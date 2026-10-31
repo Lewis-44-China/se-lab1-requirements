@@ -9,8 +9,8 @@ skinparam defaultFontName "Noto Sans CJK SC"
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam ArrowColor #4A5568
-skinparam nodesep 22
-skinparam ranksep 35
+skinparam nodesep 32
+skinparam ranksep 55
 skinparam component {
   BackgroundColor #F7FAFC
   BorderColor #4A5568
@@ -24,14 +24,14 @@ package "表现层" {
   [UI-登录/注册\n（A0）] as U0
   [UI-参与者\n（A1）] as U1
   [UI-组织者\n（A2）] as U2
-  [UI-检票\n（A3）] as U3
+  [UI-检票员\n（A3）] as U3
   [UI-管理员\n（A4）] as U4
 }
 package "应用层（角色入口）" {
   [A0 认证入口\n（共享）] as A0
   [A1 参与者应用] as A1
   [A2 组织者应用] as A2
-  [A3 检票应用] as A3
+  [A3 检票员应用] as A3
   [A4 管理员应用] as A4
 }
 package "业务约束" {
@@ -68,18 +68,16 @@ A3 ..> M7
 A4 ..> M7
 
 ' 通知与持久化
-A1 ..> S1
-A2 ..> S1
-A4 ..> S1
-CAP ..> S2
-M7 ..> S2
-S1 ..> S2
+CAP ..> S1 : 通知事件（Outbox）
+CAP ..> S2 : 仓储/事务/Outbox
 S2 --> DB
 
 legend bottom
   实线：表现层 → 角色入口 → 共享能力（D1～D6 写，Q1 读）。
   虚线：M7 权限/审计约束、通知、持久化等支撑依赖。
   A0～A4 通过共享能力接口调用 D/Q；具体“哪个入口调用哪些能力”见报告模块交互表。
+  共享能力并非对所有角色全部可用；每个入口能调用哪些 D/Q 由 A0～A4 的角色入口约束，数据范围由 M7 控制。
+  S1 消费 S2 中的 Outbox 通知事件；M7 审计通过 S2 持久化。
   M7 约束所有角色入口；A4 另可查询审计日志。
 endlegend
 

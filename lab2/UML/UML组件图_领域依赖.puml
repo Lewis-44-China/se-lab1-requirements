@@ -8,8 +8,8 @@ skinparam defaultFontName "Noto Sans CJK SC"
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam ArrowColor #4A5568
-skinparam nodesep 25
-skinparam ranksep 40
+skinparam nodesep 35
+skinparam ranksep 55
 skinparam component {
   BackgroundColor #F7FAFC
   BorderColor #4A5568
@@ -43,6 +43,7 @@ legend bottom
   虚线：Q1 只读 D1/D3/D5/D6。
   D3 → D4 为同步入队；D4 退票后通过 Outbox 发布 CapacityReleased 事件，
   由 D3 的递补编排器消费，避免 D4 反向编译依赖 D3。
+  共享能力并非对所有角色全部可用；具体入口约束见总体组件图与模块交互表。
 endlegend
 
 @enduml
