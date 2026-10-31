@@ -25,16 +25,16 @@ P -> UI : 提交报名(场次, 票种, requestId)
 UI -> A1 : register(accountId, sessionId, ticketTypeId, requestId)
 A1 -> M7 : 校验登录/角色/数据范围
 M7 --> A1 : 允许
-note right of A1
-  校验报名时间（服务器时间）；
-  未开始/已截止则直接返回失败。
-end note
 A1 -> D3 : 查重(accountId, sessionId)
 D3 -> DB : SELECT registration
 alt 已存在报名
   D3 --> A1 : 已有报名记录
   A1 --> UI : 返回已有结果（幂等）
 else 新请求
+  note right of A1
+    校验报名时间（服务器时间）；
+    未开始/已截止则直接返回失败。
+  end note
   A1 -> D2 : tryOccupy(ticketTypeId)
   D2 -> DB : UPDATE ... WHERE occupied < capacity
   alt 扣减成功
