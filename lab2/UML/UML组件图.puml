@@ -34,6 +34,7 @@ package "应用层（角色入口）" {
   [A3 检票员应用] as A3
   [A4 管理员应用] as A4
 }
+[入口接入点\n（连线汇聚，不是模块）] as ENTRY
 package "业务约束" {
   [M7 留痕与权限\n<<constrains>>] as M7
 }
@@ -53,19 +54,15 @@ U2 --> A2
 U3 --> A3
 U4 --> A4
 
-' 角色入口到共享能力
-A0 --> CAP
-A1 --> CAP
-A2 --> CAP
-A3 --> CAP
-A4 --> CAP
+' 角色入口汇聚
+A0 --> ENTRY
+A1 --> ENTRY
+A2 --> ENTRY
+A3 --> ENTRY
+A4 --> ENTRY
 
-' M7 约束所有角色入口
-A0 ..> M7
-A1 ..> M7
-A2 ..> M7
-A3 ..> M7
-A4 ..> M7
+ENTRY --> CAP : 命令/查询接口
+ENTRY ..> M7 : 权限/审计约束
 
 ' 通知与持久化
 CAP ..> S1 : 通知事件（Outbox）
@@ -79,6 +76,7 @@ legend bottom
   共享能力并非对所有角色全部可用；每个入口能调用哪些 D/Q 由 A0～A4 的角色入口约束，数据范围由 M7 控制。
   S1 消费 S2 中的 Outbox 通知事件；M7 审计通过 S2 持久化。
   M7 约束所有角色入口；A4 另可查询审计日志。
+  入口接入点只是连线汇聚点，不是新增业务模块；具体入口到 D/Q 的对应见报告模块交互表。
 endlegend
 
 @enduml
