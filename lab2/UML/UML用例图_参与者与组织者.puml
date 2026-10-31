@@ -1,0 +1,69 @@
+@startuml UML用例图_参与者与组织者
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam packageStyle rectangle
+skinparam ArrowColor #4A5568
+skinparam noteBackgroundColor #F7FAFC
+skinparam noteBorderColor #4A5568
+skinparam usecase {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+skinparam actor {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+actor "参与者" as Participant
+actor "活动组织者" as Organizer
+rectangle "活动票务与报名系统" {
+  usecase "登录/鉴权" as Login
+  usecase "浏览活动" as Browse
+  usecase "报名购票" as Register
+  usecase "候补" as Waitlist
+  usecase "退票" as Refund
+  usecase "查看我的票" as MyTickets
+  usecase "发起检票" as CheckinRequest
+  usecase "举报活动" as Report
+  usecase "创建活动" as Create
+  usecase "修改活动" as Modify
+  usecase "管理场次/票种" as Manage
+  usecase "提交审核" as Submit
+  usecase "申请取消" as CancelRequest
+  usecase "查看名单" as Roster
+  usecase "查看统计" as Stats
+}
+Participant --> Login
+Organizer --> Login
+Participant --> Browse
+Participant --> Register
+Participant --> Waitlist
+Participant --> Refund
+Participant --> MyTickets
+Participant --> CheckinRequest
+Participant --> Report
+Organizer --> Create
+Organizer --> Modify
+Organizer --> Manage
+Organizer --> Submit
+Organizer --> CancelRequest
+Organizer --> Roster
+Organizer --> Stats
+Waitlist .> Register : <<extend>>
+note right of Waitlist
+  名额已满且允许候补时，
+  从报名购票扩展出候补。
+end note
+note bottom of Login
+  所有角色先登录/鉴权；
+  权限与数据范围由 A0～A4 + M7 控制。
+end note
+note right of Modify
+  时间/地点修改、开售前容量/票价修改
+  需重新提交审核。
+end note
+note right of CancelRequest
+  组织者取消活动需管理员审批；
+  管理员可直接取消（见检票与管理员图）。
+end note
+@enduml
