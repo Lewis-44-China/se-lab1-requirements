@@ -50,10 +50,7 @@ Organizer --> CancelRequest
 Organizer --> Roster
 Organizer --> Stats
 Waitlist .> Register : <<extend>>
-note right of Waitlist
-  名额已满且允许候补时，
-  从报名购票扩展出候补。
-end note
+
 note bottom of Login
   所有角色先登录/鉴权；
   权限与数据范围由 A0～A4 + M7 控制。
