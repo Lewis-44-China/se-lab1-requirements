@@ -165,4 +165,4 @@
   - 优点：核心关系完整；`WaitlistEntry 1—0..1 Registration`、`Registration 1—* CheckRequest`、`Activity 1—* ReviewApplication` 等基数与实验一一致；`refundByParticipant` / `forceRefundByAdmin` / `cancelByActivity` 体现了共享内核 + 独立命令。
   - 问题：第一版把所有类放在多个 package 里，Account 继承线和跨包关联交叉严重、图过大；AI 自检后改为“核心业务扁平类图 + 治理小类图”两张，可读性提升，但仍需人工审查字段和方法是否过重。
 - **人工修改优化后的结果**：待人工审查后填写。
-- **对应 Git 提交**：待提交（类图初稿）。
+- **对应 Git 提交**：`f2a887b`（类图初稿）。
