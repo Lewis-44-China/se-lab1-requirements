@@ -104,12 +104,21 @@ class Registration {
   + markNoShow()
   + cancelByActivity()
 }
-class WaitlistEntry {
+class Waitlist {
+  - id: String
+  - ticketTypeId: String
+  - createdAt: DateTime
+  + enqueue(record: WaitlistRecord): void
+  + peekNext(): WaitlistRecord
+  + promoteNext(): WaitlistRecord
+  + expire(now): void
+}
+class WaitlistRecord {
   - id: String
   - joinTime: DateTime
   - paymentStatus: PaymentStatus
   - paymentAmount: BigDecimal
-  - status: WaitlistStatus
+  - status: WaitlistRecordStatus
   + promote(): Registration
   + cancel()
   + expire()
@@ -148,7 +157,7 @@ enum RegistrationStatus {
   NO_SHOW
   ACTIVITY_CANCELLED
 }
-enum WaitlistStatus {
+enum WaitlistRecordStatus {
   WAITING
   PROMOTED
   SELF_CANCELLED
@@ -174,16 +183,18 @@ Admin "1" -- "*" ReviewApplication : 审核
 Participant "1" -- "*" Registration : 报名/退票
 Session "1" -- "*" Registration : 场次
 TicketType "1" -- "*" Registration : 票种
-Participant "1" -- "*" WaitlistEntry : 候补/取消
-TicketType "1" -- "*" WaitlistEntry : 候补队列
-WaitlistEntry "1" -- "0..1" Registration : 递补生成
+Participant "1" -- "*" WaitlistRecord : 候补/取消
+TicketType "1" -- "1" Waitlist : 拥有
+Waitlist "1" -- "*" WaitlistRecord : 排队（FIFO）
+WaitlistRecord "1" -- "0..1" Registration : 递补生成
 Registration "1" -- "*" CheckRequest : 检票请求
 Inspector "1" -- "*" CheckRequest : 处理
 
 legend bottom
   本图为核心业务类图；Report、Notification、AuditLog 见 UML类图_治理.puml。
   图中只画四个关键状态枚举；其余枚举与完整字段见 类图说明.md。
-  候补队列按 FIFO：入队在队尾，递补从队首取，按 joinTime/id 排序。
+  Waitlist 是候补队列：每个票种 1-1；WaitlistRecord 是队列中的候补记录：1-*。
+  候补入队在队尾，递补从队首取，按 joinTime/id 排序。
   报名记录同时对应场次与票种；报名时校验票种属于该场次。
   报名与候补、检票的具体流程见后续活动图/时序图。
 endlegend

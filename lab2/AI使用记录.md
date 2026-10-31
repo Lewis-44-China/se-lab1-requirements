@@ -246,3 +246,23 @@
   - 问题：Registration 同时连 Session 和 TicketType，图上多一条长线；已在说明中写明“TicketType 必须属于该 Session”，并在实现时用该约束保证一致性。
 - **人工修改优化后的结果**：按用户意见简化队列标签并补充 Session 关联；未新增队列类/表。
 - **对应 Git 提交**：`8ca8c8f`（候补队列标签与报名—场次关联）。
+
+---
+
+## 使用记录 13：把 WaitlistEntry 改为 Waitlist 候补队列
+
+- **时间**：2026-10-31
+- **使用场景**：用户明确要求把 `WaitlistEntry` 改成“候补队列”（`Waitlist`），不是原来的 entry，也不要“入口”这个词；候补队列与票种是 1-1。
+- **输入（用户反馈要点，按原意记录）**：
+  - “我想把 entry 就换成候补队列，是 waitlist，不是你的 ~entry；不要这个入口；然后和票种是 1 对 1 的关系。”
+- **AI 的处理**：
+  - 将原 `WaitlistEntry` 类改为 `Waitlist`（候补队列），字段 `id`、`ticketTypeId`、`createdAt`，方法 `enqueue`、`peekNext`、`promoteNext`、`expire`；
+  - 新增 `WaitlistRecord`（候补记录），保存每条记录的 `joinTime`、`paymentStatus`、`paymentAmount`、`status`；方法 `promote`、`cancel`、`expire`；
+  - 关系改为 `TicketType 1 — 1 Waitlist`、`Waitlist 1 — * WaitlistRecord : 排队（FIFO）`、`Participant 1 — * WaitlistRecord : 候补/取消`、`WaitlistRecord 1 — 0..1 Registration`；
+  - 删除 `WaitlistEntry` 类和“入口”相关标签；
+  - `类图说明.md` 与设计基线增加 `waitlist`、`waitlist_record` 两张表（`waitlist.ticket_type_id` 唯一）。
+- **优点/问题**：
+  - 优点：`Waitlist` 就是候补队列，和票种 1-1，符合用户语义；`WaitlistRecord` 保存每条候补记录，不会把多条记录的时间/支付/状态挤在队列对象里；FIFO 关系清楚。
+  - 问题：多了一个 `WaitlistRecord` 类/表；但这是 REQ-049 候补记录字段的载体，如果不建它，队列无法保存多条独立记录。说明文档已写明“队列不是记录，记录不是队列”。
+- **人工修改优化后的结果**：按用户意见把 entry 改为 Waitlist 队列；保留 WaitlistRecord 作为队列内记录；票种—队列 1-1、队列—记录 1-*。
+- **对应 Git 提交**：待提交（Waitlist 候补队列）。
