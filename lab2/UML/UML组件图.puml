@@ -1,14 +1,16 @@
-@startuml
-' 实验二：活动票务与报名系统 组件图
-' 实线：同步调用；虚线：只读查询或基础设施依赖。
-' 为避免连线过密，横切依赖（审计/权限、通知、持久化）统一用注释说明。
+@startuml UML组件图
+' 实验二：活动票务与报名系统 组件图（总体架构）
+' 设计原则：角色入口 + 共享能力 + 业务约束 + 技术支撑。
+' 具体“哪个入口调用哪些 D/Q 能力”见报告模块交互表；
+' 领域模块之间的依赖见 UML组件图_领域依赖.puml。
+left to right direction
 skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK SC"
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam ArrowColor #4A5568
-skinparam nodesep 35
-skinparam ranksep 45
+skinparam nodesep 22
+skinparam ranksep 35
 skinparam component {
   BackgroundColor #F7FAFC
   BorderColor #4A5568
@@ -19,60 +21,66 @@ skinparam database {
 }
 
 package "表现层" {
-  [Web 前端\n（按角色显示导航）] as Web
+  [UI-登录/注册\n（A0）] as U0
+  [UI-参与者\n（A1）] as U1
+  [UI-组织者\n（A2）] as U2
+  [UI-检票\n（A3）] as U3
+  [UI-管理员\n（A4）] as U4
 }
-
-package "业务模块（实验一 8 个）" {
-  [M1 活动与场次\n（含审核）] as M1
-  [M2 票种与容量] as M2
-  [M3 报名与支付标记] as M3
-  [M4 退票与候补] as M4
-  [M5 检票] as M5
-  [M6 查询与统计] as M6
-  [M8 账号与管理员处置] as M8
+package "应用层（角色入口）" {
+  [A0 认证入口\n（共享）] as A0
+  [A1 参与者应用] as A1
+  [A2 组织者应用] as A2
+  [A3 检票应用] as A3
+  [A4 管理员应用] as A4
 }
-
-package "横切与支撑" {
-  [M7 留痕与权限] as M7
+package "业务约束" {
+  [M7 留痕与权限\n<<constrains>>] as M7
+}
+package "共享能力层" {
+  [D1 活动与场次（含审核）\nD2 票种与容量\nD3 报名与支付标记\nD4 退票与候补\nD5 检票\nD6 账号\nQ1 查询与统计（只读）] as CAP
+}
+package "技术支撑" {
   [S1 通知] as S1
   [S2 持久化与并发\n（仓储/事务/Outbox）] as S2
 }
-
 database "MySQL 8.0" as DB
 
-' 表现层通过应用服务接口调用
-Web --> M1
-Web --> M3
-Web --> M5
-Web --> M6
-Web --> M7
-Web --> M8
+' 表现层到角色入口
+U0 --> A0
+U1 --> A1
+U2 --> A2
+U3 --> A3
+U4 --> A4
 
-' 业务模块之间的同步依赖
-M1 --> M2 : 场次/票种
-M3 --> M2 : 原子占用名额
-M3 --> M4 : 满员入队
-M4 --> M2 : 释放名额
-M5 --> M3 : 查询/更新报名状态
-M8 --> M1 : 紧急取消
-M8 --> M4 : 强制退票
-M8 --> M6 : 全平台数据
+' 角色入口到共享能力
+A0 --> CAP
+A1 --> CAP
+A2 --> CAP
+A3 --> CAP
+A4 --> CAP
 
-' 查询模块只读
-M6 ..> M1 : 只读
-M6 ..> M3 : 只读
-M6 ..> M5 : 只读
+' M7 约束所有角色入口
+A0 ..> M7
+A1 ..> M7
+A2 ..> M7
+A3 ..> M7
+A4 ..> M7
 
-' 横切与持久化
+' 通知与持久化
+A1 ..> S1
+A2 ..> S1
+A4 ..> S1
+CAP ..> S2
 M7 ..> S2
-S1 ..> DB
+S1 ..> S2
 S2 --> DB
 
 legend bottom
-  实线：同步调用；虚线：只读查询或基础设施依赖。
-  业务模块通过 M7（审计/权限）、S2（仓储/事务）协作；M1、M3、M4、M8 另通过 S1 发送通知。
-  M3 → M4 为同步入队；M4 退票后通过 Outbox 发布 CapacityReleased 事件，
-  由 M3 的递补编排器消费，避免 M4 反向编译依赖 M3。
+  实线：表现层 → 角色入口 → 共享能力（D1～D6 写，Q1 读）。
+  虚线：M7 权限/审计约束、通知、持久化等支撑依赖。
+  A0～A4 通过共享能力接口调用 D/Q；具体“哪个入口调用哪些能力”见报告模块交互表。
+  M7 约束所有角色入口；A4 另可查询审计日志。
 endlegend
 
 @enduml

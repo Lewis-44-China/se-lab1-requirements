@@ -1,0 +1,48 @@
+@startuml UML组件图_领域依赖
+' 实验二：共享领域模块依赖（组件图细节）
+' 说明：本图只画 D1～D6 与 Q1 的依赖；
+' 角色入口 A0～A4 与 D/Q 的对应关系见 UML组件图.puml 与报告模块交互表。
+left to right direction
+skinparam componentStyle rectangle
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ArrowColor #4A5568
+skinparam nodesep 25
+skinparam ranksep 40
+skinparam component {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+
+package "写能力（共享领域）" {
+  [D1 活动与场次\n（含审核）] as D1
+  [D2 票种与容量] as D2
+  [D3 报名与支付标记] as D3
+  [D4 退票与候补] as D4
+  [D5 检票] as D5
+  [D6 账号] as D6
+}
+package "读能力（只读）" {
+  [Q1 查询与统计] as Q1
+}
+
+D1 --> D2 : 场次/票种
+D3 --> D2 : 占用名额
+D3 --> D4 : 满员入队
+D4 --> D2 : 释放名额
+D5 --> D3 : 更新报名状态
+
+Q1 ..> D1 : 只读
+Q1 ..> D3 : 只读
+Q1 ..> D5 : 只读
+Q1 ..> D6 : 只读
+
+legend bottom
+  实线：写能力之间的同步依赖。
+  虚线：Q1 只读 D1/D3/D5/D6。
+  D3 → D4 为同步入队；D4 退票后通过 Outbox 发布 CapacityReleased 事件，
+  由 D3 的递补编排器消费，避免 D4 反向编译依赖 D3。
+endlegend
+
+@enduml
