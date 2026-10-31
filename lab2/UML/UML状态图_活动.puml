@@ -7,24 +7,24 @@ skinparam StateBorderColor #4A5568
 skinparam noteBackgroundColor #F7FAFC
 skinparam noteBorderColor #4A5568
 
-state "草稿" as DRAFT
-state "待审核" as PENDING
-state "公开" as PUBLISHED
-state "进行中" as ONGOING
 state "已结束" as ENDED
 state "已取消" as CANCELLED
 
-[*] --> DRAFT : 组织者创建
-DRAFT --> PENDING : 提交审核
-PENDING --> PUBLISHED : 审核通过
-PENDING --> DRAFT : 审核驳回
-PUBLISHED --> ONGOING : 最早场次检票开放\n（定时任务）
-ONGOING --> ENDED : 活动时间结束\n（定时任务）
+state "活动非终态" as ACTIVE {
+  state "草稿" as DRAFT
+  state "待审核" as PENDING
+  state "公开" as PUBLISHED
+  state "进行中" as ONGOING
 
-DRAFT --> CANCELLED : 管理员取消\n或取消审批通过
-PENDING --> CANCELLED : 管理员取消\n或取消审批通过
-PUBLISHED --> CANCELLED : 管理员取消\n或取消审批通过
-ONGOING --> CANCELLED : 管理员取消\n或取消审批通过
+  [*] --> DRAFT : 组织者创建
+  DRAFT --> PENDING : 提交审核
+  PENDING --> PUBLISHED : 审核通过
+  PENDING --> DRAFT : 审核驳回
+  PUBLISHED --> ONGOING : 最早场次检票开放（定时任务）
+}
+
+ACTIVE --> CANCELLED : 管理员取消 / 组织者取消审批通过
+ONGOING --> ENDED : 活动时间结束（定时任务）
 
 ENDED --> [*]
 CANCELLED --> [*]
@@ -35,13 +35,9 @@ note right of CANCELLED
   已取消不得回到草稿。
 end note
 
-note bottom of ONGOING
-  “进行中”由该活动最早场次的
-  检票开放时间触发，定时任务推进。
-end note
-
 legend bottom
   终态：已结束、已取消。
+  “进行中”由该活动最早场次的检票开放时间触发，定时任务推进。
   活动取消 → 全部场次取消；场次取消不影响活动状态。
 endlegend
 @enduml
