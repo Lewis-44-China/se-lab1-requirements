@@ -171,7 +171,7 @@ Admin "1" -- "*" ReviewApplication : 审核
 Participant "1" -- "*" Registration : 报名/退票
 TicketType "1" -- "*" Registration : 对应
 Participant "1" -- "*" WaitlistEntry : 候补/取消
-TicketType "1" -- "*" WaitlistEntry : 候补队列（每个票种一条，有序）
+TicketType "1" -- "*" WaitlistEntry : 候补队列（每个票种一条，FIFO）
 WaitlistEntry "1" -- "0..1" Registration : 递补生成
 Registration "1" -- "*" CheckRequest : 检票请求
 Inspector "1" -- "*" CheckRequest : 处理
@@ -179,6 +179,7 @@ Inspector "1" -- "*" CheckRequest : 处理
 legend bottom
   本图为核心业务类图；Report、Notification、AuditLog 见 UML类图_治理.puml。
   图中只画四个关键状态枚举；其余枚举与完整字段见 类图说明.md。
+  候补队列按 FIFO：入队在队尾，递补从队首取，按 joinTime/id 排序。
   报名与候补、检票的具体流程见后续活动图/时序图。
 endlegend
 @enduml
