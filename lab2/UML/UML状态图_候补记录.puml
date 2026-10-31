@@ -1,0 +1,33 @@
+@startuml UML状态图_候补记录
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam ArrowColor #4A5568
+skinparam StateBackgroundColor #F7FAFC
+skinparam StateBorderColor #4A5568
+skinparam noteBackgroundColor #F7FAFC
+skinparam noteBorderColor #4A5568
+
+state "候补中" as WAITING
+state "已递补" as PROMOTED
+state "自行取消" as SELF_CANCELLED
+state "候补失败" as FAILED
+
+[*] --> WAITING : 加入票种候补队列（队尾）
+WAITING --> PROMOTED : 名额释放，队首递补成功
+WAITING --> SELF_CANCELLED : 参与者取消（退全款）
+WAITING --> FAILED : 候补截止仍未递补（退全款）
+
+PROMOTED --> [*]
+SELF_CANCELLED --> [*]
+FAILED --> [*]
+
+note right of PROMOTED
+  递补成功后生成“已购票”报名记录，
+  之后按报名记录状态机继续流转。
+end note
+
+legend bottom
+  终态：已递补、自行取消、候补失败；终态不可再变更。
+  队列按 joinTime/id 排序；入队在队尾，递补从队首取。
+endlegend
+@enduml
