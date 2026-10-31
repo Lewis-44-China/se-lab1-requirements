@@ -2,7 +2,7 @@
 
 说明：按实验手册要求，记录每一次 AI 辅助设计的使用情况。每条记录包含使用场景、输入（提示词要点）、生成结果、优点/问题、人工修改优化后的结果，以及对应的 Git 提交。最终报告第 5 章从本文件选取代表性记录。
 
-> **当前最终状态（2026-10-31，以此为准）**：`TicketType 1 — 1 Waitlist`（每个票种一条候补队列）；`Waitlist 1 — * WaitlistRecord`（队列内多条候补记录）；`WaitlistRecord 1 — 0..1 Registration`；`Registration` 同时关联 `Session` 和 `TicketType`。`WaitlistEntry`、`WaitlistQueue`、“队列入口”等仅是讨论过程中的历史写法，不是最终模型。以下记录按时间顺序保留，便于看出修改过程。
+> **当前最终状态（2026-10-31，以此为准）**：类模型中 `TicketType 1 — 1 Waitlist`（每个票种一条候补队列）；`Waitlist 1 — * WaitlistRecord`（队列内多条候补记录）；`WaitlistRecord 1 — 0..1 Registration`；`Registration` 同时关联 `Session` 和 `TicketType`。组件图最终为总体组件图 + 领域依赖图两张；总体图的“入口接入点”只是 A0～A4 连线汇聚点，不是候补队列入口，也不是模块。`WaitlistEntry`、`WaitlistQueue`、“队列入口”等仅是讨论过程中的历史写法，不是最终模型。以下记录按时间顺序保留，便于看出修改过程。
 
 ---
 
