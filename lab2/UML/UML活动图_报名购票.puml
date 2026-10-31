@@ -1,0 +1,54 @@
+@startuml UML活动图_报名购票
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam ArrowColor #4A5568
+skinparam ActivityBackgroundColor #F7FAFC
+skinparam ActivityBorderColor #4A5568
+skinparam ActivityDiamondBackgroundColor #FFF8E1
+skinparam ActivityDiamondBorderColor #B7791F
+skinparam noteBackgroundColor #F7FAFC
+skinparam noteBorderColor #4A5568
+
+start
+:参与者选择活动、场次、票种;
+:提交报名请求\n(携带 requestId);
+:A1 校验登录、角色、数据范围;
+
+if (重复请求或已报名?) then (是)
+  :返回已有报名结果\n(幂等);
+  stop
+else (否)
+endif
+
+if (报名时间有效?) then (否)
+  :返回失败\n(未开始/已截止);
+  stop
+else (是)
+endif
+
+:D2 原子扣减名额\nUPDATE ... WHERE occupied < capacity;
+if (扣减成功?) then (是)
+  :D3 创建报名记录\n(已购票、支付标记=已支付、金额快照);
+  :M7 写审计（报名成功）;
+  :提交事务，返回报名成功;
+  stop
+else (否)
+  if (允许候补且未过候补截止?) then (是)
+    :参与者选择候补\n并完成支付标记（已支付）;
+    :D4 加入该票种候补队列\n(队尾，记录入队时间);
+    :M7 写审计（候补入队）;
+    :提交事务，返回候补成功;
+    stop
+  else (否)
+    :返回失败\n(名额已满/不允许候补/已截止);
+    stop
+  endif
+endif
+
+legend bottom
+  A1 参与者应用；D2 票种与容量；D3 报名与支付标记；D4 退票与候补；M7 留痕与权限。
+  同一用户同一场次只允许一条报名；requestId 保证重复提交幂等。
+  名额扣减、报名记录、审计在同一数据库事务内；失败回滚。
+  无票时按业务方向进入候补；候补记录按 joinTime/id 排序，递补从队首取。
+endlegend
+@enduml
