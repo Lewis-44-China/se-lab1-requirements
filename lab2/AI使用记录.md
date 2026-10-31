@@ -148,3 +148,21 @@
   - 问题：两张图放在一起时要注意层次，避免让读者误以为领域依赖图是第二个总体架构图；已在说明文档中明确两者的分工。
 - **人工修改优化后的结果**：按用户意见恢复领域依赖图；设计内容没有变化，只调整交付物和说明文档结构。
 - **对应 Git 提交**：`ba64ce1`（恢复领域依赖图）。
+
+---
+
+## 使用记录 8：类图初稿
+
+- **时间**：2026-10-31
+- **使用场景**：根据设计基线和实验一需求，生成领域类图，表达账号角色、活动/场次/票种、报名/候补、检票、审核、举报/通知/审计的类、属性、方法与关系。
+- **输入（提示词要点）**：
+  - “按 A0～A4、D1～D6、Q1、M7 的模块模型，画实验二的类图；包含 Account 四类角色、活动/场次/票种、报名/候补、检票、审核、举报、通知、审计；标出多重性；退款命令要区分参与者/管理员/活动取消。”
+- **生成结果**：
+  - `UML/UML类图.puml` / `.png`：核心业务类图（Account 继承、Activity/Session/TicketType、Registration/WaitlistEntry、CheckRequest、ReviewApplication，含 4 个关键状态枚举）。
+  - `UML/UML类图_治理.puml` / `.png`：治理类图（Report、Notification、AuditLog，引用 Account/Activity/Admin）。
+  - `UML/类图说明.md`：类职责、关系与基数、共享命令、状态枚举、类到数据库表映射、与组件图的对应。
+- **优点/问题**：
+  - 优点：核心关系完整；`WaitlistEntry 1—0..1 Registration`、`Registration 1—* CheckRequest`、`Activity 1—* ReviewApplication` 等基数与实验一一致；`refundByParticipant` / `forceRefundByAdmin` / `cancelByActivity` 体现了共享内核 + 独立命令。
+  - 问题：第一版把所有类放在多个 package 里，Account 继承线和跨包关联交叉严重、图过大；AI 自检后改为“核心业务扁平类图 + 治理小类图”两张，可读性提升，但仍需人工审查字段和方法是否过重。
+- **人工修改优化后的结果**：待人工审查后填写。
+- **对应 Git 提交**：待提交（类图初稿）。

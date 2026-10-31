@@ -1,0 +1,176 @@
+@startuml UML类图
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam class {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+hide circle
+left to right direction
+
+abstract class Account {
+  - id: String
+  - phone: String
+  - passwordHash: String
+  - name: String
+  - status: AccountStatus
+  + login(password): boolean
+  + isBanned(): boolean
+}
+class Participant {
+  + register(sessionId, ticketTypeId)
+  + refund(registrationId)
+  + joinWaitlist(sessionId, ticketTypeId)
+  + requestCheckIn(registrationId)
+}
+class Organizer {
+  + createActivity(...)
+  + submitForReview(activityId)
+  + requestCancellation(activityId)
+}
+class Inspector {
+  + processCheckRequest(requestId, passed)
+}
+class Admin {
+  + review(applicationId, approved, comment)
+  + ban(accountId)
+  + forceRefund(registrationId, reason)
+  + cancelActivity(activityId)
+}
+
+class Activity {
+  - id: String
+  - name: String
+  - time: DateTime
+  - saleStart: DateTime
+  - saleEnd: DateTime
+  - refundDeadline: DateTime
+  - status: ActivityStatus
+  + submitForReview()
+  + publish()
+  + start()
+  + end()
+  + cancel()
+}
+class Session {
+  - id: String
+  - sessionNo: String
+  - time: DateTime
+  - checkinOpenTime: DateTime
+  - allowWaitlist: boolean
+  - status: SessionStatus
+  + refreshStatus(now)
+  + cancel()
+}
+class TicketType {
+  - id: String
+  - kind: TicketKind
+  - price: BigDecimal
+  - capacity: int
+  - occupied: int
+  + remaining(): int
+  + tryOccupy(): boolean
+  + release()
+}
+class Registration {
+  - id: String
+  - buyerName: String
+  - buyerPhone: String
+  - status: RegistrationStatus
+  - paymentStatus: PaymentStatus
+  - paymentAmount: BigDecimal
+  + refundByParticipant(accountId)
+  + forceRefundByAdmin(adminId, reason)
+  + checkIn()
+  + markNoShow()
+  + cancelByActivity()
+}
+class WaitlistEntry {
+  - id: String
+  - joinTime: DateTime
+  - paymentStatus: PaymentStatus
+  - paymentAmount: BigDecimal
+  - status: WaitlistStatus
+  + promote(): Registration
+  + cancel()
+  + expire()
+}
+class CheckRequest {
+  - id: String
+  - requestNo: String
+  - status: CheckRequestStatus
+  - processedAt: DateTime
+  + pass(inspectorId)
+  + markAbnormal(inspectorId)
+}
+class ReviewApplication {
+  - id: String
+  - type: ReviewType
+  - status: ReviewStatus
+  - submittedAt: DateTime
+  - comment: String
+  + approve(adminId)
+  + reject(adminId, reason)
+}
+
+enum ActivityStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ONGOING
+  ENDED
+  CANCELLED
+}
+enum RegistrationStatus {
+  PURCHASED
+  CHECKED_IN
+  NORMAL_END
+  SELF_CANCELLED
+  NO_SHOW
+  ACTIVITY_CANCELLED
+}
+enum WaitlistStatus {
+  WAITING
+  PROMOTED
+  SELF_CANCELLED
+  FAILED
+}
+enum CheckRequestStatus {
+  PENDING
+  PASSED
+  ABNORMAL
+}
+
+Account <|-- Participant
+Account <|-- Organizer
+Account <|-- Inspector
+Account <|-- Admin
+
+Organizer "1" -- "*" Activity : 创建
+Activity "1" *-- "1..*" Session : 包含
+Session "1" *-- "1..*" TicketType : 包含
+Activity "1" -- "*" ReviewApplication : 审核申请
+Admin "1" -- "*" ReviewApplication : 审核
+
+Participant "1" -- "*" Registration : 报名
+TicketType "1" -- "*" Registration : 对应
+Participant "1" -- "*" WaitlistEntry : 候补
+TicketType "1" -- "*" WaitlistEntry : 对应
+WaitlistEntry "1" -- "0..1" Registration : 递补生成
+Registration "1" -- "*" CheckRequest : 检票请求
+Inspector "1" -- "*" CheckRequest : 处理
+
+note right of WaitlistEntry
+  候补记录 1 — 0..1 报名记录
+  递补成功才生成报名记录
+end note
+
+legend bottom
+  本图为核心业务类图；Report、Notification、AuditLog 见 UML类图_治理.puml。
+  图中只画四个关键状态枚举；其余枚举与完整字段见 类图说明.md。
+  报名与候补、检票的具体流程见后续活动图/时序图。
+endlegend
+@enduml
