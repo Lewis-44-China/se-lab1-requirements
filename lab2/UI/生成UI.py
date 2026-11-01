@@ -532,8 +532,8 @@ def screen_admin_review():
         if active:
             b.append(rect(x, 204, 60, 3, C["primary"], 2))
     b.append(rect(32, 230, 400, 620, C["surface"], 16, C["border"]))
-    b.append(text(56, 270, "待审核活动 3", 16, C["text"], 700))
-    items = [("城市音乐节 · 夏日专场", "发布审核 · 组织者 李晨", "11-01 09:30", True), ("沉浸式戏剧《夜航》", "修改审核 · 组织者 李晨", "10-31 18:20", False), ("设计沙龙：AI 与创作", "取消申请 · 组织者 周舟", "10-31 16:10", False)]
+    b.append(text(56, 270, "待审核申请 3", 16, C["text"], 700))
+    items = [("城市音乐节 · 夏日专场", "修改审核 · 组织者 李晨", "11-01 09:30", True), ("沉浸式戏剧《夜航》", "发布审核 · 组织者 李晨", "10-31 18:20", False), ("设计沙龙：AI 与创作", "取消申请 · 组织者 周舟", "10-31 16:10", False)]
     for i, (title, meta, time, selected) in enumerate(items):
         y = 296 + i * 92
         b.append(rect(48, y, 368, 76, C["blue_tint"] if selected else C["surface"], 10, C["primary"] if selected else C["border"]))
@@ -543,7 +543,7 @@ def screen_admin_review():
     b.append(rect(452, 230, 956, 620, C["surface"], 16, C["border"]))
     b.append(text(476, 270, "城市音乐节 · 夏日专场", 20, C["text"], 700))
     b.append(badge(1310, 252, "待审核", C["warning"], C["warning_bg"], 10))
-    b.append(text(476, 296, "组织者：李晨 · 提交于 11-01 09:30 · 审核时限：一周内", 11, C["sub"]))
+    b.append(text(476, 296, "审核类型：修改审核 · 组织者：李晨 · 提交于 11-01 09:30 · 审核时限：一周内", 11, C["sub"]))
     b.append(text(476, 336, "本次提交的变更", 14, C["text"], 700))
     b.append(rect(476, 352, 908, 128, C["bg"], 10))
     for i, (field, before, after) in enumerate([("活动时间", "11月8日 19:30", "11月9日 19:30"), ("活动地点", "新庄国展中心", "南京奥体中心"), ("容量 / 票价", "无变化", "无变化")]):
@@ -560,8 +560,8 @@ def screen_admin_review():
     b.append(button(1120, 692, 120, 38, "驳回", "secondary", 12))
     b.append(button(1252, 692, 132, 38, "通过", "primary", 12))
     b.append(line(476, 754, 1408, 754))
-    b.append(text(476, 782, "其他处置", 12, C["text"], 700))
-    for i, label in enumerate(["举报处理", "封禁账号", "强制退票", "创建检票账号"]):
+    b.append(text(476, 782, "相关处置", 12, C["text"], 700))
+    for i, label in enumerate(["取消活动", "强制退票", "封禁组织者", "创建检票账号"]):
         b.append(button(476 + i * 176, 800, 160, 32, label, "ghost", 11))
     return svg_doc("".join(b), defs_gradient())
 
