@@ -617,31 +617,39 @@ def screen_audit():
     b.append(text(32, 126, "审计日志", 30, C["text"], 700))
     b.append(text(32, 154, "保存至少 6 个月；按角色可见范围查询关键操作留痕", 14, C["sub"]))
     b.append(rect(32, 178, 1376, 56, C["surface"], 12, C["border"]))
-    for x, label, chev in [(52, "对象类型", 72), (226, "操作类型", 72), (400, "操作人", 60), (544, "时间范围", 72), (712, "关键词", 0)]:
+    # 筛选：对象类型 / 操作类型 / 操作人 / 时间范围 / 对象或关键词 / 排序
+    for x, label, chev in [(52, "对象类型", 72), (180, "操作类型", 72), (308, "操作人", 60), (420, "时间范围", 72), (784, "时间：最新在前", 100)]:
         b.append(text(x, 211, label, 11, C["sub"]))
         if chev:
             b.append(f'<path d="M{x+chev} 207 l4 4 l4 -4" fill="none" stroke="{C["muted"]}" stroke-width="1.5"/>')
-    b.append(line(880, 192, 880, 220, C["border"]))
-    b.append(text(912, 211, "全部对象 / 操作 / 操作人，按时间倒序", 11, C["muted"]))
+    b.append(line(530, 192, 530, 220, C["border"]))
+    b.append(icon_search(552, 206, 8))
+    b.append(text(574, 211, "输入对象 ID 或关键词", 10, C["muted"]))
+    b.append(line(760, 192, 760, 220, C["border"]))
+    b.append(text(1000, 211, "共 128 条 · 按时间倒序", 10, C["muted"]))
+    # 日志表
     b.append(rect(32, 264, 1000, 520, C["surface"], 16, C["border"]))
-    for x, label in [(56, "时间"), (196, "操作人"), (316, "对象"), (500, "操作"), (660, "前后状态")]:
+    for x, label in [(56, "时间"), (186, "操作人"), (300, "对象"), (468, "操作"), (636, "前后状态"), (824, "说明")]:
         b.append(text(x, 302, label, 11, C["muted"], 500))
     b.append(line(56, 316, 1008, 316))
     rows = [
-        ("11-01 14:22", "王管理", "活动 #A102", "审核通过", "待审核 → 公开"),
-        ("11-01 13:50", "李晨", "活动 #A102", "修改时间/地点", "公开 → 待审核"),
-        ("11-01 12:08", "林同学", "报名 #R208", "报名成功", "无 → 已购票"),
-        ("11-01 11:34", "赵敏", "检票请求 #CK-1024", "检票通过", "待处理 → 通过"),
-        ("10-31 18:12", "王管理", "账号 #U33", "封禁账号", "正常 → 封禁"),
+        ("11-01 14:22", "王管理", "活动 #A102", "审核通过", "待审核 → 公开", "审核通过，活动公开"),
+        ("11-01 13:50", "李晨", "活动 #A102", "修改时间/地点", "公开 → 待审核", "提交修改审核"),
+        ("11-01 12:08", "林同学", "报名 #R208", "报名成功", "无 → 已购票", "名额占用，支付标记"),
+        ("11-01 11:34", "赵敏", "检票请求 #CK-1024", "检票通过", "待处理 → 通过", "报名转已检票"),
+        ("11-01 10:46", "林同学", "报名 #R209", "报名失败", "无 → 失败", "名额已满"),
+        ("10-31 18:12", "王管理", "账号 #U33", "封禁账号", "正常 → 封禁", "限制登录"),
     ]
-    for i, (time, operator, obj, action, state) in enumerate(rows):
-        y = 344 + i * 80
-        b.append(text(56, y + 22, time, 11, C["sub"]))
-        b.append(text(196, y + 22, operator, 11, C["text"], 500))
-        b.append(text(316, y + 22, obj, 11, C["sub"]))
-        b.append(text(500, y + 22, action, 11, C["text"], 500))
-        b.append(text(660, y + 22, state, 11, C["sub"]))
+    for i, (time, operator, obj, action, state, desc) in enumerate(rows):
+        y = 344 + i * 68
+        b.append(text(56, y + 22, time, 10, C["sub"]))
+        b.append(text(186, y + 22, operator, 10, C["text"], 500))
+        b.append(text(300, y + 22, obj, 10, C["sub"]))
+        b.append(text(468, y + 22, action, 10, C["text"], 500))
+        b.append(text(636, y + 22, state, 10, C["sub"]))
+        b.append(text(824, y + 22, desc, 10, C["muted"]))
         b.append(line(56, y + 56, 1008, y + 56, C["border"]))
+    # 详情
     b.append(rect(1052, 264, 356, 520, C["surface"], 16, C["border"]))
     b.append(text(1076, 304, "留痕详情", 18, C["text"], 700))
     details = [("操作人", "王管理（管理员）"), ("操作时间", "2026-11-01 14:22"), ("对象", "活动 #A102"), ("操作", "审核通过"), ("前状态", "待审核"), ("后状态", "公开"), ("说明", "审核通过，活动公开，通知组织者")]
@@ -649,9 +657,10 @@ def screen_audit():
         y = 342 + i * 44
         b.append(text(1076, y, k, 11, C["muted"]))
         b.append(text(1160, y, v, 11, C["text"], 500))
-    b.append(rect(1076, 680, 308, 72, C["blue_tint"], 10))
-    b.append(text(1092, 706, "权限提示", 11, C["primary"], 700))
-    b.append(text(1092, 726, "管理员可看全部；其他角色按对象/角色可见", 10, C["sub"]))
+    b.append(rect(1076, 660, 308, 92, C["blue_tint"], 10))
+    b.append(text(1092, 684, "权限提示", 11, C["primary"], 700))
+    b.append(text(1092, 704, "管理员可看全部；其他角色按对象/角色可见", 10, C["sub"]))
+    b.append(text(1092, 724, "留痕保存至少 6 个月；只追加不修改", 10, C["sub"]))
     return svg_doc("".join(b), defs_gradient())
 
 
