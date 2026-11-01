@@ -167,13 +167,8 @@ def screen_login():
     return svg_doc("".join(b), defs)
 
 
-if __name__ == "__main__":
-    out = Path(__file__).parent
-    (out / "01_登录注册.svg").write_text(screen_login(), encoding="utf-8")
-    print("written", out / "01_登录注册.svg")
 
-
-def top_nav(active="活动", role="参与者", name="林同学", breadcrumb=None):
+def top_nav(active="活动", role="参与者", name="林同学", avatar="林", breadcrumb=None, items=None):
     b = [rect(0, 0, W, 72, C["surface"]), line(0, 72, W, 72, C["border"])]
     b.append(rect(32, 19, 34, 34, C["primary"], 9))
     b.append(f'<path d="M41 28 h16 v16 h-16 z" fill="none" stroke="#FFFFFF" stroke-width="1.6"/>'
@@ -182,7 +177,8 @@ def top_nav(active="活动", role="参与者", name="林同学", breadcrumb=None
     if breadcrumb:
         b.append(text(210, 43, breadcrumb, 12, C["muted"]))
     else:
-        items = [("活动", 220), ("我的票", 285), ("通知", 355)]
+        if items is None:
+            items = [("活动", 220), ("我的票", 285), ("通知", 355)]
         for label, x in items:
             color = C["primary"] if label == active else C["sub"]
             weight = 600 if label == active else 400
@@ -192,7 +188,7 @@ def top_nav(active="活动", role="参与者", name="林同学", breadcrumb=None
     b.append(rect(1178, 24, 74, 24, C["blue_tint"], 12))
     b.append(text(1215, 40, role, 11, C["primary"], 600, "middle"))
     b.append(circle(1288, 36, 17, "#DBEAFE"))
-    b.append(text(1288, 41, "林", 13, C["primary_dark"], 700, "middle"))
+    b.append(text(1288, 41, avatar, 13, C["primary_dark"], 700, "middle"))
     b.append(text(1312, 41, name, 13, C["text"], 500))
     return "".join(b)
 
@@ -353,9 +349,312 @@ def screen_checkout():
     return svg_doc("".join(b), defs)
 
 
+
+def screen_my_tickets():
+    b = [rect(0, 0, W, H, C["bg"]), top_nav("我的票", "参与者", items=[("活动", 220), ("我的票", 285), ("通知", 355)])]
+    b.append(text(32, 126, "我的票", 30, C["text"], 700))
+    b.append(text(32, 154, "查看报名状态、退票与退款记录", 14, C["sub"]))
+    for i, (label, active) in enumerate([("全部", True), ("已购票", False), ("已检票", False), ("已结束", False), ("已取消", False)]):
+        x = 32 + i * 78
+        if active:
+            b.append(rect(x, 178, 56, 26, C["primary"], 13))
+            b.append(text(x + 28, 195, label, 11, "#FFFFFF", 600, "middle"))
+        else:
+            b.append(text(x + 12, 195, label, 11, C["sub"], 400, "middle"))
+    cards = [
+        ("城市音乐节 · 夏日专场", "11月8日 19:30 · 新庄国展中心", "普通票 · 1 张", "已购票", C["success"], C["success_bg"], "乐", "g1", "退票截止 11月7日 18:00", True),
+        ("沉浸式戏剧《夜航》", "11月12日 19:30 · 鼓楼剧场", "VIP 票 · 1 张", "已检票", C["primary"], C["blue_tint"], "剧", "g2", "已检票，不可退票", False),
+        ("设计沙龙：AI 与创作", "11月20日 14:00 · 创意产业园", "普通票 · 1 张", "活动取消", C["danger"], C["danger_bg"], "讲", "g4", "已退款 ¥60", False),
+    ]
+    for i, (title, meta, ticket, status, sfg, sbg, char, gid, note, can_refund) in enumerate(cards):
+        y = 230 + i * 186
+        b.append(rect(32, y, 900, 170, C["surface"], 16, C["border"]))
+        b.append(rect(48, y + 18, 164, 134, f"url(#{gid})", 12))
+        b.append(text(130, y + 94, char, 44, "#FFFFFF", 700, "middle"))
+        b.append(text(232, y + 40, title, 18, C["text"], 700))
+        b.append(text(232, y + 66, meta, 12, C["sub"]))
+        b.append(text(232, y + 90, ticket, 12, C["sub"]))
+        b.append(badge(762, y + 24, status, sfg, sbg, 10))
+        b.append(text(232, y + 130, note, 11, C["warning"] if can_refund else C["muted"]))
+        if can_refund:
+            b.append(button(720, y + 112, 112, 34, "申请退票", "secondary", 12))
+        else:
+            b.append(button(720, y + 112, 112, 34, "查看详情", "ghost", 12))
+    # 右栏退票说明
+    b.append(rect(956, 230, 452, 560, C["surface"], 16, C["border"]))
+    b.append(text(980, 270, "退票说明", 18, C["text"], 700))
+    bullets = [
+        ("未过退票截止", "可申请退票，退款金额等于支付金额"),
+        ("已检票 / 已过截止", "不可退票，记录保留"),
+        ("退票成功后", "名额释放，按候补队列递补"),
+        ("一单一张", "不支持代报名，不提供删除报名记录"),
+    ]
+    for i, (t, d) in enumerate(bullets):
+        y = 306 + i * 74
+        b.append(circle(992, y, 5, C["primary"]))
+        b.append(text(1008, y + 5, t, 13, C["text"], 600))
+        b.append(text(1008, y + 27, d, 11, C["sub"]))
+    b.append(rect(980, 626, 404, 64, C["blue_tint"], 10))
+    b.append(text(996, 650, "提示", 11, C["primary"], 700))
+    b.append(text(996, 670, "退票/取消后状态进入终态，记录仍可查询。", 11, C["sub"]))
+    return svg_doc("".join(b), defs_gradient())
+
+
+def screen_organizer_activities():
+    defs = defs_gradient()
+    b = [rect(0, 0, W, H, C["bg"]), top_nav("活动管理", "组织者", name="李晨", avatar="李", items=[("活动管理", 220), ("名单统计", 310), ("通知", 400)])]
+    b.append(text(32, 126, "活动管理", 30, C["text"], 700))
+    b.append(text(32, 154, "创建、提交审核、管理场次票种与取消申请", 14, C["sub"]))
+    b.append(button(1236, 110, 172, 42, "创建活动", "primary", 13))
+    stats = [("进行中", "2", C["success"], C["success_bg"]), ("待审核", "1", C["warning"], C["warning_bg"]), ("草稿", "1", C["muted"], C["bg"]), ("已结束", "3", C["primary"], C["blue_tint"])]
+    for i, (label, value, fg, bg) in enumerate(stats):
+        x = 32 + i * 236
+        b.append(rect(x, 180, 212, 78, C["surface"], 12, C["border"]))
+        b.append(text(x + 18, 208, label, 11, C["muted"]))
+        b.append(text(x + 18, 240, value, 24, fg, 700))
+        b.append(rect(x + 172, 194, 24, 24, bg, 8))
+    # 表格
+    b.append(rect(32, 280, 920, 520, C["surface"], 16, C["border"]))
+    b.append(text(56, 316, "活动", 11, C["muted"], 500))
+    b.append(text(356, 316, "场次", 11, C["muted"], 500))
+    b.append(text(436, 316, "状态", 11, C["muted"], 500))
+    b.append(text(556, 316, "报名/容量", 11, C["muted"], 500))
+    b.append(text(684, 316, "最近更新", 11, C["muted"], 500))
+    b.append(text(796, 316, "操作", 11, C["muted"], 500))
+    b.append(line(56, 330, 928, 330))
+    rows = [
+        ("城市音乐节 · 夏日专场", "2 场", "进行中", C["success"], C["success_bg"], "168 / 200", "11-01 14:20", "查看  编辑  申请取消"),
+        ("沉浸式戏剧《夜航》", "1 场", "待审核", C["warning"], C["warning_bg"], "0 / 120", "11-01 10:02", "查看"),
+        ("设计沙龙：AI 与创作", "1 场", "草稿", C["muted"], C["bg"], "0 / 60", "10-31 18:40", "编辑  提交审核"),
+        ("古典音乐会 · 秋夜", "1 场", "已结束", C["primary"], C["blue_tint"], "96 / 100", "10-30 21:00", "查看  名单"),
+    ]
+    for i, (title, session, status, sfg, sbg, count, updated, actions) in enumerate(rows):
+        y = 352 + i * 98
+        b.append(text(56, y + 22, title, 14, C["text"], 600))
+        b.append(text(356, y + 22, session, 12, C["sub"]))
+        b.append(badge(436, y + 6, status, sfg, sbg, 10))
+        b.append(text(556, y + 22, count, 12, C["sub"]))
+        b.append(text(684, y + 22, updated, 11, C["muted"]))
+        b.append(text(796, y + 22, actions, 11, C["primary"], 500))
+        b.append(line(56, y + 52, 928, y + 52, C["border"]))
+    # 右栏修改规则
+    b.append(rect(976, 180, 432, 620, C["surface"], 16, C["border"]))
+    b.append(text(1000, 218, "发布后可修改范围", 18, C["text"], 700))
+    rules = [
+        ("可直接修改", ["描述、图片、标签"], C["success"]),
+        ("需重新审核", ["时间、地点", "开售前容量、票价"], C["warning"]),
+        ("禁止修改", ["开售后容量、票价"], C["danger"]),
+        ("取消活动", ["组织者取消需管理员审批"], C["primary"]),
+    ]
+    for i, (title, items, color) in enumerate(rules):
+        y = 258 + i * 126
+        b.append(rect(1000, y - 18, 384, 1, C["border"]))
+        b.append(text(1000, y + 4, title, 13, color, 700))
+        for j, item in enumerate(items):
+            b.append(text(1000, y + 28 + j * 20, "· " + item, 11, C["sub"]))
+    return svg_doc("".join(b), defs)
+
+
+def screen_organizer_roster():
+    b = [rect(0, 0, W, H, C["bg"]), top_nav("名单统计", "组织者", name="李晨", avatar="李", items=[("活动管理", 220), ("名单统计", 310), ("通知", 400)])]
+    b.append(text(32, 126, "名单与统计", 30, C["text"], 700))
+    b.append(text(32, 154, "名单仅本活动组织者可见，手机号遮挡", 14, C["sub"]))
+    b.append(rect(32, 178, 920, 56, C["surface"], 12, C["border"]))
+    b.append(text(52, 211, "古典音乐会 · 秋夜（已结束）", 13, C["text"], 600))
+    b.append(f'<path d="M310 207 l4 4 l4 -4" fill="none" stroke="{C["muted"]}" stroke-width="1.5"/>')
+    b.append(line(352, 192, 352, 220, C["border"]))
+    b.append(text(372, 211, "全部场次", 12, C["sub"]))
+    b.append(f'<path d="M440 207 l4 4 l4 -4" fill="none" stroke="{C["muted"]}" stroke-width="1.5"/>')
+    b.append(text(556, 211, "按活动统计", 12, C["primary"], 600))
+    b.append(text(650, 211, "按场次统计", 12, C["sub"]))
+    b.append(button(1172, 188, 164, 36, "导出名单", "primary", 12))
+    stats = [("报名人数", "96", C["text"]), ("出席率", "91%", C["success"]), ("退票率", "3.1%", C["warning"]), ("候补递补", "18", C["primary"])]
+    for i, (label, value, color) in enumerate(stats):
+        x = 32 + i * 236
+        b.append(rect(x, 250, 212, 74, C["surface"], 12, C["border"]))
+        b.append(text(x + 16, 278, label, 11, C["muted"]))
+        b.append(text(x + 16, 306, value, 22, color, 700))
+    b.append(rect(32, 340, 920, 440, C["surface"], 16, C["border"]))
+    for x, label in [(56, "姓名"), (236, "场次"), (356, "票种"), (500, "状态"), (650, "手机号")]:
+        b.append(text(x, 374, label, 11, C["muted"], 500))
+    b.append(line(56, 388, 928, 388))
+    rows = [
+        ("林同学", "11月16日 19:30", "VIP 票", "已检票", "138****8888"),
+        ("周雨", "11月16日 19:30", "普通票", "已检票", "139****6120"),
+        ("陈默", "11月16日 19:30", "普通票", "未检票", "137****3091"),
+        ("许知", "11月16日 19:30", "普通票", "自行取消", "186****7723"),
+    ]
+    for i, (name, session, ticket, status, phone) in enumerate(rows):
+        y = 412 + i * 82
+        b.append(text(56, y + 24, name, 13, C["text"], 600))
+        b.append(text(236, y + 24, session, 11, C["sub"]))
+        b.append(text(356, y + 24, ticket, 11, C["sub"]))
+        color = C["success"] if status == "已检票" else (C["danger"] if status in ["未检票", "自行取消"] else C["primary"])
+        b.append(badge(500, y + 8, status, color, C["success_bg"] if color == C["success"] else C["danger_bg"] if color == C["danger"] else C["blue_tint"], 10))
+        b.append(text(650, y + 24, phone, 11, C["sub"]))
+        b.append(line(56, y + 56, 928, y + 56, C["border"]))
+    b.append(rect(976, 178, 432, 620, C["surface"], 16, C["border"]))
+    b.append(text(1000, 216, "导出与权限", 18, C["text"], 700))
+    notes = [
+        ("导出字段", "姓名、场次、票种；不含完整手机号"),
+        ("手机号可见性", "组织者只看到遮挡版；完整版仅管理员与本人"),
+        ("统计口径", "全部场次结束后开放；已取消/候补不计入"),
+        ("名单范围", "仅本活动组织者与管理员可见"),
+    ]
+    for i, (t, d) in enumerate(notes):
+        y = 258 + i * 94
+        b.append(text(1000, y, t, 13, C["text"], 600))
+        b.append(text(1000, y + 24, d, 11, C["sub"]))
+    b.append(rect(1000, 690, 384, 64, C["blue_tint"], 10))
+    b.append(text(1016, 714, "当前活动已全部结束，统计已开放。", 11, C["primary"], 600))
+    b.append(text(1016, 734, "导出名单不包含完整手机号。", 11, C["sub"]))
+    return svg_doc("".join(b), defs_gradient())
+
+
+def screen_admin_review():
+    b = [rect(0, 0, W, H, C["bg"]), top_nav("审核处置", "管理员", name="王管理", avatar="王", items=[("审核处置", 220), ("全平台数据", 320), ("审计", 430)])]
+    b.append(text(32, 126, "审核与处置", 30, C["text"], 700))
+    b.append(text(32, 154, "审核活动、处理举报、账号与报名处置", 14, C["sub"]))
+    for i, (label, active) in enumerate([("活动审核", True), ("举报处理", False), ("账号与处置", False)]):
+        x = 32 + i * 118
+        b.append(text(x, 195, label, 13, C["primary"] if active else C["sub"], 600 if active else 400))
+        if active:
+            b.append(rect(x, 204, 60, 3, C["primary"], 2))
+    b.append(rect(32, 230, 400, 620, C["surface"], 16, C["border"]))
+    b.append(text(56, 270, "待审核活动 3", 16, C["text"], 700))
+    items = [("城市音乐节 · 夏日专场", "发布审核 · 组织者 李晨", "11-01 09:30", True), ("沉浸式戏剧《夜航》", "修改审核 · 组织者 李晨", "10-31 18:20", False), ("设计沙龙：AI 与创作", "取消申请 · 组织者 周舟", "10-31 16:10", False)]
+    for i, (title, meta, time, selected) in enumerate(items):
+        y = 296 + i * 92
+        b.append(rect(48, y, 368, 76, C["blue_tint"] if selected else C["surface"], 10, C["primary"] if selected else C["border"]))
+        b.append(text(64, y + 28, title, 13, C["text"], 600))
+        b.append(text(64, y + 48, meta, 10, C["sub"]))
+        b.append(text(64, y + 66, time, 10, C["muted"]))
+    b.append(rect(452, 230, 956, 620, C["surface"], 16, C["border"]))
+    b.append(text(476, 270, "城市音乐节 · 夏日专场", 20, C["text"], 700))
+    b.append(badge(1310, 252, "待审核", C["warning"], C["warning_bg"], 10))
+    b.append(text(476, 296, "组织者：李晨 · 提交于 11-01 09:30 · 审核时限：一周内", 11, C["sub"]))
+    b.append(text(476, 336, "本次提交的变更", 14, C["text"], 700))
+    b.append(rect(476, 352, 908, 128, C["bg"], 10))
+    for i, (field, before, after) in enumerate([("活动时间", "11月8日 19:30", "11月9日 19:30"), ("活动地点", "新庄国展中心", "南京奥体中心"), ("容量 / 票价", "无变化", "无变化")]):
+        y = 380 + i * 30
+        b.append(text(496, y, field, 11, C["muted"]))
+        b.append(text(600, y, before, 11, C["sub"]))
+        b.append(text(800, y, "→", 11, C["muted"]))
+        b.append(text(830, y, after, 11, C["text"], 500))
+    b.append(text(476, 518, "组织者说明", 12, C["text"], 600))
+    b.append(text(476, 540, "因场地调整，申请把活动时间与地点改到 11 月 9 日南京奥体中心，容量和票价不变。", 11, C["sub"]))
+    b.append(text(476, 584, "审核意见", 12, C["text"], 600))
+    b.append(rect(476, 598, 908, 74, C["bg"], 10, C["border"]))
+    b.append(text(492, 624, "填写通过/驳回原因（会通知组织者）", 11, C["muted"]))
+    b.append(button(1120, 692, 120, 38, "驳回", "secondary", 12))
+    b.append(button(1252, 692, 132, 38, "通过", "primary", 12))
+    b.append(line(476, 754, 1408, 754))
+    b.append(text(476, 782, "其他处置", 12, C["text"], 700))
+    for i, label in enumerate(["举报处理", "封禁账号", "强制退票", "创建检票账号"]):
+        b.append(button(476 + i * 176, 800, 160, 32, label, "ghost", 11))
+    return svg_doc("".join(b), defs_gradient())
+
+
+def screen_inspector():
+    b = [rect(0, 0, W, H, C["bg"]), top_nav("检票工作台", "检票员", name="赵敏", avatar="赵", items=[("检票工作台", 220), ("负责活动", 330)])]
+    b.append(text(32, 126, "检票工作台", 30, C["text"], 700))
+    b.append(text(32, 154, "只显示你负责的活动和检票请求", 14, C["sub"]))
+    b.append(rect(32, 178, 1376, 80, C["surface"], 14, C["border"]))
+    b.append(text(56, 210, "城市音乐节 · 夏日专场", 17, C["text"], 700))
+    b.append(text(56, 234, "11月8日 19:30 · 新庄国展中心", 11, C["sub"]))
+    b.append(text(500, 210, "检票开放 18:30–21:00", 12, C["sub"]))
+    b.append(badge(1260, 196, "检票中", C["success"], C["success_bg"], 10))
+    b.append(text(1260, 236, "已处理 23 · 待处理 5", 10, C["muted"]))
+    b.append(rect(32, 286, 520, 520, C["surface"], 16, C["border"]))
+    b.append(text(56, 326, "待处理请求 5", 16, C["text"], 700))
+    reqs = [("#CK-1024", "林**", "普通票", "19:02", True), ("#CK-1025", "周**", "VIP 票", "19:03", False), ("#CK-1026", "陈**", "普通票", "19:05", False), ("#CK-1027", "许**", "普通票", "19:07", False)]
+    for i, (no, name, ticket, time, selected) in enumerate(reqs):
+        y = 350 + i * 82
+        b.append(rect(48, y, 488, 68, C["blue_tint"] if selected else C["surface"], 10, C["primary"] if selected else C["border"]))
+        b.append(text(64, y + 26, no, 13, C["text"], 600))
+        b.append(text(64, y + 48, f"{name} · {ticket} · {time}", 10, C["sub"]))
+        b.append(badge(430, y + 8, "待处理", C["warning"], C["warning_bg"], 9))
+    b.append(rect(572, 286, 836, 520, C["surface"], 16, C["border"]))
+    b.append(text(596, 326, "请求 #CK-1024", 20, C["text"], 700))
+    b.append(badge(1300, 308, "待处理", C["warning"], C["warning_bg"], 10))
+    b.append(text(596, 362, "参与者：林**（遮挡） · 普通票 · 请求时间 19:02", 12, C["sub"]))
+    b.append(rect(596, 386, 788, 92, C["bg"], 10))
+    b.append(text(616, 416, "报名记录：已购票", 12, C["text"], 600))
+    b.append(text(616, 440, "场次：11月8日 19:30 · 检票开放时间：18:30–21:00", 11, C["sub"]))
+    b.append(text(616, 460, "仅显示请求编号与遮挡姓名，不显示完整名单/手机号", 11, C["muted"]))
+    b.append(text(596, 518, "处理结果", 13, C["text"], 700))
+    b.append(button(596, 540, 170, 42, "通过检票", "primary", 13))
+    b.append(button(784, 540, 170, 42, "标记异常", "secondary", 13))
+    b.append(text(596, 614, "凭证不符时标记异常，不通过；不能直接修改报名状态。", 11, C["sub"]))
+    b.append(rect(596, 650, 788, 120, C["blue_tint"], 10))
+    b.append(text(616, 680, "岗位约束", 11, C["primary"], 700))
+    b.append(text(616, 704, "只能处理自己负责活动的检票请求；不能访问完整名单；不能查看完整手机号。", 11, C["sub"]))
+    b.append(text(616, 726, "重复检票只有第一次有效，后续提示“已检票”，不禁止入场。", 11, C["sub"]))
+    return svg_doc("".join(b), defs_gradient())
+
+
+def screen_audit():
+    b = [rect(0, 0, W, H, C["bg"]), top_nav("审计", "管理员", name="王管理", avatar="王", items=[("审核处置", 220), ("全平台数据", 320), ("审计", 430)])]
+    b.append(text(32, 126, "审计日志", 30, C["text"], 700))
+    b.append(text(32, 154, "保存至少 6 个月；按角色可见范围查询关键操作留痕", 14, C["sub"]))
+    b.append(rect(32, 178, 1376, 56, C["surface"], 12, C["border"]))
+    for x, label, chev in [(52, "对象类型", 72), (226, "操作类型", 72), (400, "操作人", 60), (544, "时间范围", 72), (712, "关键词", 0)]:
+        b.append(text(x, 211, label, 11, C["sub"]))
+        if chev:
+            b.append(f'<path d="M{x+chev} 207 l4 4 l4 -4" fill="none" stroke="{C["muted"]}" stroke-width="1.5"/>')
+    b.append(line(880, 192, 880, 220, C["border"]))
+    b.append(text(912, 211, "全部对象 / 操作 / 操作人，按时间倒序", 11, C["muted"]))
+    b.append(rect(32, 264, 1000, 520, C["surface"], 16, C["border"]))
+    for x, label in [(56, "时间"), (196, "操作人"), (316, "对象"), (500, "操作"), (660, "前后状态")]:
+        b.append(text(x, 302, label, 11, C["muted"], 500))
+    b.append(line(56, 316, 1008, 316))
+    rows = [
+        ("11-01 14:22", "王管理", "活动 #A102", "审核通过", "待审核 → 公开"),
+        ("11-01 13:50", "李晨", "活动 #A102", "修改时间/地点", "公开 → 待审核"),
+        ("11-01 12:08", "林同学", "报名 #R208", "报名成功", "无 → 已购票"),
+        ("11-01 11:34", "赵敏", "检票请求 #CK-1024", "检票通过", "待处理 → 通过"),
+        ("10-31 18:12", "王管理", "账号 #U33", "封禁账号", "正常 → 封禁"),
+    ]
+    for i, (time, operator, obj, action, state) in enumerate(rows):
+        y = 344 + i * 80
+        b.append(text(56, y + 22, time, 11, C["sub"]))
+        b.append(text(196, y + 22, operator, 11, C["text"], 500))
+        b.append(text(316, y + 22, obj, 11, C["sub"]))
+        b.append(text(500, y + 22, action, 11, C["text"], 500))
+        b.append(text(660, y + 22, state, 11, C["sub"]))
+        b.append(line(56, y + 56, 1008, y + 56, C["border"]))
+    b.append(rect(1052, 264, 356, 520, C["surface"], 16, C["border"]))
+    b.append(text(1076, 304, "留痕详情", 18, C["text"], 700))
+    details = [("操作人", "王管理（管理员）"), ("操作时间", "2026-11-01 14:22"), ("对象", "活动 #A102"), ("操作", "审核通过"), ("前状态", "待审核"), ("后状态", "公开"), ("说明", "审核通过，活动公开，通知组织者")]
+    for i, (k, v) in enumerate(details):
+        y = 342 + i * 44
+        b.append(text(1076, y, k, 11, C["muted"]))
+        b.append(text(1160, y, v, 11, C["text"], 500))
+    b.append(rect(1076, 680, 308, 72, C["blue_tint"], 10))
+    b.append(text(1092, 706, "权限提示", 11, C["primary"], 700))
+    b.append(text(1092, 726, "管理员可看全部；其他角色按对象/角色可见", 10, C["sub"]))
+    return svg_doc("".join(b), defs_gradient())
+
+
+def defs_gradient():
+    return ('<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient>'
+            '<linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0D9488"/><stop offset="100%" stop-color="#0F766E"/></linearGradient>'
+            '<linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient>')
+
+
 if __name__ == "__main__":
     out = Path(__file__).parent
-    (out / "01_登录注册.svg").write_text(screen_login(), encoding="utf-8")
-    (out / "02_活动浏览与详情.svg").write_text(screen_activity(), encoding="utf-8")
-    (out / "03_报名购票与候补.svg").write_text(screen_checkout(), encoding="utf-8")
-    print("written 3 svg")
+    screens = {
+        "01_登录注册": screen_login,
+        "02_活动浏览与详情": screen_activity,
+        "03_报名购票与候补": screen_checkout,
+        "04_我的票与退票": screen_my_tickets,
+        "05_组织者活动管理": screen_organizer_activities,
+        "06_组织者名单与统计": screen_organizer_roster,
+        "07_管理员审核与处置": screen_admin_review,
+        "08_检票员工作台": screen_inspector,
+        "09_审计日志与权限": screen_audit,
+    }
+    for name, fn in screens.items():
+        (out / f"{name}.svg").write_text(fn(), encoding="utf-8")
+    print("written", len(screens), "svg")
