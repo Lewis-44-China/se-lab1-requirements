@@ -314,7 +314,7 @@ def screen_checkout():
     b.append(text(468, 466, "¥220 / 张", 13, C["sub"]))
     b.append(badge(722, 424, "余 2", C["success"], C["success_bg"], 10))
     b.append(text(468, 490, "可直接报名", 11, C["success"]))
-    b.append(text(56, 542, "报名信息", 15, C["text"], 700))
+    b.append(text(56, 530, "报名信息", 15, C["text"], 700))
     b.append(input_box(56, 560, 370, 44, "请输入姓名", "姓名", value="林同学"))
     b.append(input_box(448, 560, 376, 44, "请输入手机号", "手机号", value="138****8888"))
     b.append(text(56, 624, "一单一张，不支持代报名；手机号仅用于报名和检票", 11, C["muted"]))
@@ -325,13 +325,13 @@ def screen_checkout():
     b.append(text(828, 692, "应付 ¥120", 20, C["text"], 700, "end"))
     b.append(rect(56, 714, 776, 58, C["warning_bg"], 10))
     b.append(text(72, 738, "候补截止 11月7日 23:59；递补成功自动转为已购票并通知；未递补成功全额退款", 11, C["warning"]))
-    b.append(text(72, 758, "候补期间可取消并全额退款；候补成功不等于最终买到票。", 11, C["muted"]))
+    b.append(text(72, 758, "候补成功只是加入候补队列，不保证最终买到票。", 11, C["muted"]))
     b.append(button(56, 790, 776, 44, "加入候补并支付标记", "primary", 14))
     b.append(text(444, 852, "返回活动详情", 11, C["primary"], 500, "middle"))
     b.append(rect(876, 220, 532, 620, C["surface"], 16, C["border"]))
     b.append(text(900, 258, "候补说明", 18, C["text"], 700))
     b.append(text(900, 282, "按票种排队，先到先得", 12, C["sub"]))
-    steps = [("1", "加入候补队列", "记录入队时间，排队顺序公开"), ("2", "等待名额释放", "有人退票后，按队首顺序递补"), ("3", "递补或退款", "递补成功生成已购票；未成功全额退款")]
+    steps = [("1", "加入候补队列", "按入队时间排序，先到先得"), ("2", "等待名额释放", "有人退票后，按队首顺序递补"), ("3", "递补或退款", "递补成功生成已购票；未成功全额退款")]
     for i, (num, title, desc) in enumerate(steps):
         y = 326 + i * 92
         b.append(circle(920, y, 13, C["blue_tint"]))
@@ -341,10 +341,10 @@ def screen_checkout():
         if i < 2:
             b.append(line(920, y + 15, 920, y + 77, C["border"], 1, "4 4"))
     b.append(rect(900, 598, 484, 72, C["bg"], 10))
-    b.append(text(918, 624, "当前候补人数", 11, C["muted"]))
-    b.append(text(918, 650, "12 人", 20, C["text"], 700))
-    b.append(text(1040, 624, "预计等待", 11, C["muted"]))
-    b.append(text(1040, 650, "以实际递补为准", 13, C["sub"], 500))
+    b.append(text(918, 624, "候补状态", 11, C["muted"]))
+    b.append(text(918, 650, "候补中", 20, C["text"], 700))
+    b.append(text(1040, 624, "递补结果", 11, C["muted"]))
+    b.append(text(1040, 650, "以站内通知为准", 13, C["sub"], 500))
     b.append(text(900, 708, "有票时怎么办？", 13, C["text"], 700))
     b.append(text(900, 730, "若其他票种仍有余票，可直接选择有票票种报名，无需候补。", 11, C["sub"]))
     b.append(rect(900, 752, 484, 64, C["blue_tint"], 10))
