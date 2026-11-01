@@ -479,12 +479,12 @@ def screen_organizer_roster():
     b.append(text(556, 211, "按活动统计", 12, C["primary"], 600))
     b.append(text(650, 211, "按场次统计", 12, C["sub"]))
     b.append(button(1172, 188, 164, 36, "导出名单", "primary", 12))
-    stats = [("报名人数", "96", C["text"]), ("出席率", "91%", C["success"]), ("退票率", "3.1%", C["warning"]), ("候补递补", "18", C["primary"])]
+    stats = [("报名人数", "96", C["text"]), ("出席率", "91%", C["success"]), ("退票率", "3.1%", C["warning"])]
     for i, (label, value, color) in enumerate(stats):
-        x = 32 + i * 236
-        b.append(rect(x, 250, 212, 74, C["surface"], 12, C["border"]))
-        b.append(text(x + 16, 278, label, 11, C["muted"]))
-        b.append(text(x + 16, 306, value, 22, color, 700))
+        x = 32 + i * 312
+        b.append(rect(x, 250, 300, 74, C["surface"], 12, C["border"]))
+        b.append(text(x + 18, 278, label, 11, C["muted"]))
+        b.append(text(x + 18, 306, value, 22, color, 700))
     b.append(rect(32, 340, 920, 440, C["surface"], 16, C["border"]))
     for x, label in [(56, "姓名"), (236, "场次"), (356, "票种"), (500, "状态"), (650, "手机号")]:
         b.append(text(x, 374, label, 11, C["muted"], 500))
