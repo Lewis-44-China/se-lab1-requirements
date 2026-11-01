@@ -353,9 +353,9 @@ def screen_checkout():
 def screen_my_tickets():
     b = [rect(0, 0, W, H, C["bg"]), top_nav("我的票", "参与者", items=[("活动", 220), ("我的票", 285), ("通知", 355)])]
     b.append(text(32, 126, "我的票", 30, C["text"], 700))
-    b.append(text(32, 154, "查看报名、候补与退款记录；已购票表示有效票（待检票）", 14, C["sub"]))
+    b.append(text(32, 154, "查看报名、候补与退款记录；待检票 = 已购票但尚未检票", 14, C["sub"]))
     positions = [32, 104, 176, 248, 320, 392]
-    for i, (label, active) in enumerate([("全部", True), ("已购票", False), ("已检票", False), ("候补中", False), ("已结束", False), ("已取消/已退票", False)]):
+    for i, (label, active) in enumerate([("全部", True), ("待检票", False), ("已检票", False), ("候补中", False), ("已结束", False), ("已取消/已退票", False)]):
         x = positions[i]
         if active:
             b.append(rect(x, 178, 56, 26, C["primary"], 13))
@@ -363,10 +363,10 @@ def screen_my_tickets():
         else:
             b.append(text(x + 8, 195, label, 11, C["sub"], 400, "middle"))
     cards = [
-        ("城市音乐节 · 夏日专场", "11月8日 19:30 · 新庄国展中心", "普通票 · 1 张", "已购票", C["success"], C["success_bg"], "乐", "g1", "有效票 · 待检票 · 退票截止 11月7日 18:00", "申请退票"),
-        ("沉浸式戏剧《夜航》", "11月12日 19:30 · 鼓楼剧场", "VIP 票 · 1 张", "已检票", C["primary"], C["blue_tint"], "剧", "g2", "已检票 · 不可退票", "查看详情"),
-        ("古典音乐会 · 秋夜", "11月16日 19:30 · 南京艺术学院音乐厅", "普通票 · 候补", "候补中", C["warning"], C["warning_bg"], "音", "g3", "入队 11-01 09:20 · 候补截止 11-05 23:59", "取消候补"),
-        ("设计沙龙：AI 与创作", "11月20日 14:00 · 创意产业园", "普通票 · 1 张", "已退票", C["muted"], C["bg"], "讲", "g4", "已退款 ¥60 · 11-01 10:02", "查看详情"),
+        ("沉浸式戏剧《夜航》", "11月1日 19:30 · 鼓楼剧场", "VIP 票 · 1 张", "已检票", C["primary"], C["blue_tint"], "剧", "g2", "报名状态：已检票 · 不可退票", "查看详情"),
+        ("城市音乐节 · 夏日专场", "11月8日 19:30 · 新庄国展中心", "普通票 · 1 张", "待检票", C["success"], C["success_bg"], "乐", "g1", "报名状态：已购票（有效票） · 退票截止 11月7日 18:00", "申请退票"),
+        ("古典音乐会 · 秋夜", "11月16日 19:30 · 南京艺术学院音乐厅", "普通票 · 候补", "候补中", C["warning"], C["warning_bg"], "音", "g3", "候补记录 · 入队 11-01 09:20 · 候补截止 11-05 23:59", "取消候补"),
+        ("设计沙龙：AI 与创作", "11月20日 14:00 · 创意产业园", "普通票 · 1 张", "已退票", C["muted"], C["bg"], "讲", "g4", "报名状态：自行取消 · 已退款 ¥60 · 11-01 10:02", "查看详情"),
     ]
     for i, (title, meta, ticket, status, sfg, sbg, char, gid, note, action) in enumerate(cards):
         y = 230 + i * 156
@@ -377,7 +377,7 @@ def screen_my_tickets():
         b.append(text(196, y + 58, meta, 11, C["sub"]))
         b.append(text(196, y + 82, ticket, 11, C["sub"]))
         b.append(badge(748, y + 18, status, sfg, sbg, 10))
-        b.append(text(196, y + 112, note, 10, C["warning"] if status in ("已购票", "候补中") else C["muted"]))
+        b.append(text(196, y + 112, note, 10, C["warning"] if status in ("待检票", "候补中") else C["muted"]))
         b.append(button(704, y + 96, 148, 32, action, "secondary" if action in ("申请退票", "取消候补") else "ghost", 11))
     b.append(rect(956, 230, 452, 560, C["surface"], 16, C["border"]))
     b.append(text(980, 268, "退票与候补说明", 18, C["text"], 700))
@@ -385,18 +385,24 @@ def screen_my_tickets():
         ("未过退票截止", "可申请退票，退款金额等于支付金额"),
         ("已检票 / 已过截止", "不可退票，记录保留"),
         ("候补中取消", "退全款；候补记录进入终态"),
-        ("活动取消", "统一退款；与自行退票在筛选里同组，但卡片显示具体原因"),
         ("记录保留", "报名/候补记录不提供删除"),
     ]
     for i, (t, d) in enumerate(bullets):
-        y = 304 + i * 64
+        y = 304 + i * 60
         b.append(circle(992, y, 5, C["primary"]))
         b.append(text(1008, y + 5, t, 12, C["text"], 600))
         b.append(text(1008, y + 25, d, 10, C["sub"]))
-    b.append(rect(980, 666, 404, 92, C["blue_tint"], 10))
-    b.append(text(996, 690, "状态说明", 11, C["primary"], 700))
-    b.append(text(996, 710, "“我的票”展示报名记录；“候补中”是候补记录，尚未取得票。", 10, C["sub"]))
-    b.append(text(996, 730, "“已购票”是需求里的报名状态，UI 上补充“有效票（待检票）”。", 10, C["sub"]))
+    b.append(rect(980, 550, 404, 210, C["blue_tint"], 10))
+    b.append(text(996, 578, "筛选分类（UI 归纳，不改变系统状态）", 11, C["primary"], 700))
+    mapping = [
+        "待检票 = 已购票（有效票，尚未检票）",
+        "已结束 = 正常结束 + 未检票（缺席）",
+        "已取消/已退票 = 自行取消 + 活动取消",
+        "候补中 = 候补记录，不是报名记录",
+        "活动取消与已退票筛选同组，卡片显示具体原因",
+    ]
+    for i, line in enumerate(mapping):
+        b.append(text(996, 604 + i * 26, line, 10, C["sub"]))
     return svg_doc("".join(b), defs_gradient())
 
 
