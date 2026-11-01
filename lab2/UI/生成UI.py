@@ -210,23 +210,23 @@ def screen_activity():
     b.append(rect(32, 178, 1376, 56, C["surface"], 12, C["border"]))
     b.append(icon_search(58, 206, 9))
     b.append(text(82, 212, "搜索活动名称、地点或组织者", 13, C["muted"]))
-    b.append(line(512, 192, 512, 220, C["border"]))
-    for i, (label, active) in enumerate([("全部", True), ("音乐", False), ("戏剧", False), ("运动", False), ("讲座", False)]):
-        x = 532 + i * 64
+    b.append(line(392, 192, 392, 220, C["border"]))
+    for i, (label, active) in enumerate([("全部", True), ("音乐", False), ("戏剧", False), ("讲座", False)]):
+        x = 408 + i * 56
         if active:
             b.append(rect(x, 195, 48, 24, C["primary"], 12))
             b.append(text(x + 24, 211, label, 11, "#FFFFFF", 600, "middle"))
         else:
             b.append(text(x + 18, 211, label, 11, C["sub"], 400, "middle"))
-    b.append(line(900, 192, 900, 220, C["border"]))
-    for x, label in [(920, "时间范围"), (1060, "全部状态"), (1200, "最新发布")]:
+    b.append(line(632, 192, 632, 220, C["border"]))
+    for x, label, chev in [(650, "时间范围", 70), (778, "全部状态", 70), (906, "全部场次", 70), (1034, "全部票种", 70), (1162, "时间：最新在前", 96)]:
         b.append(text(x, 211, label, 11, C["sub"]))
-        b.append(f'<path d="M{x+72} 207 l4 4 l4 -4" fill="none" stroke="{C["muted"]}" stroke-width="1.5"/>')
+        b.append(f'<path d="M{x+chev} 207 l4 4 l4 -4" fill="none" stroke="{C["muted"]}" stroke-width="1.5"/>')
 
     cards = [
         ("城市音乐节 · 夏日专场", "11月8日 19:30 · 南京 · 新庄国展中心", "音乐 / 户外", "¥120 起", "余 36", "售票中", C["success"], C["success_bg"], "g1", "乐", True),
         ("沉浸式戏剧《夜航》", "11月12日 19:30 · 南京 · 鼓楼剧场", "戏剧 / 沉浸式", "¥180 起", "余 12", "即将售罄", C["warning"], C["warning_bg"], "g2", "剧", False),
-        ("校园马拉松志愿者", "11月16日 08:00 · 南京 · 仙林校区", "运动 / 公益", "免费", "余 80", "报名中", C["primary"], C["blue_tint"], "g3", "跑", False),
+        ("古典音乐会 · 秋夜", "11月16日 19:30 · 南京 · 南京艺术学院音乐厅", "音乐 / 古典", "¥80 起", "余 60", "售票中", C["success"], C["success_bg"], "g3", "音", False),
         ("设计沙龙：AI 与创作", "11月20日 14:00 · 南京 · 创意产业园", "讲座 / 设计", "¥60 起", "已售罄", "可候补", C["warning"], C["warning_bg"], "g4", "讲", False),
     ]
     for i, (title, meta, tags, price, remain, status, sfg, sbg, gid, char, selected) in enumerate(cards):
