@@ -574,6 +574,7 @@ def screen_inspector():
     b.append(text(56, 210, "城市音乐节 · 夏日专场", 17, C["text"], 700))
     b.append(text(56, 234, "11月8日 19:30 · 新庄国展中心", 11, C["sub"]))
     b.append(text(500, 210, "检票开放 18:30–21:00", 12, C["sub"]))
+    b.append(text(700, 210, "仅开放时间内可发起/处理；非开放时间按钮禁用", 10, C["muted"]))
     b.append(badge(1260, 196, "检票中", C["success"], C["success_bg"], 10))
     b.append(text(1260, 236, "已处理 23 · 待处理 5", 10, C["muted"]))
     b.append(rect(32, 286, 520, 520, C["surface"], 16, C["border"]))
@@ -597,10 +598,17 @@ def screen_inspector():
     b.append(button(596, 540, 170, 42, "通过检票", "primary", 13))
     b.append(button(784, 540, 170, 42, "标记异常", "secondary", 13))
     b.append(text(596, 614, "凭证不符时标记异常，不通过；不能直接修改报名状态。", 11, C["sub"]))
-    b.append(rect(596, 650, 788, 120, C["blue_tint"], 10))
-    b.append(text(616, 680, "岗位约束", 11, C["primary"], 700))
-    b.append(text(616, 704, "只能处理自己负责活动的检票请求；不能访问完整名单；不能查看完整手机号。", 11, C["sub"]))
-    b.append(text(616, 726, "重复检票只有第一次有效，后续提示“已检票”，不禁止入场。", 11, C["sub"]))
+    b.append(rect(596, 640, 788, 160, C["blue_tint"], 10))
+    b.append(text(616, 668, "岗位约束", 11, C["primary"], 700))
+    notes = [
+        "只能处理自己负责活动的检票请求；不能访问完整名单或完整手机号。",
+        "手动勾选检票，不提供扫码/二维码入口。",
+        "不能修改报名状态；异常标记会写入留痕。",
+        "不记录缺席；场次结束后未检票由系统转“未检票”终态。",
+        "重复检票只有第一次有效，后续提示“已检票”，不禁止入场。",
+    ]
+    for i, line in enumerate(notes):
+        b.append(text(616, 692 + i * 19, line, 10, C["sub"]))
     return svg_doc("".join(b), defs_gradient())
 
 
