@@ -411,7 +411,7 @@ def screen_organizer_activities():
     defs = defs_gradient()
     b = [rect(0, 0, W, H, C["bg"]), top_nav("活动管理", "组织者", name="李晨", avatar="李", items=[("活动管理", 220), ("名单统计", 310), ("通知", 400)])]
     b.append(text(32, 126, "活动管理", 30, C["text"], 700))
-    b.append(text(32, 154, "创建、提交审核、管理场次票种与取消申请", 14, C["sub"]))
+    b.append(text(32, 154, "创建、提交审核、管理场次票种与取消申请（仅显示你创建的活动）", 14, C["sub"]))
     b.append(button(1236, 110, 172, 42, "创建活动", "primary", 13))
     stats = [("进行中", "2", C["success"], C["success_bg"]), ("待审核", "1", C["warning"], C["warning_bg"]), ("草稿", "1", C["muted"], C["bg"]), ("已结束", "3", C["primary"], C["blue_tint"])]
     for i, (label, value, fg, bg) in enumerate(stats):
@@ -430,10 +430,10 @@ def screen_organizer_activities():
     b.append(text(796, 316, "操作", 11, C["muted"], 500))
     b.append(line(56, 330, 928, 330))
     rows = [
-        ("城市音乐节 · 夏日专场", "2 场", "进行中", C["success"], C["success_bg"], "168 / 200", "11-01 14:20", "查看  编辑  申请取消"),
-        ("沉浸式戏剧《夜航》", "1 场", "待审核", C["warning"], C["warning_bg"], "0 / 120", "11-01 10:02", "查看"),
-        ("设计沙龙：AI 与创作", "1 场", "草稿", C["muted"], C["bg"], "0 / 60", "10-31 18:40", "编辑  提交审核"),
-        ("古典音乐会 · 秋夜", "1 场", "已结束", C["primary"], C["blue_tint"], "96 / 100", "10-30 21:00", "查看  名单"),
+        ("城市音乐节 · 夏日专场", "2 场", "进行中", C["success"], C["success_bg"], "168 / 200", "11-01 14:20", ["查看 · 编辑资料", "场次票种 · 申请修改", "申请取消"]),
+        ("沉浸式戏剧《夜航》", "1 场", "待审核", C["warning"], C["warning_bg"], "0 / 120", "11-01 10:02", ["查看"]),
+        ("设计沙龙：AI 与创作", "1 场", "草稿", C["muted"], C["bg"], "0 / 60", "10-31 18:40", ["编辑 · 场次票种", "提交审核"]),
+        ("古典音乐会 · 秋夜", "1 场", "已结束", C["primary"], C["blue_tint"], "96 / 100", "10-30 21:00", ["查看 · 名单", "统计"]),
     ]
     for i, (title, session, status, sfg, sbg, count, updated, actions) in enumerate(rows):
         y = 352 + i * 98
@@ -442,23 +442,27 @@ def screen_organizer_activities():
         b.append(badge(436, y + 6, status, sfg, sbg, 10))
         b.append(text(556, y + 22, count, 12, C["sub"]))
         b.append(text(684, y + 22, updated, 11, C["muted"]))
-        b.append(text(796, y + 22, actions, 11, C["primary"], 500))
-        b.append(line(56, y + 52, 928, y + 52, C["border"]))
+        for j, action in enumerate(actions):
+            b.append(text(790, y + 16 + j * 15, action, 9, C["primary"], 500))
+        b.append(line(56, y + 70, 928, y + 70, C["border"]))
     # 右栏修改规则
     b.append(rect(976, 180, 432, 620, C["surface"], 16, C["border"]))
-    b.append(text(1000, 218, "发布后可修改范围", 18, C["text"], 700))
+    b.append(text(1000, 218, "组织者权限与修改规则", 18, C["text"], 700))
+    b.append(text(1000, 244, "可见范围：仅自己创建的活动；不提供公开活动查询；", 10, C["sub"]))
+    b.append(text(1000, 262, "不能查看其他组织者的活动与报名。", 10, C["sub"]))
     rules = [
         ("可直接修改", ["描述、图片、标签"], C["success"]),
-        ("需重新审核", ["时间、地点", "开售前容量、票价"], C["warning"]),
-        ("禁止修改", ["开售后容量、票价"], C["danger"]),
-        ("取消活动", ["组织者取消需管理员审批"], C["primary"]),
+        ("需重新审核", ["时间、地点（无论开售前后）", "容量、票价（仅开售前）", "时间修改后通知已购票人"], C["warning"]),
+        ("禁止修改", ["开售后容量、票价", "已结束 / 已取消不可修改"], C["danger"]),
+        ("取消活动", ["组织者申请取消需管理员审批", "未审批前活动不进入取消"], C["primary"]),
     ]
     for i, (title, items, color) in enumerate(rules):
-        y = 258 + i * 126
-        b.append(rect(1000, y - 18, 384, 1, C["border"]))
+        y = 310 + i * 110
+        b.append(rect(1000, y - 16, 384, 1, C["border"]))
         b.append(text(1000, y + 4, title, 13, color, 700))
         for j, item in enumerate(items):
-            b.append(text(1000, y + 28 + j * 20, "· " + item, 11, C["sub"]))
+            b.append(text(1000, y + 26 + j * 18, "· " + item, 10, C["sub"]))
+    b.append(text(1000, 748, "审核不通过 → 退回草稿，可修改后重新提交。", 10, C["muted"]))
     return svg_doc("".join(b), defs)
 
 
