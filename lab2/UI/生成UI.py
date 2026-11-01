@@ -353,15 +353,16 @@ def screen_checkout():
 def screen_my_tickets():
     b = [rect(0, 0, W, H, C["bg"]), top_nav("我的票", "参与者", items=[("活动", 220), ("我的票", 285), ("通知", 355)])]
     b.append(text(32, 126, "我的票", 30, C["text"], 700))
-    b.append(text(32, 154, "查看报名、候补与退款记录；待检票 = 已购票但尚未检票", 14, C["sub"]))
-    positions = [32, 104, 176, 248, 320, 392]
-    for i, (label, active) in enumerate([("全部", True), ("待检票", False), ("已检票", False), ("候补中", False), ("已结束", False), ("已取消/已退票", False)]):
-        x = positions[i]
+    b.append(text(32, 154, "查看报名、候补与退款记录", 14, C["sub"]))
+    x = 32
+    for label, active in [("全部", True), ("待检票", False), ("已检票", False), ("候补中", False), ("已结束", False), ("已取消/已退票", False)]:
+        w = 56 if label == "全部" else len(label) * 11 + 20
         if active:
-            b.append(rect(x, 178, 56, 26, C["primary"], 13))
-            b.append(text(x + 28, 195, label, 11, "#FFFFFF", 600, "middle"))
+            b.append(rect(x, 178, w, 26, C["primary"], 13))
+            b.append(text(x + w / 2, 195, label, 11, "#FFFFFF", 600, "middle"))
         else:
-            b.append(text(x + 8, 195, label, 11, C["sub"], 400, "middle"))
+            b.append(text(x + 10, 195, label, 11, C["sub"], 400, "middle"))
+        x += w + 14
     cards = [
         ("沉浸式戏剧《夜航》", "11月1日 19:30 · 鼓楼剧场", "VIP 票 · 1 张", "已检票", C["primary"], C["blue_tint"], "剧", "g2", "报名状态：已检票 · 不可退票", "查看详情"),
         ("城市音乐节 · 夏日专场", "11月8日 19:30 · 新庄国展中心", "普通票 · 1 张", "待检票", C["success"], C["success_bg"], "乐", "g1", "报名状态：已购票（有效票） · 退票截止 11月7日 18:00", "申请退票"),
