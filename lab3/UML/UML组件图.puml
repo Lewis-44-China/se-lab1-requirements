@@ -1,0 +1,82 @@
+@startuml UML组件图
+' 实验二：活动票务与报名系统 组件图（总体架构）
+' 设计原则：角色入口 + 共享能力 + 业务约束 + 技术支撑。
+' 具体“哪个入口调用哪些 D/Q 能力”见报告模块交互表；
+' 领域模块之间的依赖见 UML组件图_领域依赖.puml。
+left to right direction
+skinparam componentStyle rectangle
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ArrowColor #4A5568
+skinparam nodesep 32
+skinparam ranksep 55
+skinparam component {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+skinparam database {
+  BackgroundColor #EDF2F7
+  BorderColor #4A5568
+}
+
+package "表现层" {
+  [UI-登录/注册\n（A0）] as U0
+  [UI-参与者\n（A1）] as U1
+  [UI-组织者\n（A2）] as U2
+  [UI-检票员\n（A3）] as U3
+  [UI-管理员\n（A4）] as U4
+}
+package "应用层（角色入口）" {
+  [A0 认证入口\n（共享）] as A0
+  [A1 参与者应用] as A1
+  [A2 组织者应用] as A2
+  [A3 检票员应用] as A3
+  [A4 管理员应用] as A4
+}
+[入口接入点\n（连线汇聚，不是模块）] as ENTRY
+package "业务约束" {
+  [M7 留痕与权限\n<<constrains>>] as M7
+}
+package "共享能力层" {
+  [D1 活动与场次（含审核）\nD2 票种与容量\nD3 报名与支付标记\nD4 退票与候补\nD5 检票\nD6 账号\nQ1 查询与统计（只读）] as CAP
+}
+package "技术支撑" {
+  [S1 通知] as S1
+  [S2 持久化与并发\n（仓储/事务/Outbox）] as S2
+}
+database "MySQL 8.0" as DB
+
+' 表现层到角色入口
+U0 --> A0
+U1 --> A1
+U2 --> A2
+U3 --> A3
+U4 --> A4
+
+' 角色入口汇聚
+A0 --> ENTRY
+A1 --> ENTRY
+A2 --> ENTRY
+A3 --> ENTRY
+A4 --> ENTRY
+
+ENTRY --> CAP : 命令/查询接口
+ENTRY ..> M7 : 权限/审计约束
+
+' 通知与持久化
+CAP ..> S1 : 通知事件（Outbox）
+CAP ..> S2 : 仓储/事务/Outbox
+S2 --> DB
+
+legend bottom
+  实线：表现层 → 角色入口 → 共享能力（D1～D6 写，Q1 读）。
+  虚线：M7 权限/审计约束、通知、持久化等支撑依赖。
+  A0～A4 通过共享能力接口调用 D/Q；具体“哪个入口调用哪些能力”见报告模块交互表。
+  共享能力并非对所有角色全部可用；每个入口能调用哪些 D/Q 由 A0～A4 的角色入口约束，数据范围由 M7 控制。
+  S1 消费 S2 中的 Outbox 通知事件；M7 审计通过 S2 持久化。
+  M7 约束所有角色入口；A4 另可查询审计日志。
+  入口接入点只是连线汇聚点，不是新增业务模块；具体入口到 D/Q 的对应见报告模块交互表。
+endlegend
+
+@enduml

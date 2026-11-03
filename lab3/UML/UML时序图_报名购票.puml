@@ -1,0 +1,69 @@
+@startuml UML时序图_报名购票
+autonumber
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam sequence {
+  ArrowColor #4A5568
+  LifeLineBorderColor #4A5568
+  ParticipantBorderColor #4A5568
+  ParticipantBackgroundColor #F7FAFC
+}
+skinparam noteBackgroundColor #F7FAFC
+skinparam noteBorderColor #4A5568
+skinparam maxMessageSize 140
+
+actor "参与者" as P
+participant "报名页\n(UI)" as UI
+participant "A1\n参与者应用" as A1
+participant "M7\n权限/审计" as M7
+participant "D3\n报名" as D3
+participant "D2\n票种容量" as D2
+participant "D4\n退票与候补" as D4
+database "MySQL" as DB
+
+P -> UI : 提交报名(场次, 票种, requestId)
+UI -> A1 : register(accountId, sessionId, ticketTypeId, requestId)
+A1 -> M7 : 校验登录/角色/数据范围
+M7 --> A1 : 允许
+A1 -> D3 : 查重(accountId, sessionId)
+D3 -> DB : SELECT registration
+alt 已存在报名
+  D3 --> A1 : 已有报名记录
+  A1 --> UI : 返回已有结果（幂等）
+else 新请求
+  note right of A1
+    校验报名时间（服务器时间）；
+    未开始/已截止则直接返回失败。
+  end note
+  A1 -> D2 : tryOccupy(ticketTypeId)
+  D2 -> DB : UPDATE ... WHERE occupied < capacity
+  alt 扣减成功
+    D2 --> A1 : 成功
+    A1 -> D3 : 创建报名(已购票/已支付)
+    D3 -> DB : INSERT registration
+    A1 -> M7 : 写审计(报名成功)
+    M7 -> DB : INSERT audit_log
+    A1 --> UI : 报名成功
+  else 名额已满
+    D2 --> A1 : 名额已满
+    alt 允许候补且未过截止
+      A1 -> D4 : enqueue(accountId, sessionId, ticketTypeId)
+      D4 -> DB : INSERT waitlist_record
+      A1 -> M7 : 写审计(候补入队)
+      M7 -> DB : INSERT audit_log
+      A1 --> UI : 候补入队成功
+    else 不允许候补/已截止
+      A1 --> UI : 报名失败(名额已满/已截止)
+    end
+  end
+end
+
+note over A1,DB
+  同一数据库事务：名额扣减、报名记录、候补记录、审计一起提交；
+  事务提交后才返回成功，失败回滚。
+end note
+
+legend bottom
+  本图只覆盖报名购票与候补入队；候补递补/失败/退款/通知由后续流程处理。
+endlegend
+@enduml

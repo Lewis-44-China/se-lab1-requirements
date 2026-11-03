@@ -1,0 +1,201 @@
+@startuml UML类图
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam class {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+hide circle
+left to right direction
+
+together {
+abstract class Account {
+  - id: String
+  - phone: String
+  - passwordHash: String
+  - name: String
+  - status: AccountStatus
+  + login(password): boolean
+  + isBanned(): boolean
+}
+class Participant {
+  + register(sessionId, ticketTypeId)
+  + refund(registrationId)
+  + joinWaitlist(sessionId, ticketTypeId)
+  + requestCheckIn(registrationId)
+  + reportActivity(activityId, reason)
+  + viewMyTickets()
+}
+class Organizer {
+  + createActivity(...)
+  + modifyActivity(activityId, changes)
+  + submitForReview(activityId)
+  + requestCancellation(activityId)
+  + manageSessions(activityId)
+  + manageTicketTypes(sessionId)
+  + viewRoster(activityId)
+  + viewStatistics(activityId)
+}
+class Inspector {
+  + processCheckRequest(requestId, passed)
+}
+class Admin {
+  + review(applicationId, approved, comment)
+  + ban(accountId)
+  + forceRefund(registrationId, reason)
+  + cancelActivity(activityId)
+  + handleReport(reportId, result)
+  + createInspector(accountInfo)
+  + viewPlatformData()
+}
+
+}
+class Activity {
+  - id: String
+  - name: String
+  - time: DateTime
+  - saleStart: DateTime
+  - saleEnd: DateTime
+  - refundDeadline: DateTime
+  - status: ActivityStatus
+  + submitForReview()
+  + publish()
+  + start()
+  + end()
+  + cancel()
+  + modify(changes)
+}
+class Session {
+  - id: String
+  - sessionNo: String
+  - time: DateTime
+  - checkinOpenTime: DateTime
+  - allowWaitlist: boolean
+  - status: SessionStatus
+  + refreshStatus(now)
+  + cancel()
+}
+class TicketType {
+  - id: String
+  - kind: TicketKind
+  - price: BigDecimal
+  - capacity: int
+  - occupied: int
+  + remaining(): int
+  + tryOccupy(): boolean
+  + release()
+}
+class Registration {
+  - id: String
+  - activityId: String
+  - sessionId: String
+  - ticketKind: TicketKind
+  - buyerName: String
+  - buyerPhone: String
+  - status: RegistrationStatus
+  - paymentStatus: PaymentStatus
+  - paymentAmount: BigDecimal
+  + refundByParticipant(accountId)
+  + forceRefundByAdmin(adminId, reason)
+  + checkIn()
+  + markNoShow()
+  + cancelByActivity()
+}
+class Waitlist {
+  - id: String
+  - ticketTypeId: String
+  - createdAt: DateTime
+  + enqueue(record: WaitlistRecord): void
+  + peekNext(): WaitlistRecord
+  + promoteNext(): WaitlistRecord
+  + expire(now): void
+}
+class WaitlistRecord {
+  - id: String
+  - joinTime: DateTime
+  - paymentStatus: PaymentStatus
+  - paymentAmount: BigDecimal
+  - status: WaitlistRecordStatus
+  + promote(): Registration
+  + cancel()
+  + expire()
+}
+class CheckRequest {
+  - id: String
+  - requestNo: String
+  - status: CheckRequestStatus
+  - processedAt: DateTime
+  + pass(inspectorId)
+  + markAbnormal(inspectorId)
+}
+class ReviewApplication {
+  - id: String
+  - type: ReviewType
+  - status: ReviewStatus
+  - submittedAt: DateTime
+  - comment: String
+  + approve(adminId)
+  + reject(adminId, reason)
+}
+
+enum ActivityStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ONGOING
+  ENDED
+  CANCELLED
+}
+enum RegistrationStatus {
+  PURCHASED
+  CHECKED_IN
+  NORMAL_END
+  SELF_CANCELLED
+  NO_SHOW
+  ACTIVITY_CANCELLED
+}
+enum WaitlistRecordStatus {
+  WAITING
+  PROMOTED
+  SELF_CANCELLED
+  FAILED
+}
+enum CheckRequestStatus {
+  PENDING
+  PASSED
+  ABNORMAL
+}
+
+Account <|-- Participant
+Account <|-- Organizer
+Account <|-- Inspector
+Account <|-- Admin
+
+Organizer "1" -- "*" Activity : 管理
+Activity "1" *-- "1..*" Session : 包含
+Session "1" *-- "1..*" TicketType : 包含
+Activity "1" -- "*" ReviewApplication : 审核申请
+Admin "1" -- "*" ReviewApplication : 审核
+
+Participant "1" -- "*" Registration : 报名/退票
+Session "1" -- "*" Registration : 场次
+TicketType "1" -- "*" Registration : 票种
+Participant "1" -- "*" WaitlistRecord : 候补/取消
+TicketType "1" -- "1" Waitlist : 拥有
+Waitlist "1" -- "*" WaitlistRecord : 排队（FIFO）
+WaitlistRecord "1" -- "0..1" Registration : 递补生成
+Registration "1" -- "*" CheckRequest : 检票请求
+Inspector "1" -- "*" CheckRequest : 处理
+
+legend bottom
+  本图为核心业务类图；Report、Notification、AuditLog 见 UML类图_治理.puml。
+  图中只画四个关键状态枚举；其余枚举与完整字段见 类图说明.md。
+  Waitlist 是候补队列：每个票种 1-1；WaitlistRecord 是队列中的候补记录：1-*。
+  候补入队在队尾，递补从队首取，按 joinTime/id 排序。
+  报名记录同时对应场次与票种；报名时校验票种属于该场次。
+  报名与候补、检票的具体流程见后续活动图/时序图。
+endlegend
+@enduml

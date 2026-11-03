@@ -1,0 +1,56 @@
+@startuml UML用例图_检票与管理员
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam packageStyle rectangle
+skinparam ArrowColor #4A5568
+skinparam noteBackgroundColor #F7FAFC
+skinparam noteBorderColor #4A5568
+skinparam usecase {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+skinparam actor {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+actor "检票员" as Inspector
+actor "平台管理员" as Admin
+rectangle "活动票务与报名系统" {
+  usecase "登录/鉴权" as Login
+  usecase "查看负责活动" as InspectorActivities
+  usecase "处理检票请求" as ProcessCheck
+  usecase "审核活动" as Review
+  usecase "处理举报" as HandleReport
+  usecase "封禁/解封账号" as Ban
+  usecase "强制退票" as ForceRefund
+  usecase "紧急取消活动" as EmergencyCancel
+  usecase "查看全平台数据" as PlatformData
+  usecase "查询审计" as Audit
+  usecase "创建检票账号" as CreateInspector
+}
+Inspector --> Login
+Admin --> Login
+Inspector --> InspectorActivities
+Inspector --> ProcessCheck
+Admin --> Review
+Admin --> HandleReport
+Admin --> Ban
+Admin --> ForceRefund
+Admin --> EmergencyCancel
+Admin --> PlatformData
+Admin --> Audit
+Admin --> CreateInspector
+note right of Review
+  审核申请可由发布、修改、
+  取消申请触发。
+end note
+note right of ProcessCheck
+  只处理自己负责活动的请求；
+  不能修改报名状态。
+end note
+note bottom of Login
+  所有角色先登录/鉴权；
+  权限与数据范围由 A0～A4 + M7 控制。
+end note
+@enduml

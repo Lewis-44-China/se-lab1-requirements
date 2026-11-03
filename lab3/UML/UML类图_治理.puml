@@ -1,0 +1,84 @@
+@startuml UML类图_治理
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam class {
+  BackgroundColor #F7FAFC
+  BorderColor #4A5568
+}
+hide circle
+left to right direction
+
+class Account <<reference>> {
+  - id: String
+  - name: String
+}
+class Activity <<reference>> {
+  - id: String
+  - name: String
+}
+class Admin <<reference>> {
+  - id: String
+  - name: String
+}
+
+class Report {
+  - id: String
+  - reason: String
+  - status: ReportStatus
+  - result: String
+  - handledAt: DateTime
+  + resolve(adminId, result)
+  + dismiss(adminId)
+}
+class Notification {
+  - id: String
+  - type: NotificationType
+  - content: String
+  - isRead: boolean
+  - createdAt: DateTime
+  + markRead()
+}
+class AuditLog {
+  - id: String
+  - objectType: String
+  - objectId: String
+  - action: String
+  - beforeStatus: String
+  - afterStatus: String
+  - description: String
+  - operatedAt: DateTime
+  + append(...)
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+enum NotificationType {
+  REVIEW_RESULT
+  ACTIVITY_CHANGED
+  WAITLIST_PROMOTED
+  FORCE_REFUND
+}
+
+Account "1" -- "*" Report : 提交
+Activity "1" -- "*" Report : 被举报
+Admin "0..1" -- "*" Report : 处理
+Account "1" -- "*" Notification : 接收
+Account "0..1" -- "*" AuditLog : 操作人
+
+note right of AuditLog
+  审计对象用 objectType + objectId 关联，
+  不直接连到所有业务类，避免图过密。
+end note
+
+legend bottom
+  本图与 UML类图.puml 共同构成类模型。
+  Account、Activity、Admin 只画引用信息，完整定义见核心业务类图。
+  Report/Notification/AuditLog 的完整字段见 类图说明.md 与数据库映射。
+endlegend
+@enduml

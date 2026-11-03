@@ -1,0 +1,46 @@
+@startuml UML状态图_报名记录
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam ArrowColor #4A5568
+skinparam StateBackgroundColor #F7FAFC
+skinparam StateBorderColor #4A5568
+skinparam noteBackgroundColor #F7FAFC
+skinparam noteBorderColor #4A5568
+
+state "已购票" as PURCHASED
+state "已检票" as CHECKED_IN
+state "正常结束" as NORMAL_END
+state "自行取消" as SELF_CANCELLED
+state "未检票" as NO_SHOW
+state "活动取消" as ACTIVITY_CANCELLED
+
+[*] --> PURCHASED : 报名成功（已支付）
+PURCHASED --> CHECKED_IN : 检票通过
+CHECKED_IN --> NORMAL_END : 场次时间结束
+PURCHASED --> SELF_CANCELLED : 参与者退票\n或管理员强制退票
+PURCHASED --> NO_SHOW : 场次结束未检票
+PURCHASED --> ACTIVITY_CANCELLED : 活动取消（退款）
+CHECKED_IN --> ACTIVITY_CANCELLED : 活动取消（退款）
+
+NORMAL_END --> [*]
+SELF_CANCELLED --> [*]
+NO_SHOW --> [*]
+ACTIVITY_CANCELLED --> [*]
+
+note right of SELF_CANCELLED
+  参与者退票需未过退票截止；
+  管理员强制退票按 REQ-048 处理。
+end note
+
+note bottom of NO_SHOW
+  缺席不释放名额；
+  不另行记录缺席原因。
+end note
+
+legend bottom
+  终态：正常结束、自行取消、未检票、活动取消；终态不可再变更。
+  已购票、已检票、未检票占用名额；自行取消、退票、活动取消释放名额；缺席不释放名额。
+  活动取消时，已购票和已检票记录都进入“活动取消”并退款。
+endlegend
+@enduml
