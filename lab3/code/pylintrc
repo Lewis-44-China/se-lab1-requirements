@@ -1,0 +1,17 @@
+[MAIN]
+py-version = 3.10
+max-line-length = 100
+
+[MESSAGES CONTROL]
+# 课程项目按业务职责拆分服务，部分方法参数较多、局部变量较多；
+# 这些是规模提示，不是正确性问题。其余可读性/未使用变量等检查保留。
+disable =
+    duplicate-code,
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-few-public-methods,
+    too-many-return-statements,
+    too-many-lines
