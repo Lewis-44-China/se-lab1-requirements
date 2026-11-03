@@ -1,0 +1,43 @@
+test_cancel_approval_refunds_and_fails_waitlist (tests.test_core.ActivityTests) ... ok
+test_location_change_notifies_registrants (tests.test_core.ActivityTests) ... ok
+test_publish_reject_returns_draft (tests.test_core.ActivityTests) ... ok
+test_publish_review_flow (tests.test_core.ActivityTests) ... ok
+test_ticket_change_after_sale_forbidden (tests.test_core.ActivityTests) ... ok
+test_ticket_change_before_sale_needs_review (tests.test_core.ActivityTests) ... ok
+test_duplicate_phone_rejected (tests.test_core.AuthTests) ... ok
+test_password_is_not_plaintext (tests.test_core.AuthTests) ... ok
+test_register_and_login (tests.test_core.AuthTests) ... ok
+test_wrong_password_rejected (tests.test_core.AuthTests) ... ok
+test_capacity_full_and_failure_audit (tests.test_core.RegistrationTests) ... ok
+test_concurrent_last_seat_only_one_wins (tests.test_core.RegistrationTests) ... ok
+test_register_after_sale_end_fails (tests.test_core.RegistrationTests) ... ok
+test_register_at_sale_end_is_allowed (tests.test_core.RegistrationTests) ... ok
+test_register_success (tests.test_core.RegistrationTests) ... ok
+test_same_request_id_is_idempotent (tests.test_core.RegistrationTests) ... ok
+test_same_session_second_request_rejected (tests.test_core.RegistrationTests) ... ok
+test_ban_organizer_cancels_activities (tests.test_lifecycle.BanTests) ... ok
+test_ban_participant_blocks_new_purchase_but_keeps_ticket (tests.test_lifecycle.BanTests) ... ok
+test_ban_participant_cancels_waitlist (tests.test_lifecycle.BanTests) ... ok
+test_abnormal_does_not_change_registration (tests.test_lifecycle.CheckinTests) ... ok
+test_checkin_before_window_fails (tests.test_lifecycle.CheckinTests) ... ok
+test_checkin_pass_and_duplicate (tests.test_lifecycle.CheckinTests) ... ok
+test_inspector_must_be_assigned (tests.test_lifecycle.CheckinTests) ... ok
+test_force_refund_checked_in_rejected (tests.test_lifecycle.RefundTests) ... ok
+test_force_refund_refunds_notifies_and_audits (tests.test_lifecycle.RefundTests) ... ok
+test_refund_after_deadline_fails (tests.test_lifecycle.RefundTests) ... ok
+test_activity_status_moves_with_time (tests.test_lifecycle.SchedulerTests) ... ok
+test_session_end_marks_no_show_and_normal_end (tests.test_lifecycle.SchedulerTests) ... ok
+test_cancel_refunds_full_amount (tests.test_lifecycle.WaitlistTests) ... ok
+test_expire_refunds (tests.test_lifecycle.WaitlistTests) ... ok
+test_fifo_and_promotion (tests.test_lifecycle.WaitlistTests) ... ok
+test_audit_scope_by_role (tests.test_queries.QueryTests) ... ok
+test_export_csv_has_no_phone (tests.test_queries.QueryTests) ... ok
+test_organizer_roster_masks_phone (tests.test_queries.QueryTests) ... ok
+test_participant_cannot_see_draft (tests.test_queries.QueryTests) ... ok
+test_platform_summary (tests.test_queries.QueryTests) ... ok
+test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
+
+----------------------------------------------------------------------
+Ran 38 tests in 25.931s
+
+OK

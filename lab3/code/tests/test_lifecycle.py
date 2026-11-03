@@ -1,0 +1,285 @@
+"""候补、退票、检票、时间推进与封禁测试。"""
+# pylint: disable=missing-function-docstring
+
+from __future__ import annotations
+
+import unittest
+from datetime import timedelta
+
+from ticketing.errors import Conflict, DeadlinePassed, PermissionDenied
+from ticketing.models import (
+    AccountStatus,
+    ActivityStatus,
+    CheckRequestStatus,
+    RegistrationStatus,
+    WaitlistStatus,
+)
+
+from .helpers import ServiceTestCase
+
+
+class WaitlistTests(ServiceTestCase):
+    """候补 FIFO、取消、递补与截止失败。"""
+
+    def test_fifo_and_promotion(self) -> None:
+        activity = self.make_activity(normal_capacity=1)
+        first = self.register(self.people[0], activity)
+        second = self.enqueue(self.people[1], activity)
+        third = self.enqueue(self.people[2], activity)
+        self.assertEqual(self.s.waitlist.head(self.ticket(activity).id).id, second.id)
+
+        self.s.refunds.refund_by_participant(self.people[0], first.id)
+        self.s.scheduler.tick()
+        promoted = self.s.waitlist.get_record(second.id)
+        self.assertIs(promoted.status, WaitlistStatus.PROMOTED)
+        self.assertEqual(
+            self.s.waitlist.head(self.ticket(activity).id).id, third.id
+        )
+        row = self.db.query_one(
+            "SELECT * FROM registration WHERE account_id = ?",
+            (self.people[1].id,),
+        )
+        self.assertIsNotNone(row)
+        self.assertIs(RegistrationStatus(row["status"]), RegistrationStatus.PURCHASED)
+
+    def test_cancel_refunds_full_amount(self) -> None:
+        activity = self.make_activity(normal_capacity=1)
+        self.register(self.people[0], activity)
+        record = self.enqueue(self.people[1], activity)
+        cancelled = self.s.waitlist.cancel(self.people[1], record.id)
+        self.assertIs(cancelled.status, WaitlistStatus.SELF_CANCELLED)
+        self.assertEqual(cancelled.refund_amount_cents, 5000)
+
+    def test_expire_refunds(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            normal_capacity=1,
+            sale_end=now + timedelta(hours=1),
+            refund_deadline=now,
+            session_start=now + timedelta(hours=1),
+            session_end=now + timedelta(hours=2),
+            checkin_open=now,
+        )
+        self.register(self.people[0], activity)
+        record = self.enqueue(self.people[1], activity)
+        self.clock.advance(hours=2)
+        self.s.scheduler.tick()
+        expired = self.s.waitlist.get_record(record.id)
+        self.assertIs(expired.status, WaitlistStatus.FAILED)
+        self.assertEqual(expired.refund_amount_cents, 5000)
+
+
+class RefundTests(ServiceTestCase):
+    """退票截止与管理员强制退票。"""
+
+    def test_refund_after_deadline_fails(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(refund_deadline=now + timedelta(hours=1))
+        registration = self.register(self.people[0], activity)
+        self.clock.advance(hours=2)
+        with self.assertRaises(DeadlinePassed):
+            self.s.refunds.refund_by_participant(
+                self.people[0], registration.id
+            )
+        self.assertIs(
+            self.s.registrations.get_registration(registration.id).status,
+            RegistrationStatus.PURCHASED,
+        )
+
+    def test_force_refund_refunds_notifies_and_audits(self) -> None:
+        activity = self.make_activity()
+        registration = self.register(self.people[0], activity)
+        result = self.s.refunds.force_refund(
+            self.admin, registration.id, "违规操作"
+        )
+        self.assertIs(result.status, RegistrationStatus.SELF_CANCELLED)
+        self.assertEqual(result.refund_amount_cents, 5000)
+        notifications = self.db.query_all(
+            "SELECT * FROM notification WHERE recipient_id = ?",
+            (self.people[0].id,),
+        )
+        self.assertTrue(any(row["type"] == "FORCE_REFUND" for row in notifications))
+        audits = self.db.query_all(
+            "SELECT * FROM audit_log WHERE action = 'FORCE_REFUND'"
+        )
+        self.assertEqual(len(audits), 1)
+
+    def test_force_refund_checked_in_rejected(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            refund_deadline=now - timedelta(hours=2),
+            session_start=now - timedelta(hours=1),
+            session_end=now + timedelta(hours=2),
+            checkin_open=now - timedelta(hours=2),
+        )
+        registration = self.register(self.people[0], activity)
+        request = self.s.checkin.request_checkin(
+            self.people[0], registration.id
+        )
+        self.s.checkin.process(self.inspector, request.id, True)
+        with self.assertRaises(Conflict):
+            self.s.refunds.force_refund(self.admin, registration.id, "测试")
+
+
+class CheckinTests(ServiceTestCase):
+    """检票请求、通过、异常与权限。"""
+
+    def _ongoing(self):
+        now = self.clock.now()
+        return self.make_activity(
+            refund_deadline=now - timedelta(hours=2),
+            session_start=now - timedelta(hours=1),
+            session_end=now + timedelta(hours=2),
+            checkin_open=now - timedelta(hours=2),
+        )
+
+    def test_checkin_pass_and_duplicate(self) -> None:
+        activity = self._ongoing()
+        registration = self.register(self.people[0], activity)
+        request = self.s.checkin.request_checkin(
+            self.people[0], registration.id
+        )
+        processed = self.s.checkin.process(self.inspector, request.id, True)
+        self.assertIs(processed.status, CheckRequestStatus.PASSED)
+        self.assertIs(
+            self.s.registrations.get_registration(registration.id).status,
+            RegistrationStatus.CHECKED_IN,
+        )
+        with self.assertRaises(Conflict):
+            self.s.checkin.request_checkin(
+                self.people[0], registration.id
+            )
+
+    def test_abnormal_does_not_change_registration(self) -> None:
+        activity = self._ongoing()
+        registration = self.register(self.people[0], activity)
+        request = self.s.checkin.request_checkin(
+            self.people[0], registration.id
+        )
+        processed = self.s.checkin.process(self.inspector, request.id, False)
+        self.assertIs(processed.status, CheckRequestStatus.ABNORMAL)
+        self.assertIs(
+            self.s.registrations.get_registration(registration.id).status,
+            RegistrationStatus.PURCHASED,
+        )
+
+    def test_checkin_before_window_fails(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            refund_deadline=now + timedelta(hours=1),
+            session_start=now + timedelta(hours=2),
+            session_end=now + timedelta(hours=4),
+            checkin_open=now + timedelta(hours=1),
+        )
+        registration = self.register(self.people[0], activity)
+        with self.assertRaises(DeadlinePassed):
+            self.s.checkin.request_checkin(
+                self.people[0], registration.id
+            )
+
+    def test_inspector_must_be_assigned(self) -> None:
+        other = self.s.auth.create_inspector(
+            self.admin, "13900000099", "Inspect@123", "另一检票员"
+        )
+        activity = self._ongoing()
+        registration = self.register(self.people[0], activity)
+        request = self.s.checkin.request_checkin(
+            self.people[0], registration.id
+        )
+        with self.assertRaises(Conflict):
+            self.s.checkin.process(other, request.id, True)
+
+
+class SchedulerTests(ServiceTestCase):
+    """时间推动终态与名额规则。"""
+
+    def test_session_end_marks_no_show_and_normal_end(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            normal_capacity=2,
+            refund_deadline=now - timedelta(hours=1),
+            session_start=now,
+            session_end=now + timedelta(hours=1),
+            checkin_open=now - timedelta(hours=1),
+        )
+        first = self.register(self.people[0], activity)
+        second = self.register(self.people[1], activity)
+        request = self.s.checkin.request_checkin(self.people[0], first.id)
+        self.s.checkin.process(self.inspector, request.id, True)
+        self.clock.advance(hours=2)
+        self.s.scheduler.tick()
+        self.assertIs(
+            self.s.registrations.get_registration(first.id).status,
+            RegistrationStatus.NORMAL_END,
+        )
+        self.assertIs(
+            self.s.registrations.get_registration(second.id).status,
+            RegistrationStatus.NO_SHOW,
+        )
+        self.assertEqual(self.ticket(activity).occupied, 2)
+
+    def test_activity_status_moves_with_time(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            refund_deadline=now + timedelta(hours=1),
+            session_start=now + timedelta(hours=2),
+            session_end=now + timedelta(hours=3),
+            checkin_open=now + timedelta(hours=1),
+        )
+        self.clock.advance(hours=1, minutes=1)
+        self.s.scheduler.tick()
+        self.assertIs(
+            self.s.activities.get_activity(activity.id).status,
+            ActivityStatus.ONGOING,
+        )
+        self.clock.advance(hours=3)
+        self.s.scheduler.tick()
+        self.assertIs(
+            self.s.activities.get_activity(activity.id).status,
+            ActivityStatus.ENDED,
+        )
+
+
+class BanTests(ServiceTestCase):
+    """封禁的连锁处置。"""
+
+    def test_ban_organizer_cancels_activities(self) -> None:
+        activity = self.make_activity()
+        registration = self.register(self.people[0], activity)
+        self.s.admin.ban_account(self.admin, self.organizer.id, "违规", True)
+        self.assertIs(
+            self.s.auth.get_account(self.organizer.id).status,
+            AccountStatus.BANNED,
+        )
+        self.assertIs(
+            self.s.activities.get_activity(activity.id).status,
+            ActivityStatus.CANCELLED,
+        )
+        self.assertIs(
+            self.s.registrations.get_registration(registration.id).status,
+            RegistrationStatus.ACTIVITY_CANCELLED,
+        )
+
+    def test_ban_participant_blocks_new_purchase_but_keeps_ticket(self) -> None:
+        activity = self.make_activity(normal_capacity=1)
+        registration = self.register(self.people[0], activity)
+        self.s.admin.ban_account(self.admin, self.people[0].id, "违规", True)
+        with self.assertRaises(PermissionDenied):
+            self.register(self.people[0], self.make_activity())
+        self.assertIs(
+            self.s.registrations.get_registration(registration.id).status,
+            RegistrationStatus.PURCHASED,
+        )
+
+    def test_ban_participant_cancels_waitlist(self) -> None:
+        activity = self.make_activity(normal_capacity=1)
+        self.register(self.people[0], activity)
+        record = self.enqueue(self.people[1], activity)
+        self.s.admin.ban_account(self.admin, self.people[1].id, "违规", True)
+        refreshed = self.s.waitlist.get_record(record.id)
+        self.assertIs(refreshed.status, WaitlistStatus.FAILED)
+        self.assertEqual(refreshed.refund_amount_cents, 5000)
+
+
+if __name__ == "__main__":
+    unittest.main()
