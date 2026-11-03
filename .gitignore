@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pylint.d/
+.venv/
+venv/
+
+# SQLite 运行数据
+lab3/code/ticketing.db
+lab3/code/*.db
+lab3/code/*.db-wal
+lab3/code/*.db-shm
+
+# 运行产物
+lab3/code/exports/
+lab3/code/*.csv
+
+# 报告编译中间文件
+*.aux
+*.log
+*.out
+*.toc

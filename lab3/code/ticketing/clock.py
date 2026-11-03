@@ -1,0 +1,89 @@
+"""时间抽象与时间解析。
+
+生产环境使用 SystemClock（服务器本地时间）；测试和演示数据使用
+ManualClock，可以在不修改系统时间的前提下推进“业务时间”。
+所有截止判断都经过 Clock，因此“以服务器时间为准”只有一处实现。
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+INPUT_FORMATS = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M")
+
+
+class Clock(ABC):
+    """时钟接口。"""
+
+    @abstractmethod
+    def now(self) -> datetime:
+        """返回当前业务时间（精确到秒）。"""
+
+
+class SystemClock(Clock):
+    """使用服务器本地时间。"""
+
+    def now(self) -> datetime:
+        return datetime.now().replace(microsecond=0)
+
+
+class ManualClock(Clock):
+    """可手动设置、推进的时钟，用于测试和演示数据。"""
+
+    def __init__(self, current: datetime | None = None) -> None:
+        self._current = (current or datetime.now()).replace(microsecond=0)
+
+    def now(self) -> datetime:
+        return self._current
+
+    def set(self, value: datetime) -> None:
+        """直接把时钟拨到指定时间。"""
+        self._current = value.replace(microsecond=0)
+
+    def advance(self, **kwargs: float) -> None:
+        """按时长推进，例如 advance(days=1, hours=2)。"""
+        self._current += timedelta(**kwargs)
+
+
+def format_dt(value: datetime) -> str:
+    """转成数据库统一时间格式。"""
+    return value.strftime(TIME_FORMAT)
+
+
+def parse_dt(text: str, now: datetime | None = None) -> datetime:
+    """解析用户输入的时间。
+
+    支持：
+    - 2026-11-20 19:30
+    - 2026-11-20 19:30:00
+    - 2026-11-20T19:30
+    - +3d / +2h / +30m（相对当前时间，便于演示）
+    """
+    value = text.strip()
+    base = now or datetime.now()
+    if value.startswith("+"):
+        return _parse_relative(value, base)
+    for fmt in INPUT_FORMATS:
+        try:
+            return datetime.strptime(value, fmt).replace(microsecond=0)
+        except ValueError:
+            continue
+    raise ValueError(f"无法识别的时间：{text}")
+
+
+def _parse_relative(value: str, base: datetime) -> datetime:
+    """解析 +3d、+2h、+30m 这类相对时间。"""
+    unit = value[-1].lower()
+    number_text = value[1:-1]
+    if not number_text.isdigit():
+        raise ValueError(f"无法识别的相对时间：{value}")
+    number = int(number_text)
+    if unit == "d":
+        return (base + timedelta(days=number)).replace(microsecond=0)
+    if unit == "h":
+        return (base + timedelta(hours=number)).replace(microsecond=0)
+    if unit == "m":
+        return (base + timedelta(minutes=number)).replace(microsecond=0)
+    raise ValueError(f"相对时间单位只支持 d/h/m：{value}")
