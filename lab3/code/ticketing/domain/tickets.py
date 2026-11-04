@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from .db import Database
-from .errors import Conflict, NotFound, ValidationError
-from .models import TicketKind, TicketType
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import Conflict, NotFound, ValidationError
+from ticketing.domain.models import TicketKind, TicketType
 
 
 class TicketService:

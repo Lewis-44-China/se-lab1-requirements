@@ -11,8 +11,8 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Iterable
 
-from .clock import format_dt, parse_dt
-from .models import (
+from ticketing.infrastructure.clock import format_dt, parse_dt
+from ticketing.domain.models import (
     AccountStatus,
     ActivityStatus,
     CheckRequestStatus,

@@ -13,12 +13,12 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from .activities import ActivityDraft, SessionDraft, TicketDraft
-from .clock import ManualClock, SystemClock, format_dt, parse_dt
-from .container import Services, build_services
-from .db import Database
-from .errors import AppError, CapacityFull
-from .models import (
+from ticketing.domain.activities import ActivityDraft, SessionDraft, TicketDraft
+from ticketing.infrastructure.clock import ManualClock, SystemClock, format_dt, parse_dt
+from ticketing.container import Services, build_services
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import AppError, CapacityFull
+from ticketing.domain.models import (
     Account,
     Activity,
     RegistrationStatus,
@@ -26,7 +26,7 @@ from .models import (
     TicketKind,
     WaitlistStatus,
 )
-from .render import (
+from ticketing.presentation.render import (
     ask,
     ask_int,
     ask_money,
@@ -41,8 +41,8 @@ from .render import (
     success,
     warn,
 )
-from .security import mask_phone, new_request_id
-from .seed import seed_demo
+from ticketing.infrastructure.security import mask_phone, new_request_id
+from ticketing.application.seed import seed_demo
 
 DEMO_HINT = """
 演示账号（首次启动自动创建）：

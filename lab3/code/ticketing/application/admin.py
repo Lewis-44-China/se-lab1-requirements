@@ -13,13 +13,13 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from .activities import ActivityService
-from .audit import AuditService
-from .auth import AuthService
-from .clock import Clock, format_dt
-from .db import Database
-from .errors import Conflict, NotFound, PermissionDenied, ValidationError
-from .models import (
+from ticketing.domain.activities import ActivityService
+from ticketing.common.audit import AuditService
+from ticketing.domain.auth import AuthService
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import Conflict, NotFound, PermissionDenied, ValidationError
+from ticketing.domain.models import (
     Activity,
     NotificationType,
     Report,
@@ -29,11 +29,11 @@ from .models import (
     ReviewType,
     Role,
 )
-from .notifications import NotificationService
-from .permissions import PermissionService
-from .queries import QueryService
-from .refunds import RefundService
-from .waitlist import WaitlistService
+from ticketing.common.notifications import NotificationService
+from ticketing.common.permissions import PermissionService
+from ticketing.domain.queries import QueryService
+from ticketing.domain.refunds import RefundService
+from ticketing.domain.waitlist import WaitlistService
 
 
 class AdminService:

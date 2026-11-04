@@ -11,19 +11,19 @@ import json
 import sqlite3
 from typing import Mapping, Any
 
-from .audit import AuditService
-from .clock import Clock, format_dt
-from .db import Database
-from .models import (
+from ticketing.common.audit import AuditService
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.models import (
     Activity,
     PaymentStatus,
     RegistrationStatus,
     Session,
     TicketType,
 )
-from .security import new_request_id
-from .tickets import TicketService
-from .waitlist import WaitlistService
+from ticketing.infrastructure.security import new_request_id
+from ticketing.domain.tickets import TicketService
+from ticketing.domain.waitlist import WaitlistService
 
 
 class PromotionService:

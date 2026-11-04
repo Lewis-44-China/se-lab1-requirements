@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .audit import AuditService
-from .clock import Clock, format_dt, parse_dt
-from .db import Database
-from .errors import Conflict, DeadlinePassed, NotFound
-from .models import (
+from ticketing.common.audit import AuditService
+from ticketing.infrastructure.clock import Clock, format_dt, parse_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import Conflict, DeadlinePassed, NotFound
+from ticketing.domain.models import (
     Activity,
     ActivityStatus,
     CheckRequest,
@@ -25,8 +25,8 @@ from .models import (
     Session,
     SessionStatus,
 )
-from .permissions import PermissionService
-from .security import new_request_id
+from ticketing.common.permissions import PermissionService
+from ticketing.infrastructure.security import new_request_id
 
 
 @dataclass(slots=True)

@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import sqlite3
 
-from .audit import AuditService
-from .clock import Clock, format_dt, parse_dt
-from .db import Database
-from .errors import (
+from ticketing.common.audit import AuditService
+from ticketing.infrastructure.clock import Clock, format_dt, parse_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import (
     AppError,
     Conflict,
     DeadlinePassed,
@@ -22,7 +22,7 @@ from .errors import (
     PermissionDenied,
     ValidationError,
 )
-from .models import (
+from ticketing.domain.models import (
     Account,
     Activity,
     ActivityStatus,
@@ -34,10 +34,10 @@ from .models import (
     WaitlistRecord,
     WaitlistStatus,
 )
-from .notifications import NotificationService
-from .permissions import PermissionService
-from .security import normalize_phone
-from .tickets import TicketService
+from ticketing.common.notifications import NotificationService
+from ticketing.common.permissions import PermissionService
+from ticketing.infrastructure.security import normalize_phone
+from ticketing.domain.tickets import TicketService
 
 
 class WaitlistService:

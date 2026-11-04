@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from .clock import Clock, format_dt
-from .models import AuditLog
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.domain.models import AuditLog
 
 
 class AuditService:

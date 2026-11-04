@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import sqlite3
 
-from .audit import AuditService
-from .clock import Clock, format_dt
-from .db import Database
-from .errors import Conflict, NotFound, ValidationError
-from .models import Account, AccountStatus, Role
-from .permissions import PermissionService
-from .security import (
+from ticketing.common.audit import AuditService
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import Conflict, NotFound, ValidationError
+from ticketing.domain.models import Account, AccountStatus, Role
+from ticketing.common.permissions import PermissionService
+from ticketing.infrastructure.security import (
     hash_password,
     normalize_phone,
     validate_password,

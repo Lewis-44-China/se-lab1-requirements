@@ -9,12 +9,12 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from ticketing.activities import ActivityDraft, SessionDraft, TicketDraft
-from ticketing.clock import ManualClock
+from ticketing.domain.activities import ActivityDraft, SessionDraft, TicketDraft
+from ticketing.infrastructure.clock import ManualClock
 from ticketing.container import build_services
-from ticketing.db import Database
-from ticketing.models import Role, TicketKind
-from ticketing.security import new_request_id
+from ticketing.infrastructure.db import Database
+from ticketing.domain.models import Role, TicketKind
+from ticketing.infrastructure.security import new_request_id
 
 BASE_TIME = datetime(2026, 11, 1, 12, 0, 0)
 

@@ -13,7 +13,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Sequence
 
-SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema.sql"
+# db.py 位于 code/ticketing/infrastructure/，向上三层才是 code/
+SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema.sql"
 
 
 class Database:

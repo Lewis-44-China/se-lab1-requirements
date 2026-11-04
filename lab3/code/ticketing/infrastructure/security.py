@@ -14,7 +14,7 @@ import secrets
 import uuid
 from decimal import Decimal, InvalidOperation
 
-from .errors import ValidationError
+from ticketing.domain.errors import ValidationError
 
 PHONE_PATTERN = re.compile(r"^1\d{10}$")
 PBKDF2_ITERATIONS = 200_000

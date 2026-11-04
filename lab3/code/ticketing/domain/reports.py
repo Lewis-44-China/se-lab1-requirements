@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-from .audit import AuditService
-from .clock import Clock, format_dt
-from .db import Database
-from .errors import NotFound, ValidationError
-from .models import Activity, ActivityStatus, Report, ReportStatus, Role
-from .permissions import PermissionService
+from ticketing.common.audit import AuditService
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import NotFound, ValidationError
+from ticketing.domain.models import Activity, ActivityStatus, Report, ReportStatus, Role
+from ticketing.common.permissions import PermissionService
 
 
 class ReportService:

@@ -12,13 +12,13 @@
 
 from __future__ import annotations
 
-from .activities import ActivityService
-from .audit import AuditService
-from .clock import Clock, format_dt
-from .db import Database
-from .models import RegistrationStatus
-from .promotion import PromotionService
-from .waitlist import WaitlistService
+from ticketing.domain.activities import ActivityService
+from ticketing.common.audit import AuditService
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.infrastructure.db import Database
+from ticketing.domain.models import RegistrationStatus
+from ticketing.application.promotion import PromotionService
+from ticketing.domain.waitlist import WaitlistService
 
 
 class Scheduler:

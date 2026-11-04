@@ -2,19 +2,19 @@
 
 用 ManualClock 在不同时间点调用真实服务，保证演示数据的状态、名额、
 审计和通知都与业务规则一致，而不是直接往表里塞“假数据”。
-运行：python3 -m ticketing.seed  （或 python3 main.py 首次启动自动生成）
+运行：python3 -m ticketing.application.seed  （或 python3 main.py 首次启动自动生成）
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from .activities import ActivityDraft, SessionDraft, TicketDraft
-from .clock import ManualClock
-from .container import build_services
-from .db import Database
-from .models import Role, TicketKind
-from .security import new_request_id
+from ticketing.domain.activities import ActivityDraft, SessionDraft, TicketDraft
+from ticketing.infrastructure.clock import ManualClock
+from ticketing.container import build_services
+from ticketing.infrastructure.db import Database
+from ticketing.domain.models import Role, TicketKind
+from ticketing.infrastructure.security import new_request_id
 
 
 def seed_demo(db: Database, clock: ManualClock | None = None) -> bool:

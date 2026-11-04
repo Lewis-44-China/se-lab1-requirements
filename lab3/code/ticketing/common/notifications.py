@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from .clock import Clock, format_dt
-from .models import Notification, NotificationType
+from ticketing.infrastructure.clock import Clock, format_dt
+from ticketing.domain.models import Notification, NotificationType
 
 
 class NotificationService:

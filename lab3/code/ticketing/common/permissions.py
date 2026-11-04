@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 
-from .errors import PermissionDenied
-from .models import Account, AccountStatus, Role
-from .security import mask_phone
+from ticketing.domain.errors import PermissionDenied
+from ticketing.domain.models import Account, AccountStatus, Role
+from ticketing.infrastructure.security import mask_phone
 
 
 class PermissionService:

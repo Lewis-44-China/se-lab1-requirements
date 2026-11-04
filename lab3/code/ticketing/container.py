@@ -4,22 +4,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .activities import ActivityService
-from .admin import AdminService
-from .audit import AuditService
-from .auth import AuthService
-from .checkin import CheckinService
-from .clock import Clock
-from .db import Database
-from .notifications import NotificationService
-from .promotion import PromotionService
-from .queries import QueryService
-from .refunds import RefundService
-from .registrations import RegistrationService
-from .reports import ReportService
-from .scheduler import Scheduler
-from .tickets import TicketService
-from .waitlist import WaitlistService
+from ticketing.domain.activities import ActivityService
+from ticketing.application.admin import AdminService
+from ticketing.common.audit import AuditService
+from ticketing.domain.auth import AuthService
+from ticketing.domain.checkin import CheckinService
+from ticketing.infrastructure.clock import Clock
+from ticketing.infrastructure.db import Database
+from ticketing.common.notifications import NotificationService
+from ticketing.application.promotion import PromotionService
+from ticketing.domain.queries import QueryService
+from ticketing.domain.refunds import RefundService
+from ticketing.domain.registrations import RegistrationService
+from ticketing.domain.reports import ReportService
+from ticketing.application.scheduler import Scheduler
+from ticketing.domain.tickets import TicketService
+from ticketing.domain.waitlist import WaitlistService
 
 
 @dataclass(slots=True)

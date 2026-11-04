@@ -6,8 +6,8 @@ from __future__ import annotations
 import unittest
 from datetime import timedelta
 
-from ticketing.errors import Conflict, DeadlinePassed, PermissionDenied
-from ticketing.models import (
+from ticketing.domain.errors import Conflict, DeadlinePassed, PermissionDenied
+from ticketing.domain.models import (
     AccountStatus,
     ActivityStatus,
     CheckRequestStatus,

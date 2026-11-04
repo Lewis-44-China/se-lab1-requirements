@@ -7,7 +7,7 @@ import unittest
 from datetime import timedelta
 from pathlib import Path
 
-from ticketing.models import RegistrationStatus
+from ticketing.domain.models import RegistrationStatus
 
 from .helpers import ServiceTestCase
 
