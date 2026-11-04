@@ -18,6 +18,7 @@ abstract class Account {
   - passwordHash: String
   - name: String
   - status: AccountStatus
+  - /role: Role
   + login(password): boolean
   + isBanned(): boolean
 }
@@ -59,6 +60,7 @@ class Activity {
   - time: DateTime
   - saleStart: DateTime
   - saleEnd: DateTime
+  - waitlistDeadline: DateTime
   - refundDeadline: DateTime
   - status: ActivityStatus
   + submitForReview()
@@ -115,6 +117,8 @@ class Waitlist {
 }
 class WaitlistRecord {
   - id: String
+  - activityId: String
+  - sessionId: String
   - joinTime: DateTime
   - paymentStatus: PaymentStatus
   - paymentAmount: BigDecimal
@@ -195,6 +199,10 @@ legend bottom
   图中只画四个关键状态枚举；其余枚举与完整字段见 类图说明.md。
   Waitlist 是候补队列：每个票种 1-1；WaitlistRecord 是队列中的候补记录：1-*。
   候补入队在队尾，递补从队首取，按 joinTime/id 排序。
+  Account 的 /role 是派生属性，由具体子类决定；数据库用 account.role 列判别。
+  Activity.waitlistDeadline 是活动级候补截止，所有场次和票种共享。
+  WaitlistRecord 的 activityId/sessionId 是冗余快照，来源于 waitlist → ticketType → session，便于查询并保留历史上下文。
+  WaitlistRecord.paymentStatus 是支付快照：入队前必须为 PAID，用于退款对账，不参与候补状态机。
   报名记录同时对应场次与票种；报名时校验票种属于该场次。
   报名与候补、检票的具体流程见后续活动图/时序图。
 endlegend
