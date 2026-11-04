@@ -23,10 +23,14 @@
 | `f042582` | 添加 UML 交付、49 条需求追踪表、AI 使用记录、进度记录与打包工具 |
 | `735be3d` | 按分层重组 `ticketing/` 为 presentation/application/domain/common/infrastructure，更新绝对导入与 SCHEMA_PATH |
 | `652fd8a` | 同步目录结构文档、UML 实现映射、进度记录与代码规模/测试素材 |
+| `629618e` | 同步实验二修订版 UML（5 张图 + 设计说明），核对失败审计、重复候补、活动取消候补失败、分配检票等实现 |
+| `31867c1` | 为活动创建补充独立候补截止输入，更新实现映射、基线、需求追踪与代码规模素材 |
 
 完整哈希：
 
 ```text
+31867c1a1a93995574399049769384f15857c431  lab3: 为活动创建补充独立候补截止输入
+629618e95d345f02736b45eaabae00f38be74914  lab3: 同步实验二修订版 UML 并核对实现
 652fd8aab697ee4a478f0d95da08b227e8a836c5  lab3: 同步分层结构文档与报告素材
 735be3d2c7f632d71d6c539f729a99630c4e596d  lab3: 按分层重组 ticketing 包目录并更新导入
 f042582568a0cecd1f77e3ff7c0a871b1a3228a1  lab3: 添加 UML 交付、需求追踪、AI 记录与打包工具
@@ -54,14 +58,14 @@ git diff lab1-final..lab3 -- requirements.md chat.txt
 
 ## 4. 远程状态
 
-- 本地 `lab3` 已包含上述 7 个提交；
+- 本地 `lab3` 已包含上述 9 个提交（另有本文件的记录更新提交）；
 - **尚未推送**；推送命令计划为 `git push github lab3`；
 - 推送不涉及标签、不 force push；需用户明确确认后执行；
 - 远程仓库地址：`git@github.com:Lewis-44-China/se-lab1-requirements.git`。
 
 ## 5. 报告中可展示的内容
 
-1. `git log --oneline --graph -8` 的截图/文本；
+1. `git log --oneline --graph -11` 的截图/文本；
 2. GitHub 仓库 `lab3` 分支页面截图（推送后）；
 3. `git diff lab1-final..lab3 -- requirements.md chat.txt` 为空；
 4. 每个提交对应的功能/测试，说明 AI 初稿与人工修改的阶段性差异。
