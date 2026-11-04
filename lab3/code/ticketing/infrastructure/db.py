@@ -13,7 +13,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Sequence
 
-# db.py 位于 code/ticketing/infrastructure/，向上三层才是 code/
+# 审查通过：db.py 位于 code/ticketing/infrastructure/，向上三层才是 code/；
+# schema.sql 保持在 code/ 根，打包脚本按该路径复制。
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema.sql"
 
 
@@ -27,6 +28,8 @@ class Database:
         self.path = str(path)
         self.conn = self._connect()
 
+    # 审查通过：isolation_level=None 关闭 sqlite3 隐式事务，交给 transaction()
+    # 显式控制；WAL 让读写不互相阻塞，busy_timeout 让并发写等待而不是立刻报 locked。
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path, timeout=10.0, isolation_level=None)
         conn.row_factory = sqlite3.Row
@@ -37,10 +40,13 @@ class Database:
             conn.execute("PRAGMA journal_mode = WAL")
         return conn
 
+    # 审查通过：schema.sql 全部 IF NOT EXISTS，可重复执行；课程项目不做表结构迁移。
     def initialize(self) -> None:
         """建表；schema.sql 使用 IF NOT EXISTS，可重复执行。"""
         self.conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
 
+    # 审查通过：BEGIN IMMEDIATE 在事务开始就取写锁，避免“先读后写”的竞态；
+    # 异常回滚、正常提交。SQLite 不支持嵌套事务，跨服务组合用 *_conn 方法共享同一连接。
     @contextmanager
     def transaction(self, immediate: bool = True) -> Iterator[sqlite3.Connection]:
         """显式事务；异常回滚，正常提交。"""
@@ -65,6 +71,8 @@ class Database:
         """查询多行。"""
         return self.conn.execute(sql, params).fetchall()
 
+    # 审查通过：仅用于只读或无需跨表一致性的单条写入（如通知已读、场次状态刷新）；
+    # 报名、名额、审计等关键业务写必须走 transaction()。
     def execute(
         self, sql: str, params: Sequence[object] = ()
     ) -> sqlite3.Cursor:

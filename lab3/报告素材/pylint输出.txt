@@ -1,5 +1,5 @@
 ************* Module ticketing.domain.models
-ticketing/domain/models.py:513:0: C0304: Final newline missing (missing-final-newline)
+ticketing/domain/models.py:515:0: C0304: Final newline missing (missing-final-newline)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)

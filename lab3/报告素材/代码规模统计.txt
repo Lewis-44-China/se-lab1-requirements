@@ -1,9 +1,9 @@
 实验三代码规模统计
 说明：行数按 wc -l 口径；有效代码行=非空且非纯注释行；AST 统计类/函数数量。
 
-主代码 ticketing/: 文件 30 个，总行 6425，空行 607，注释行 50，有效代码行 5768，类 64，函数/方法 267
+主代码 ticketing/: 文件 30 个，总行 6459，空行 609，注释行 82，有效代码行 5768，类 64，函数/方法 267
 测试 tests/: 文件 5 个，总行 857，空行 94，注释行 4，有效代码行 759，类 10，函数/方法 48
-合计: 文件 35 个，总行 7282，空行 701，注释行 54，有效代码行 6527，类 74，函数/方法 315
+合计: 文件 35 个，总行 7316，空行 703，注释行 86，有效代码行 6527，类 74，函数/方法 315
 
 主代码文件明细：
   ticketing/__init__.py                            12 行
@@ -21,8 +21,8 @@
   ticketing/domain/activities.py                  766 行
   ticketing/domain/auth.py                        197 行
   ticketing/domain/checkin.py                     302 行
-  ticketing/domain/errors.py                       45 行
-  ticketing/domain/models.py                      513 行
+  ticketing/domain/errors.py                       49 行
+  ticketing/domain/models.py                      515 行
   ticketing/domain/queries.py                     627 行
   ticketing/domain/refunds.py                     266 行
   ticketing/domain/registrations.py               263 行
@@ -30,9 +30,9 @@
   ticketing/domain/tickets.py                     114 行
   ticketing/domain/waitlist.py                    432 行
   ticketing/infrastructure/__init__.py              1 行
-  ticketing/infrastructure/clock.py                89 行
-  ticketing/infrastructure/db.py                   76 行
-  ticketing/infrastructure/security.py             83 行
+  ticketing/infrastructure/clock.py                96 行
+  ticketing/infrastructure/db.py                   84 行
+  ticketing/infrastructure/security.py             96 行
   ticketing/presentation/__init__.py                1 行
   ticketing/presentation/cli.py                  1120 行
   ticketing/presentation/render.py                209 行

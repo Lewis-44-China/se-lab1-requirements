@@ -5,6 +5,8 @@
 """
 
 
+# 审查通过：业务层只抛 AppError 子类，CLI 统一捕获并显示中文提示；
+# CapacityFull 额外带 ticket_type_id，便于询问是否候补。
 class AppError(Exception):
     """所有业务异常的基类。"""
 
@@ -41,5 +43,7 @@ class CapacityFull(AppError):
         self.ticket_type_id = ticket_type_id
 
 
+# 注意：当前封禁由 PermissionService.require_active 抛 PermissionDenied 表达，
+# 本异常暂未使用；保留作为更细的语义预留，后续可统一替换或删除。
 class AccountBanned(AppError):
     """账号被封禁，不能进行购票、候补等新增交易。"""
