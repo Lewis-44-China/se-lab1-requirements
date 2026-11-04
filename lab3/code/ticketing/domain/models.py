@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
 
-
+# 四种账号角色，一致
 class Role(str, Enum):
     """账号角色。"""
 
@@ -19,14 +19,14 @@ class Role(str, Enum):
     INSPECTOR = "INSPECTOR"
     ADMIN = "ADMIN"
 
-
+# 账号状态，一致
 class AccountStatus(str, Enum):
     """账号状态：正常/封禁。"""
 
     NORMAL = "NORMAL"
     BANNED = "BANNED"
 
-
+# 活动状态，一致
 class ActivityStatus(str, Enum):
     """活动状态（REQ-021）。"""
 
@@ -37,7 +37,8 @@ class ActivityStatus(str, Enum):
     ENDED = "ENDED"
     CANCELLED = "CANCELLED"
 
-
+# 场次状态，审核通过：allow_waitlist 是场次属性，候补截止 waitlistDeadline 是活动属性；
+# FULL 只表示容量已满，不区分能否候补。
 class SessionStatus(str, Enum):
     """场次状态（REQ-007）。"""
 
@@ -49,13 +50,14 @@ class SessionStatus(str, Enum):
     ENDED = "ENDED"
 
 
+# 票种类型，一致
 class TicketKind(str, Enum):
     """票种类型（REQ-008）。"""
 
     VIP = "VIP"
     NORMAL = "NORMAL"
 
-
+# 报名记录状态，一致
 class RegistrationStatus(str, Enum):
     """报名记录状态（REQ-022）。"""
 
@@ -67,6 +69,7 @@ class RegistrationStatus(str, Enum):
     ACTIVITY_CANCELLED = "ACTIVITY_CANCELLED"
 
 
+# 支付标记，一致
 class PaymentStatus(str, Enum):
     """支付标记（REQ-025）。"""
 
@@ -74,15 +77,17 @@ class PaymentStatus(str, Enum):
     UNPAID = "UNPAID"
 
 
+# 候补记录状态，一致
 class WaitlistStatus(str, Enum):
     """候补记录状态（REQ-023）。"""
 
     WAITING = "WAITING"
     PROMOTED = "PROMOTED"
     SELF_CANCELLED = "SELF_CANCELLED"
-    FAILED = "FAILED"
+    FAILED = "FAILED"   # 包括活动取消
 
 
+# 检票请求状态，一致
 class CheckRequestStatus(str, Enum):
     """检票请求状态（REQ-014/017）。"""
 
@@ -91,6 +96,7 @@ class CheckRequestStatus(str, Enum):
     ABNORMAL = "ABNORMAL"
 
 
+# 审核申请类型，一致
 class ReviewType(str, Enum):
     """审核申请类型（REQ-009/010/011）。"""
 
@@ -99,6 +105,7 @@ class ReviewType(str, Enum):
     CANCEL = "CANCEL"
 
 
+# 审核结果状态，一致
 class ReviewStatus(str, Enum):
     """审核结果状态。"""
 
@@ -107,6 +114,7 @@ class ReviewStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
+# 举报处理状态，一致
 class ReportStatus(str, Enum):
     """举报处理状态。"""
 
@@ -115,6 +123,7 @@ class ReportStatus(str, Enum):
     DISMISSED = "DISMISSED"
 
 
+# 站内消息类型，一致
 class NotificationType(str, Enum):
     """站内消息类型。"""
 
@@ -124,6 +133,11 @@ class NotificationType(str, Enum):
     FORCE_REFUND = "FORCE_REFUND"
     ACTIVITY_CANCELLED = "ACTIVITY_CANCELLED"
     WAITLIST_FAILED = "WAITLIST_FAILED"
+
+# 以上枚举审查通过；场次状态的疑问已核实（allow_waitlist 属场次，候补截止属活动）。
+
+
+# 以下数据对象与 schema 表、实验二类图一一对应，审核通过
 
 
 @dataclass(slots=True)
@@ -493,3 +507,7 @@ class AuditLog:
             after_status=row["after_status"],
             description=row["description"],
         )
+
+
+# 数据对象审查通过：字段与表、类图一致，from_row 与派生属性正确。
+# 第二部分审查完毕：数据库定义结构已用于实现相关类、转换方法与派生属性。
