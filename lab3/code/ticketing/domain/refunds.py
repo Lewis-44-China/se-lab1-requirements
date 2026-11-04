@@ -8,6 +8,15 @@
 活动取消不再递补，因此不写事件。
 """
 
+# 审查说明：本类有 3 个退款入口 + 1 个事务内批量取消 + 1 个共用退款动作：
+#   refund_by_participant  参与者本人退票（入口）
+#   force_refund           管理员强制退票（入口）
+#   cancel_activity        管理员直接取消活动（入口）
+#   cancel_activity_conn   取消活动的事务内版本，供审核/封禁/举报复用
+#   _refund_registration_conn  以上入口最终都调用的“单条报名退款”动作
+# 入口负责权限、前置校验、开事务；*_conn 方法假设调用方已开事务。
+# 所有退款共用 _refund_registration_conn，避免三处重复。
+
 from __future__ import annotations
 
 import json
@@ -52,6 +61,9 @@ class RefundService:
         self.notifications = notifications
         self.waitlist = waitlist
 
+    # 入口 1：参与者本人退票。校验参与者角色、本人、已购票、未过退票截止。
+    # 自己开事务；write_event=True 会在释放名额后写 CapacityReleased，
+    # 由 Scheduler.tick → PromotionService 触发候补递补。
     def refund_by_participant(self, participant, registration_id: int) -> Registration:
         """参与者退票：退票截止前、本人、已购票。"""
         registration = self.get_registration(registration_id)
@@ -75,6 +87,9 @@ class RefundService:
             )
         return self.get_registration(registration_id)
 
+    # 入口 2：管理员强制退票。管理员角色、原因必填、仅“已购票”可退。
+    # 同样写 CapacityReleased 触发候补递补，并额外发 FORCE_REFUND 通知。
+    # 备注：报名状态仍记 SELF_CANCELLED，审计 action 通过通知类型区分为 FORCE_REFUND。
     def force_refund(
         self, admin, registration_id: int, reason: str
     ) -> Registration:
@@ -98,6 +113,8 @@ class RefundService:
             )
         return self.get_registration(registration_id)
 
+    # 入口 3：管理员直接紧急取消活动（公开入口）。
+    # 只做管理员权限与原因校验，然后开事务；真正的批量逻辑在 cancel_activity_conn。
     def cancel_activity(self, admin, activity_id: int, reason: str) -> int:
         """管理员紧急取消活动；返回受影响的报名记录数。"""
         PermissionService.require_role(admin, Role.ADMIN)
@@ -107,6 +124,14 @@ class RefundService:
         with self.db.transaction() as conn:
             return self.cancel_activity_conn(conn, admin.id, activity, reason)
 
+    # 批量取消活动的“事务内版本”：不自开事务，假设调用方已开事务并完成权限/原因校验。
+    # 被三类调用方复用：
+    #   - cancel_activity（管理员直接取消）
+    #   - AdminService.review 的“取消申请审核通过”
+    #   - AdminService 封禁组织者 / 举报处理联动取消
+    # 做四件事：活动/场次置 CANCELLED；已购票/已检票批量退款；
+    # WAITING 候补转 FAILED 并退款；写活动审计、通知组织者。
+    # write_event=False：活动已取消，候补不再递补。
     def cancel_activity_conn(
         self,
         conn: sqlite3.Connection,
@@ -183,6 +208,12 @@ class RefundService:
         )
         return len(registrations)
 
+    # 所有退款入口共用的“单条报名退款”动作（事务内）：
+    # 1) 条件 UPDATE 改终态 + 记录退款金额/时间，rowcount 必须为 1；
+    # 2) 原记录占名额则释放（退票/活动取消都要还名额）；
+    # 3) 写报名审计；
+    # 4) write_event=True 时写 Outbox，触发候补递补；notify 非空时发站内消息。
+    # 状态区分：参与者/强制退票传 SELF_CANCELLED；活动取消传 ACTIVITY_CANCELLED。
     def _refund_registration_conn(
         self,
         conn: sqlite3.Connection,
@@ -249,6 +280,7 @@ class RefundService:
                 notify_content,
             )
 
+    # 查询辅助：按 id 取报名，不存在抛 NotFound；入口和外部调用复用。
     def get_registration(self, registration_id: int) -> Registration:
         """取报名记录。"""
         row = self.db.query_one(
@@ -258,6 +290,7 @@ class RefundService:
             raise NotFound("报名记录不存在")
         return Registration.from_row(row)
 
+    # 查询辅助：按 id 取活动，不存在抛 NotFound；入口和外部调用复用。
     def get_activity(self, activity_id: int) -> Activity:
         """取活动。"""
         row = self.db.query_one("SELECT * FROM activity WHERE id = ?", (activity_id,))
