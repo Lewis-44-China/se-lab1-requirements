@@ -69,6 +69,7 @@ class ActivityDraft:
     estimated_participants: int
     sale_start: datetime
     sale_end: datetime
+    waitlist_deadline: datetime
     refund_deadline: datetime
     sessions: list[SessionDraft]
     cover: str = ""
@@ -117,7 +118,7 @@ class ActivityService:
                     draft.estimated_participants,
                     format_dt(draft.sale_start),
                     format_dt(draft.sale_end),
-                    format_dt(draft.sale_end),
+                    format_dt(draft.waitlist_deadline),
                     format_dt(draft.refund_deadline),
                     draft.cover.strip(),
                     draft.tags.strip(),
@@ -585,6 +586,8 @@ class ActivityService:
         if not draft.sessions:
             raise ValidationError("至少需要一个场次")
         first_start = min(item.start_time for item in draft.sessions)
+        if not draft.sale_start <= draft.waitlist_deadline <= first_start:
+            raise ValidationError("候补截止必须不早于开售时间，且不晚于最早场次开始")
         if not draft.sale_start <= draft.refund_deadline <= first_start:
             raise ValidationError("退票截止必须不早于开售时间，且不晚于最早场次开始")
         for session in draft.sessions:

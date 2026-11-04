@@ -55,6 +55,7 @@ class ServiceTestCase(unittest.TestCase):
         *,
         sale_start: datetime | None = None,
         sale_end: datetime | None = None,
+        waitlist_deadline: datetime | None = None,
         refund_deadline: datetime | None = None,
         session_start: datetime | None = None,
         session_end: datetime | None = None,
@@ -79,6 +80,7 @@ class ServiceTestCase(unittest.TestCase):
             estimated_participants=100,
             sale_start=sale_start,
             sale_end=sale_end,
+            waitlist_deadline=waitlist_deadline or min(sale_end, session_start),
             refund_deadline=refund_deadline,
             sessions=[
                 SessionDraft(

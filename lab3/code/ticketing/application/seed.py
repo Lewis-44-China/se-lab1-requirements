@@ -197,6 +197,7 @@ def _create_and_publish(
     estimated_participants: int,
     sale_start: datetime,
     sale_end: datetime,
+    waitlist_deadline: datetime | None = None,
     refund_deadline: datetime,
     session_start: datetime,
     checkin_open: datetime,
@@ -212,6 +213,7 @@ def _create_and_publish(
         estimated_participants=estimated_participants,
         sale_start=sale_start,
         sale_end=sale_end,
+        waitlist_deadline=waitlist_deadline,
         refund_deadline=refund_deadline,
         session_start=session_start,
         checkin_open=checkin_open,
@@ -232,6 +234,7 @@ def _create_draft(
     estimated_participants: int,
     sale_start: datetime,
     sale_end: datetime,
+    waitlist_deadline: datetime | None = None,
     refund_deadline: datetime,
     session_start: datetime,
     checkin_open: datetime,
@@ -245,6 +248,7 @@ def _create_draft(
         estimated_participants=estimated_participants,
         sale_start=sale_start,
         sale_end=sale_end,
+        waitlist_deadline=waitlist_deadline or sale_end,
         refund_deadline=refund_deadline,
         sessions=[
             SessionDraft(

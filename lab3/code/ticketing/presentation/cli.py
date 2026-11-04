@@ -459,6 +459,7 @@ class ConsoleApp:
         estimated = ask_int("参与人数估计", 1)
         sale_start = ask_time("售票开始", "+0d")
         sale_end = ask_time("售票截止", "+3d")
+        waitlist_deadline = ask_time("候补截止", "+3d")
         refund_deadline = ask_time("退票截止", "+2d")
         session_start = ask_time("场次开始", "+4d")
         checkin_open = ask_time("检票开放", "+3d")
@@ -490,6 +491,7 @@ class ConsoleApp:
             estimated_participants=estimated,
             sale_start=sale_start,
             sale_end=sale_end,
+            waitlist_deadline=waitlist_deadline,
             refund_deadline=refund_deadline,
             sessions=[session],
         )
