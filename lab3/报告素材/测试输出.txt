@@ -39,6 +39,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 39 tests in 26.477s
+Ran 39 tests in 25.402s
 
 OK

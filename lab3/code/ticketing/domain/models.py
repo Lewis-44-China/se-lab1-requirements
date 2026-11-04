@@ -4,6 +4,8 @@
 服务层只操作对象和枚举，避免在业务代码里散落字符串常量。
 """
 
+# 数据库和UML图到python对象的映射构建方法，定义了相关的类和对应的从数据库提取数据创建对象的方法
+
 from __future__ import annotations
 
 from dataclasses import dataclass

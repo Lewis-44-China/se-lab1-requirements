@@ -173,6 +173,13 @@ class WaitlistService:
             self._mark_self_cancelled(conn, record, participant.id)
         return self.get_record(record_id)
 
+
+    # 审查通过：三种失败场景最终都走 mark_failed_conn：
+    #   - 候补截止 / 场次结束 → 本方法（expire_due）扫描 WAITING 记录；
+    #   - 活动取消 → RefundService.cancel_activity_conn 扫描 WAITING 记录；
+    #   - 账号封禁 → cancel_waiting_for_account_conn 扫描 WAITING 记录。
+    # mark_failed_conn 用条件 UPDATE（WHERE status='WAITING'）+ rowcount 检查，
+    # 同一记录只会成功退款一次；已递补/已取消/已失败的记录不会重复退款。
     def expire_due(self) -> int:
         """候补截止或场次结束后，把仍在等待的记录转为候补失败并退款。"""
         rows = self.db.query_all(
@@ -196,7 +203,9 @@ class WaitlistService:
                 if self.mark_failed_conn(conn, record, "候补截止仍未递补", None):
                     count += 1
         return count
-
+    # 审查通过：失败时统一发 WAITLIST_FAILED 站内通知（reason 文案区分截止/
+    # 场次结束/活动取消/账号封禁），同时写审计、退全款；参与者主动取消走
+    # _mark_self_cancelled，只退款和写审计，不发通知（用户自己的操作）。
     def mark_failed_conn(
         self,
         conn: sqlite3.Connection,

@@ -6,6 +6,7 @@
 PRAGMA foreign_keys = ON;
 
 -- 账号：单表 + role 区分四类角色（设计基线 5.5 节）
+-- 账号字段符合我们实验二中的设计
 CREATE TABLE IF NOT EXISTS account (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     phone         TEXT    NOT NULL UNIQUE,
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS account (
 );
 
 -- 活动：聚合根，组织者创建；状态由组织者、管理员和时间共同推动
+-- 与实验二略有不同，将活动时间属性细化到下面的session中，是合理的
 CREATE TABLE IF NOT EXISTS activity (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     organizer_id           INTEGER NOT NULL REFERENCES account(id),
@@ -40,6 +42,7 @@ CREATE TABLE IF NOT EXISTS activity (
 );
 
 -- 场次：活动 1—N 场次；场次号由系统生成
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS activity_session (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     activity_id       INTEGER NOT NULL REFERENCES activity(id),
@@ -54,6 +57,7 @@ CREATE TABLE IF NOT EXISTS activity_session (
 );
 
 -- 票种：场次 1—N 票种；occupied 是已占用名额
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS ticket_type (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id   INTEGER NOT NULL REFERENCES activity_session(id),
@@ -66,6 +70,7 @@ CREATE TABLE IF NOT EXISTS ticket_type (
 );
 
 -- 报名记录：报名即购票；记录不可删除，只能改状态
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS registration (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     account_id          INTEGER NOT NULL REFERENCES account(id),
@@ -88,6 +93,7 @@ CREATE TABLE IF NOT EXISTS registration (
 );
 
 -- 候补队列：每个票种一条队列（票种 1—1 队列）
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS waitlist (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     ticket_type_id INTEGER NOT NULL UNIQUE REFERENCES ticket_type(id),
@@ -95,6 +101,7 @@ CREATE TABLE IF NOT EXISTS waitlist (
 );
 
 -- 候补记录：队列 1—N 记录；递补成功时生成报名记录
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS waitlist_record (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     waitlist_id         INTEGER NOT NULL REFERENCES waitlist(id),
@@ -118,6 +125,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_waitlist_active
     WHERE status = 'WAITING';
 
 -- 检票请求：报名 1—N 请求；检票员只处理请求，不直接改报名状态
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS check_request (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     registration_id INTEGER NOT NULL REFERENCES registration(id),
@@ -130,6 +138,7 @@ CREATE TABLE IF NOT EXISTS check_request (
 );
 
 -- 审核申请：发布、修改、取消三类
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS review_application (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     activity_id   INTEGER NOT NULL REFERENCES activity(id),
@@ -144,6 +153,7 @@ CREATE TABLE IF NOT EXISTS review_application (
 );
 
 -- 举报：管理员处理，可联动取消活动或封禁账号
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS report (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     reporter_id INTEGER NOT NULL REFERENCES account(id),
@@ -170,6 +180,7 @@ CREATE TABLE IF NOT EXISTS notification (
 );
 
 -- 审计留痕：只追加，不更新、不删除；关键操作与业务同事务写入
+-- 与实验二一致
 CREATE TABLE IF NOT EXISTS audit_log (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     operator_id   INTEGER REFERENCES account(id),
