@@ -21,10 +21,14 @@
 | `17e9fca` | 添加四角色终端界面、演示数据、Makefile 与运行入口 |
 | `dcc7abd` | 添加 38 个自动化测试；修复封禁状态过期、候补递补票种查找、时钟注入等问题；pylint 10.00/10 |
 | `f042582` | 添加 UML 交付、49 条需求追踪表、AI 使用记录、进度记录与打包工具 |
+| `735be3d` | 按分层重组 `ticketing/` 为 presentation/application/domain/common/infrastructure，更新绝对导入与 SCHEMA_PATH |
+| `652fd8a` | 同步目录结构文档、UML 实现映射、进度记录与代码规模/测试素材 |
 
 完整哈希：
 
 ```text
+652fd8aab697ee4a478f0d95da08b227e8a836c5  lab3: 同步分层结构文档与报告素材
+735be3d2c7f632d71d6c539f729a99630c4e596d  lab3: 按分层重组 ticketing 包目录并更新导入
 f042582568a0cecd1f77e3ff7c0a871b1a3228a1  lab3: 添加 UML 交付、需求追踪、AI 记录与打包工具
 dcc7abdede29b486ee6503e3523f3d124ae814cf  lab3: 添加自动化测试并修复规范与业务问题
 17e9fca63793dd995d5f9d6916413cfdb906c43e  lab3: 添加四角色终端界面、演示数据与运行入口
@@ -50,14 +54,14 @@ git diff lab1-final..lab3 -- requirements.md chat.txt
 
 ## 4. 远程状态
 
-- 本地 `lab3` 已包含上述 5 个提交；
+- 本地 `lab3` 已包含上述 7 个提交；
 - **尚未推送**；推送命令计划为 `git push github lab3`；
 - 推送不涉及标签、不 force push；需用户明确确认后执行；
 - 远程仓库地址：`git@github.com:Lewis-44-China/se-lab1-requirements.git`。
 
 ## 5. 报告中可展示的内容
 
-1. `git log --oneline --graph -6` 的截图/文本；
+1. `git log --oneline --graph -8` 的截图/文本；
 2. GitHub 仓库 `lab3` 分支页面截图（推送后）；
 3. `git diff lab1-final..lab3 -- requirements.md chat.txt` 为空；
 4. 每个提交对应的功能/测试，说明 AI 初稿与人工修改的阶段性差异。
