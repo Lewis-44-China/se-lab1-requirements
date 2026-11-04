@@ -8,6 +8,8 @@
 不存在“先查余票再更新”的竞态（ADR-03）。
 """
 
+# 主要就是实现票的相关操作的接口，向下是对于数据库信息的查询
+
 from __future__ import annotations
 
 import sqlite3
@@ -75,6 +77,10 @@ class TicketService:
         if cursor.rowcount != 1:
             raise Conflict("名额释放失败：票种占用数异常")
 
+
+    # 审查通过：本方法只做低层校验（价格/容量/已占用）。开售时间检查分两处：
+    # 申请修改时 _build_ticket_updates 拒绝已开售；审核通过时 apply_modification
+    # 再次校验，避免“申请后拖到开售再通过”的时间窗口。
     def update_ticket(
         self,
         conn: sqlite3.Connection,

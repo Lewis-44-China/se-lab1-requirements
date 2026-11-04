@@ -118,6 +118,8 @@ class RegistrationService:
         try:
             with self.db.transaction() as conn:
                 if not self.tickets.try_occupy(conn, ticket.id):
+                    # 审查通过：这里只抛 CapacityFull，不自动候补；CLI 捕获后询问用户，
+                    # 用户确认才调用 WaitlistService.enqueue。
                     raise CapacityFull("该票种已售罄，可尝试候补", ticket.id)
                 cursor = conn.execute(
                     """

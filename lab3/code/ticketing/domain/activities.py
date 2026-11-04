@@ -397,6 +397,10 @@ class ActivityService:
     ) -> None:
         """修改审核通过后，把 payload 中的修改真正落库。"""
         data = json.loads(payload)
+        # 审查通过：申请时 _build_ticket_updates 已检查一次；这里再检查一次，
+        # 防止申请后时间推进到开售、管理员再审核通过而绕过“开售后禁改容量/票价”。
+        if data.get("tickets") and self.clock.now() >= parse_dt(activity.sale_start):
+            raise PermissionDenied("活动已开售，不能应用票价/容量修改")
         changes: list[str] = []
         if "location" in data:
             conn.execute(

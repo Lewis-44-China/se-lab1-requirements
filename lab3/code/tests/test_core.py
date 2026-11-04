@@ -124,6 +124,35 @@ class ActivityTests(ServiceTestCase):
                 ],
             )
 
+    def test_ticket_change_approved_after_sale_forbidden(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            sale_start=now + timedelta(days=2),
+            sale_end=now + timedelta(days=2, hours=12),
+            refund_deadline=now + timedelta(days=2),
+            session_start=now + timedelta(days=3),
+            checkin_open=now + timedelta(days=2, hours=1),
+        )
+        ticket = self.ticket(activity, TicketKind.NORMAL)
+        review = self.s.activities.modify_activity(
+            self.organizer,
+            activity.id,
+            ticket_updates=[
+                {
+                    "ticket_type_id": ticket.id,
+                    "price_cents": 8800,
+                    "capacity": 5,
+                }
+            ],
+        )
+        self.assertIsNotNone(review)
+        self.clock.set(now + timedelta(days=2, hours=1))
+        with self.assertRaises(PermissionDenied):
+            self.s.admin.review(self.admin, review.id, True, "同意")
+        updated = self.s.tickets.get_ticket_type(ticket.id)
+        self.assertEqual(updated.price_cents, 5000)
+        self.assertEqual(updated.capacity, 1)
+
     def test_location_change_notifies_registrants(self) -> None:
         activity = self.make_activity()
         self.register(self.people[0], activity)
