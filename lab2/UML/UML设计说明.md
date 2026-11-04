@@ -54,7 +54,7 @@
 | A1 参与者应用 | D3、D4、D5、Q1 | 报名、退票、候补、发起检票、浏览/我的票 |
 | A2 组织者应用 | D1、D2、Q1 | 活动/场次/审核、票种/容量、名单/统计 |
 | A3 检票员应用 | D5、Q1 | 负责的活动、处理检票请求 |
-| A4 管理员应用 | D1、D4、D6、Q1、M7 | 审核、强制退票、封禁/创建检票账号、全平台数据、审计查询 |
+| A4 管理员应用 | D1、D4、D6、Q1、M7 | 审核、强制退票、封禁/创建检票账号、分配检票活动、全平台数据、审计查询 |
 
 > 这张表就是“共用但有入口控制”的落地：同一个 D/Q 能力可以被多个入口使用，但每个入口能调用的范围、前置条件和数据范围由 M7 + 入口本身限制。
 >
@@ -155,21 +155,29 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 
 | 类 | 职责 | 关键字段 | 关键方法 | 主要需求 |
 |---|---|---|---|---|
-| `Account`（抽象） | 账号身份与状态 | id、phone、passwordHash、name、status | `login`、`logout`、`isBanned` | REQ-002、REQ-045、REQ-047 |
+| `Account`（抽象） | 账号身份与状态 | id、phone、passwordHash、name、status、`/role`（派生） | `login`、`logout`、`isBanned` | REQ-002、REQ-045、REQ-047 |
 | `Participant` | 参与者入口 | 继承 Account | `register`、`refund`、`joinWaitlist`、`requestCheckIn`、`reportActivity`、`viewMyTickets` | REQ-012～REQ-017、REQ-018 |
 | `Organizer` | 组织者入口 | 继承 Account | `createActivity`、`modifyActivity`、`submitForReview`、`requestCancellation`、`manageSessions`、`manageTicketTypes`、`viewRoster`、`viewStatistics` | REQ-006～REQ-011、REQ-030、REQ-031 |
 | `Inspector` | 检票员入口 | 继承 Account | `processCheckRequest` | REQ-014～REQ-017 |
 | `Admin` | 管理员入口 | 继承 Account | `review`、`ban`、`forceRefund`、`cancelActivity`、`handleReport`、`createInspector`、`viewPlatformData` | REQ-009、REQ-018、REQ-048 |
-| `Activity` | 活动聚合根 | id、name、time、saleStart、saleEnd、refundDeadline、status | `submitForReview`、`publish`、`start`、`end`、`cancel`、`modify` | REQ-006～REQ-011、REQ-021、REQ-028 |
+| `Activity` | 活动聚合根 | id、name、time、saleStart、saleEnd、waitlistDeadline、refundDeadline、status | `submitForReview`、`publish`、`start`、`end`、`cancel`、`modify` | REQ-006～REQ-011、REQ-019、REQ-021、REQ-028 |
 | `Session` | 场次 | id、sessionNo、time、checkinOpenTime、allowWaitlist、status | `refreshStatus`、`cancel` | REQ-007、REQ-026 |
 | `TicketType` | 票种与容量 | id、kind、price、capacity、occupied | `remaining`、`tryOccupy`、`release` | REQ-008、REQ-026、REQ-032 |
 | `Registration` | 报名记录 | id、activityId、sessionId、ticketKind、buyerName、buyerPhone、status、paymentStatus、paymentAmount、refundAmount、requestId | `refundByParticipant`、`forceRefundByAdmin`、`checkIn`、`markNoShow`、`cancelByActivity` | REQ-004、REQ-012、REQ-022、REQ-025、REQ-027、REQ-033、REQ-046、REQ-048 |
 | `Waitlist` | 候补队列 | id、ticketTypeId、createdAt | `enqueue`、`peekNext`、`promoteNext`、`expire` | REQ-019、REQ-020 |
-| `WaitlistRecord` | 候补记录 | id、joinTime、paymentStatus、paymentAmount、status | `promote`、`cancel`、`expire` | REQ-019、REQ-020、REQ-023、REQ-049 |
+| `WaitlistRecord` | 候补记录 | id、activityId（快照）、sessionId（快照）、joinTime、paymentStatus、paymentAmount、status | `promote`、`cancel`、`expire` | REQ-019、REQ-020、REQ-023、REQ-049 |
 | `CheckRequest` | 检票请求 | id、requestNo、status、processedAt | `pass`、`markAbnormal` | REQ-014～REQ-017、REQ-036 |
 | `ReviewApplication` | 审核申请 | id、type、status、submittedAt、comment | `approve`、`reject` | REQ-009、REQ-010、REQ-011 |
 
 > `Participant`、`Organizer`、`Inspector`、`Admin` 上的方法是**角色入口的示意**；实际编排在 A1～A4，领域规则在对应领域对象/服务中。类图这样画是为了同时表达“谁有这个入口”和“领域对象有哪些行为”。
+>
+> `Account` 的 `/role` 是派生属性，由具体子类决定，不额外存储；数据库表 `account` 用 `role` 列判别角色。这样类模型用继承表达“账号是哪一种角色”，持久化用单表 + 判别列，两者不重复。
+>
+> `Activity.waitlistDeadline` 是**活动级候补截止**，同一活动的所有场次、票种共享；候补队列 `Waitlist` 和候补记录 `WaitlistRecord` 不重复保存截止时间。
+>
+> `WaitlistRecord.paymentStatus` 是支付结果快照：按业务规则，候补入队前必须完成支付，因此 `WAITING` 状态的候补记录必须为 `PAID`；该字段用于退款对账，不参与候补状态机的分支判断。
+>
+> `WaitlistRecord.activityId/sessionId` 是冗余快照，来源于 `waitlist → ticketType → session`；保留它们是为了按活动/场次直接查询，并让候补记录保留当时的历史上下文。
 
 ---
 
@@ -193,6 +201,8 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | `Admin` — `ReviewApplication` | 1 : * | 管理员审核申请；审核人可空（待审核时） | REQ-009 |
 
 > `Waitlist` 是候补队列，每个票种 1-1；`WaitlistRecord` 是队列里的候补记录，1-*。不要把队列和记录合成一个类，否则每条记录的时间/支付/状态无处安放。
+>
+> `Waitlist` 只保存 `ticketTypeId`，活动/场次沿 `Waitlist → TicketType → Session → Activity` 推导，不在队列上重复存外键，避免同一事实出现多个来源。
 >
 > 关联线上的词表示“关系角色/主要操作”，不是完整操作清单；完整操作见第一节的类方法表。
 >
@@ -234,7 +244,7 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | `ReviewType` | PUBLISH、MODIFY、CANCEL | REQ-009～REQ-011 |
 | `ReviewStatus` | PENDING、APPROVED、REJECTED | 设计补充（审核流程） |
 | `ReportStatus` | PENDING、RESOLVED、DISMISSED | 设计补充（举报处理） |
-| `NotificationType` | REVIEW_RESULT、ACTIVITY_CHANGED、WAITLIST_PROMOTED、FORCE_REFUND | REQ-009、REQ-020、REQ-028、REQ-048 |
+| `NotificationType` | REVIEW_RESULT、ACTIVITY_CHANGED、WAITLIST_PROMOTED、FORCE_REFUND、ACTIVITY_CANCELLED | REQ-009、REQ-011、REQ-020、REQ-028、REQ-037、REQ-048 |
 
 > 类图只画了 ActivityStatus、RegistrationStatus、WaitlistRecordStatus、CheckRequestStatus 四个关键枚举；其余枚举在本表列出，避免类图过大。
 
@@ -250,8 +260,9 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | TicketType | `ticket_type` | id、session_id、kind、price、capacity、occupied；`occupied <= capacity` |
 | Registration | `registration` | id、account_id、activity_id、session_id、ticket_type_id、buyer_name、buyer_phone、ticket_kind、status、payment_status、payment_amount、refund_amount、refund_time、request_id、created_at；`(account_id, session_id)` 唯一，`request_id` 唯一 |
 | Waitlist | `waitlist` | id、ticket_type_id（唯一）、created_at；每个票种一条队列 |
-| WaitlistRecord | `waitlist_record` | id、waitlist_id、account_id、join_time、payment_status、payment_amount、status、refund_amount、refund_time、request_id |
+| WaitlistRecord | `waitlist_record` | id、waitlist_id、account_id、activity_id（快照）、session_id（快照）、join_time、payment_status、payment_amount、status、refund_amount、refund_time、request_id；`payment_status` 在候补中必须为 `PAID` |
 | CheckRequest | `check_request` | id、registration_id、request_no、inspector_id、status、processed_at |
+| 检票分配 | `activity_inspector` | inspector_id、activity_id、assigned_at；主键 `(inspector_id, activity_id)` |
 | ReviewApplication | `review_application` | id、activity_id、type、status、submitted_at、reviewer_id、comment、reviewed_at |
 | Report | `report` | id、reporter_id、activity_id、reason、status、handler_id、result、handled_at |
 | Notification | `notification` | id、recipient_id、type、content、is_read、created_at |
@@ -302,7 +313,8 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 4. 报名记录是否同时关联 `Session` 和 `TicketType`，票种是否属于该场次；票种与 `Waitlist` 是否是 `1 : 1`，`Waitlist` 与 `WaitlistRecord` 是否是 `1 : *`，`WaitlistRecord` 与报名是否是 `1 : 0..1`；
 5. 检票请求是否属于报名记录，检票员是否只处理请求；
 6. 退款为什么有 `refundByParticipant` / `forceRefundByAdmin` / `cancelByActivity` 三个命令；
-7. `AuditLog` 是否用 `objectType/objectId` 而不是连所有类。
+7. `AuditLog` 是否用 `objectType/objectId` 而不是连所有类；
+8. `Account` 的 `/role` 是否标为派生属性、`Activity` 是否包含 `waitlistDeadline`、`WaitlistRecord` 的支付状态是否说明为支付快照。
 
 ---
 
@@ -313,7 +325,7 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | 文件 | 角色 | 内容 |
 |---|---|---|
 | `UML用例图_参与者与组织者.puml` / `.png` | 参与者、活动组织者 | 浏览、报名、候补、退票、检票请求、举报；活动创建/修改/审核/名单/统计 |
-| `UML用例图_检票与管理员.puml` / `.png` | 检票员、平台管理员 | 检票工作台；审核、举报、封禁、强制退票、紧急取消、全平台数据、审计、创建检票账号 |
+| `UML用例图_检票与管理员.puml` / `.png` | 检票员、平台管理员 | 检票工作台；审核、举报、封禁、强制退票、紧急取消、全平台数据、审计、创建检票账号、分配检票活动 |
 
 ![参与者与组织者用例图](UML用例图_参与者与组织者.png)
 
@@ -363,10 +375,12 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | 管理员 | 查看全平台数据 | A4 + Q1 |
 | 管理员 | 查询审计 | A4 + M7 |
 | 管理员 | 创建检票账号 | A4 + D6 |
+| 管理员 | 分配检票活动 | A4 + D1/D6 |
 
 #### 关系与限制
 
 - 检票员只能查看自己负责的活动，只能处理该活动的检票请求；不能修改报名状态，不能访问完整名单。
+- 管理员通过“分配检票活动”把检票员与活动关联起来；检票员的“负责活动”来自 `activity_inspector`，不是从检票请求反推。
 - `审核活动` 可由发布审核、修改审核、取消申请触发。
 - 管理员强制退票进入“自行取消”终态；紧急取消活动会触发批量退款和通知。
 - 管理员查看个人信息只限运营、举报、封禁所需范围。
@@ -390,7 +404,8 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 3. 组织者的修改/取消是否体现了“重新审核/管理员审批”；
 4. 检票员是否只做检票请求处理，没有修改报名状态；
 5. 管理员是否覆盖审核、举报、封禁、强制退票、紧急取消、审计；
-6. 是否把“报名流程”画成了用例之间的顺序（不应该）。
+6. 管理员是否可以把检票员分配到活动，检票员是否只查看/处理负责活动；
+7. 是否把“报名流程”画成了用例之间的顺序（不应该）。
 
 ---
 
@@ -421,27 +436,31 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | 2 | 提交报名请求（携带 `requestId`） | 参与者 | 用于幂等 |
 | 3 | 校验登录、角色、数据范围 | A1 + M7 | 不通过则拒绝 |
 | 4 | 重复请求或已报名？ | A1 + D3 | 是：返回已有结果（幂等） |
-| 5 | 报名时间有效？ | A1 | 否：返回未开始/已截止 |
+| 5 | 报名时间有效？ | A1 | 否：写失败审计，返回未开始/已截止 |
 | 6 | 原子扣减名额 | D2 | `UPDATE ... WHERE occupied < capacity` |
 | 7 | 扣减成功？ | D2 | 是：走成功分支；否：走满员分支 |
 | 8 | 创建报名记录 | D3 | 已购票、支付标记=已支付、金额快照 |
 | 9 | 写审计 | M7 | 报名成功 |
 | 10 | 提交事务，返回报名成功 | A1/D3 | 事务提交后返回 |
-| 11 | 允许候补且未过候补截止？ | D4 | 否：返回名额已满/不允许候补/已截止 |
-| 12 | 选择候补并完成支付标记 | 参与者 + D4 | 支付标记=已支付 |
-| 13 | 加入该票种候补队列 | D4 | 队尾，记录入队时间 |
-| 14 | 写审计（候补入队） | M7 | 关键操作留痕 |
-| 15 | 提交事务，返回候补入队成功 | A1/D4 | 仅表示成功加入候补队列 |
+| 11 | 允许候补且未过候补截止？ | D4 | 否：写失败审计，返回名额已满/不允许候补/已截止 |
+| 12 | 该账号在此场次已有有效候补？ | D4 | 是：写失败审计，返回已有有效候补 |
+| 13 | 选择候补并完成支付标记 | 参与者 + D4 | 支付标记=已支付 |
+| 14 | 加入该票种候补队列 | D4 | 队尾，记录入队时间 |
+| 15 | 写审计（候补入队） | M7 | 关键操作留痕 |
+| 16 | 提交事务，返回候补入队成功 | A1/D4 | 仅表示成功加入候补队列 |
+
+> 失败分支的审计在业务事务回滚后用独立事务写入，记录失败原因；报名成功分支的审计与业务同事务提交。
 
 ### 3. 关键设计点
 
 1. **幂等**：请求携带 `requestId`；重复请求返回第一次结果，不再扣名额。
 2. **截止判定**：使用服务器时间；未开始或已截止直接失败。
 3. **不超发**：名额由 D2 原子扣减，条件更新失败即视为满员。
-4. **无票进候补**：扣减失败后，只有“允许候补且未过候补截止”才进入候补；否则直接失败。这就是业务上的“报名 → 查余票 → 无票 → 候补”方向。
-5. **事务一致**：名额扣减、报名记录、审计在同一数据库事务内；失败回滚。
-6. **候补 FIFO**：候补记录按 `joinTime/id` 排序，入队尾，递补从队首取。
-7. **行动作前缀**：A1/D2/D3/D4/M7 表示负责模块；本图不画泳道，避免泳道切换造成连线打结。
+4. **无票进候补**：扣减失败后，只有“允许候补且未过候补截止”且“该账号没有有效候补”才进入候补；否则直接失败。这就是业务上的“报名 → 查余票 → 无票 → 候补”方向。
+5. **事务一致**：报名成功时名额扣减、报名记录、审计在同一数据库事务内；候补入队时候补记录、审计在同一事务内；失败回滚。
+6. **失败留痕**：报名失败（未开始/已截止、名额已满且不能候补、重复候补）在业务事务回滚后用独立事务写审计，记录失败原因（REQ-039）。
+7. **候补 FIFO**：候补记录按 `joinTime/id` 排序，入队尾，递补从队首取。
+8. **行动作前缀**：A1/D2/D3/D4/M7 表示负责模块；本图不画泳道，避免泳道切换造成连线打结。
 
 ### 4. 为什么不用泳道
 
@@ -452,9 +471,9 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 1. 重复请求是否在扣名额之前被拦截；
 2. 截止时间是否在扣名额之前判断；
 3. 名额扣减失败后是否才进入候补；
-4. 候补是否要求“允许候补且未过截止”；
+4. 候补是否要求“允许候补、未过截止且没有有效候补”；
 5. 报名成功/候补入队成功是否都在事务提交后才返回；
-6. 审计是否覆盖报名成功和候补入队。
+6. 审计是否覆盖报名成功、报名失败和候补入队；失败分支是否注明独立事务。
 
 ---
 
@@ -595,7 +614,7 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 | — | 加入票种候补队列（队尾） | 候补中 | 记录入队时间、支付标记 |
 | 候补中 | 名额释放，队首递补成功 | 已递补 | 生成“已购票”报名记录 |
 | 候补中 | 参与者取消 | 自行取消 | 退全款 |
-| 候补中 | 候补截止仍未递补 | 候补失败 | 退全款 |
+| 候补中 | 候补截止仍未递补或者活动取消 | 候补失败 | 退全款 |
 | 已递补/自行取消/候补失败 | — | 终态 | — |
 
 说明：
@@ -619,4 +638,5 @@ S1 通知、S2 持久化/并发才是技术支撑，放在单独的“技术支�
 3. 报名记录终态是否不可再变；
 4. 活动取消时已购票和已检票是否都进入“活动取消”；
 5. 候补记录的已递补是否生成报名记录，而不是直接算“最终买到票”；
-6. 缺席是否不释放名额。
+6. 缺席是否不释放名额；
+7. 候补截止仍未递补或者活动取消时，候补记录是否进入“候补失败”并退款。

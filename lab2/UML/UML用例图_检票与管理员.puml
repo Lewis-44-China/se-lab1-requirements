@@ -28,6 +28,7 @@ rectangle "活动票务与报名系统" {
   usecase "查看全平台数据" as PlatformData
   usecase "查询审计" as Audit
   usecase "创建检票账号" as CreateInspector
+  usecase "分配检票活动" as AssignInspector
 }
 Inspector --> Login
 Admin --> Login
@@ -41,6 +42,7 @@ Admin --> EmergencyCancel
 Admin --> PlatformData
 Admin --> Audit
 Admin --> CreateInspector
+Admin --> AssignInspector
 note right of Review
   审核申请可由发布、修改、
   取消申请触发。

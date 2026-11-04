@@ -63,6 +63,7 @@ enum NotificationType {
   ACTIVITY_CHANGED
   WAITLIST_PROMOTED
   FORCE_REFUND
+  ACTIVITY_CANCELLED
 }
 
 Account "1" -- "*" Report : 提交

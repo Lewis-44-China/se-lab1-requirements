@@ -15,7 +15,7 @@ state "候补失败" as FAILED
 [*] --> WAITING : 加入票种候补队列（队尾）
 WAITING --> PROMOTED : 名额释放，队首递补成功
 WAITING --> SELF_CANCELLED : 参与者取消（退全款）
-WAITING --> FAILED : 候补截止仍未递补（退全款）
+WAITING --> FAILED : 候补截止仍未递补或者活动取消（退全款）
 
 PROMOTED --> [*]
 SELF_CANCELLED --> [*]
@@ -29,5 +29,6 @@ end note
 legend bottom
   终态：已递补、自行取消、候补失败；终态不可再变更。
   队列按 joinTime/id 排序；入队在队尾，递补从队首取。
+  候补截止仍未递补或者活动取消时，候补记录进入候补失败并退全款。
 endlegend
 @enduml
