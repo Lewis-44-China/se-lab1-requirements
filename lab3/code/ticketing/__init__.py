@@ -1,13 +1,12 @@
 """活动票务与报名系统（实验三实现包）。
 
-包内按实验二设计基线划分：
-- models / db：领域对象与持久化；
-- auth / activities / registrations / waitlist / refunds / checkin / admin：
-  对应共享写能力 D1～D6；
-- queries：对应只读查询 Q1；
-- audit / permissions：对应业务约束 M7；
-- notifications：对应技术支撑 S1；
-- scheduler：时间推动与 Outbox 递补编排。
+按架构分层组织：
+- presentation：终端菜单、输入与渲染（表现层）；
+- application：跨领域用例编排、系统任务与演示数据（应用层）；
+- domain：领域对象、业务异常与各领域能力服务（共享能力层）；
+- common：权限、审计与通知（横切能力）；
+- infrastructure：数据库、时钟与安全工具（基础设施）；
+- container：组合根，负责装配所有服务。
 """
 
 __version__ = "1.0.0"

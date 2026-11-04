@@ -18,26 +18,35 @@
 ```text
 lab3/
 ├── code/
-│   ├── ticketing/            # 主代码（25 个模块，约 6400 行）
-│   │   ├── models.py         # 领域枚举与数据对象（对应 UML 类）
-│   │   ├── db.py             # SQLite 连接/事务（S2）
-│   │   ├── auth.py           # 注册登录（A0 + D6）
-│   │   ├── activities.py     # 活动/场次/票种/审核（D1）
-│   │   ├── tickets.py        # 名额原子占用/释放（D2）
-│   │   ├── registrations.py  # 报名购票/幂等（D3）
-│   │   ├── waitlist.py       # 候补 FIFO/退款（D4）
-│   │   ├── refunds.py        # 退票/强制退票/活动取消（D4）
-│   │   ├── promotion.py      # Outbox 递补编排（D3/D4 解耦）
-│   │   ├── checkin.py        # 检票请求与处理（D5）
-│   │   ├── queries.py        # 查询/名单/统计/审计范围（Q1）
-│   │   ├── audit.py          # 审计留痕（M7）
-│   │   ├── permissions.py    # 角色/数据范围（M7）
-│   │   ├── notifications.py  # 站内消息（S1）
-│   │   ├── scheduler.py      # 时间推动 + Outbox 消费
-│   │   ├── cli.py            # 四角色终端界面
-│   │   └── seed.py           # 演示数据
+│   ├── ticketing/            # 主代码（30 个 .py，约 6400 行）
+│   │   ├── presentation/     # 表现层：终端界面与渲染
+│   │   │   ├── cli.py
+│   │   │   └── render.py
+│   │   ├── application/      # 应用层：用例编排与系统任务
+│   │   │   ├── admin.py      # 审核、封禁、举报（A4）
+│   │   │   ├── promotion.py  # Outbox 递补编排（D3/D4）
+│   │   │   ├── scheduler.py  # 时间推动 + Outbox 消费
+│   │   │   └── seed.py       # 演示数据
+│   │   ├── domain/           # 共享能力层：领域对象与业务能力
+│   │   │   ├── models.py / errors.py
+│   │   │   ├── auth.py       # A0 + D6
+│   │   │   ├── activities.py # D1
+│   │   │   ├── tickets.py    # D2
+│   │   │   ├── registrations.py / waitlist.py / refunds.py # D3/D4
+│   │   │   ├── checkin.py    # D5
+│   │   │   ├── queries.py    # Q1
+│   │   │   └── reports.py    # A1
+│   │   ├── common/           # 横切能力
+│   │   │   ├── audit.py      # M7
+│   │   │   ├── permissions.py# M7
+│   │   │   └── notifications.py # S1
+│   │   ├── infrastructure/   # 基础设施
+│   │   │   ├── db.py         # S2
+│   │   │   ├── clock.py
+│   │   │   └── security.py
+│   │   └── container.py      # 组合根
 │   ├── tests/                # 38 个 unittest 测试
-│   ├── schema.sql            # 数据库表、约束、索引
+│   ├── schema.sql            # 数据库表、约束、索引（数据层）
 │   ├── main.py               # 入口
 │   ├── Makefile              # run/test/lint/seed/clean
 │   └── pylintrc              # 代码规范配置
@@ -47,6 +56,9 @@ lab3/
 ├── AI使用记录.md             # AI 辅助实现的过程记录
 └── 工具/打包.py              # 生成交付 zip
 ```
+
+分层依赖：`presentation → application → domain → common → infrastructure`；
+`container.py` 是唯一可同时引用所有层的组合根。
 
 ## 三、运行
 
