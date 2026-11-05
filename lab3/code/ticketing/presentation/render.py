@@ -4,6 +4,9 @@
 所有输入都做了基本校验，服务层仍会再校验一次业务规则。
 """
 
+# 审查通过：表格按 CJK 显示宽度对齐；输入辅助只做格式/范围检查；
+# 成功/警告/错误提示统一，业务规则仍由服务层兜底。
+
 from __future__ import annotations
 
 import unicodedata
@@ -101,6 +104,7 @@ def pad(text: str, width: int) -> str:
     return str(text) + " " * max(0, width - display_width(str(text)))
 
 
+# 按 CJK 显示宽度对齐，避免中文表格错位。
 def print_table(headers: list[str], rows: Iterable[Iterable[object]]) -> None:
     """打印对齐的终端表格。"""
     data = [[str(cell) for cell in row] for row in rows]

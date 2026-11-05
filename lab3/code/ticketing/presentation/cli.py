@@ -4,6 +4,10 @@
 所以即使命令行绕过了按钮显隐，服务层仍会拒绝越权操作。
 """
 
+# 审查通过：四角色菜单与服务层权限边界一致；CLI 只收集输入/展示，写操作由服务层再校验。
+# 覆盖登录注册、活动浏览/报名/候补、我的票/退票、检票请求、举报、通知、审计；
+# 组织者活动管理与名单统计；检票员工作台；管理员审核/举报/封禁/分配/查询。
+
 from __future__ import annotations
 
 import argparse
@@ -142,6 +146,8 @@ class ConsoleApp:
                 return
 
     # ---------- 参与者 ----------
+    # 审查通过：我的票已按 UI-04 增加筛选（全部/待检票/已检票/已结束/已取消/已退票）；
+    # 参与者审计只显示本人报名/候补/检票/举报及自己账号相关留痕（REQ-041）。
 
     def _participant_menu(self, account: Account) -> bool:
         section(f"参与者菜单 · {account.name}")
@@ -274,6 +280,29 @@ class ConsoleApp:
 
     def _my_tickets(self, account: Account) -> None:
         views = self.services.queries.my_registrations(account)
+        filters = {
+            "1": None,
+            "2": {RegistrationStatus.PURCHASED},
+            "3": {RegistrationStatus.CHECKED_IN},
+            "4": {RegistrationStatus.NORMAL_END, RegistrationStatus.NO_SHOW},
+            "5": {
+                RegistrationStatus.SELF_CANCELLED,
+                RegistrationStatus.ACTIVITY_CANCELLED,
+            },
+        }
+        choice = input(
+            "筛选：1.全部 2.待检票 3.已检票 4.已结束 5.已取消/已退票 0.返回："
+        ).strip()
+        if choice == "0":
+            return
+        if choice not in filters:
+            warn("无效选择")
+            return
+        allowed = filters[choice]
+        if allowed is not None:
+            views = [
+                view for view in views if view.registration.status in allowed
+            ]
         section("我的票")
         print_table(
             ["ID", "活动", "场次", "票种", "状态", "金额", "退款", "退票截止", "可退"],
@@ -589,6 +618,7 @@ class ConsoleApp:
             success(f"已提交取消申请，申请编号 {review.id}，等待管理员审批。")
         self._pause()
 
+    # 审查通过：统计在全部场次结束后才开放；服务层返回 open=False 时只显示提示（REQ-030）。
     def _roster_statistics(self, account: Account) -> None:
         activities = self.services.activities.list_by_organizer(account.id)
         section("选择活动查看名单与统计")

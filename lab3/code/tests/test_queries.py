@@ -7,7 +7,7 @@ import unittest
 from datetime import timedelta
 from pathlib import Path
 
-from ticketing.domain.models import RegistrationStatus
+from ticketing.domain.models import RegistrationStatus, Role
 
 from .helpers import ServiceTestCase
 
@@ -109,6 +109,22 @@ class QueryTests(ServiceTestCase):
         self.assertIsNotNone(
             self.s.registrations.get_registration(registration.id)
         )
+
+    def test_audit_scope_includes_reported_organizer(self) -> None:
+        activity = self.make_activity()
+        report = self.s.reports.submit_report(
+            self.people[0], activity.id, "测试举报"
+        )
+        self.s.admin.handle_report(
+            self.admin, report.id, dismiss=True, result="举报不属实"
+        )
+        logs = self.s.queries.audit_query(self.organizer, object_type="REPORT")
+        self.assertTrue(any(item.object_id == report.id for item in logs))
+        other = self.s.auth.register(
+            "13700000099", "Org@123", "其他组织者", Role.ORGANIZER
+        )
+        other_logs = self.s.queries.audit_query(other, object_type="REPORT")
+        self.assertFalse(any(item.object_id == report.id for item in other_logs))
 
     def test_platform_summary(self) -> None:
         self.make_activity()

@@ -608,7 +608,14 @@ class QueryService:
                     (SELECT r.id FROM review_application r
                        JOIN activity a ON a.id = r.activity_id
                       WHERE a.organizer_id = ?))
+                OR (object_type = 'REPORT' AND object_id IN
+                    (SELECT r.id FROM report r
+                       JOIN activity a ON a.id = r.activity_id
+                      WHERE a.organizer_id = ?))
+                OR (object_type = 'ACCOUNT' AND object_id = ?)
                 """,
+                viewer.id,
+                viewer.id,
                 viewer.id,
                 viewer.id,
                 viewer.id,
@@ -627,7 +634,9 @@ class QueryService:
                       WHERE r.account_id = ?))
                 OR (object_type = 'REPORT' AND object_id IN
                     (SELECT id FROM report WHERE reporter_id = ?))
+                OR (object_type = 'ACCOUNT' AND object_id = ?)
                 """,
+                viewer.id,
                 viewer.id,
                 viewer.id,
                 viewer.id,

@@ -37,6 +37,7 @@ test_cancel_refunds_full_amount (tests.test_lifecycle.WaitlistTests) ... ok
 test_expire_refunds (tests.test_lifecycle.WaitlistTests) ... ok
 test_fifo_and_promotion (tests.test_lifecycle.WaitlistTests) ... ok
 test_audit_scope_by_role (tests.test_queries.QueryTests) ... ok
+test_audit_scope_includes_reported_organizer (tests.test_queries.QueryTests) ... ok
 test_export_csv_has_no_phone (tests.test_queries.QueryTests) ... ok
 test_organizer_roster_masks_phone (tests.test_queries.QueryTests) ... ok
 test_participant_cannot_see_draft (tests.test_queries.QueryTests) ... ok
@@ -44,6 +45,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 44 tests in 29.163s
+Ran 45 tests in 30.236s
 
 OK
