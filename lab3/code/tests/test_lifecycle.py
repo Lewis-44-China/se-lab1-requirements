@@ -121,6 +121,30 @@ class RefundTests(ServiceTestCase):
         with self.assertRaises(Conflict):
             self.s.refunds.force_refund(self.admin, registration.id, "测试")
 
+    def test_stale_cancel_does_not_duplicate_activity_audit(self) -> None:
+        """并发取消时，第二个持有旧活动对象的调用不能重复写审计/通知。"""
+        activity = self.make_activity()
+        self.register(self.people[0], activity)
+        stale = self.s.activities.get_activity(activity.id)
+        self.s.refunds.cancel_activity(self.admin, activity.id, "第一次")
+        with self.assertRaises(Conflict):
+            with self.db.transaction() as conn:
+                self.s.refunds.cancel_activity_conn(
+                    conn, self.admin.id, stale, "重复取消"
+                )
+        audits = self.db.query_all(
+            "SELECT * FROM audit_log WHERE action = 'ACTIVITY_CANCELLED' "
+            "AND object_type = 'ACTIVITY' AND object_id = ?",
+            (activity.id,),
+        )
+        self.assertEqual(len(audits), 1)
+        notices = self.db.query_all(
+            "SELECT * FROM notification WHERE type = 'ACTIVITY_CANCELLED' "
+            "AND recipient_id = ?",
+            (self.organizer.id,),
+        )
+        self.assertEqual(len(notices), 1)
+
 
 class CheckinTests(ServiceTestCase):
     """检票请求、通过、异常与权限。"""

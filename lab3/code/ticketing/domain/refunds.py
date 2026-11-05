@@ -61,6 +61,12 @@ class RefundService:
         self.notifications = notifications
         self.waitlist = waitlist
 
+    # 第二轮审查：入口 1/2 不单独写审计，由共用的 _refund_registration_conn 写
+    # 报名对象上的 REFUND / FORCE_REFUND，符合 REQ-039“退票/强制退票留痕”。
+    # 活动取消不是“重复写”：一次取消会产生三类记录——每条报名一条 REFUND、
+    # 每条候补一条 WAITLIST_FAILED、活动本身一条 ACTIVITY_CANCELLED，
+    # 对象类型/对象 id/action 都不同；同一条记录不会被重复退款或重复审计。
+
     # 入口 1：参与者本人退票。校验参与者角色、本人、已购票、未过退票截止。
     # 自己开事务；write_event=True 会在释放名额后写 CapacityReleased，
     # 由 Scheduler.tick → PromotionService 触发候补递补。
@@ -148,10 +154,23 @@ class RefundService:
             raise Conflict("活动已取消")
         if activity.status is ActivityStatus.ENDED:
             raise Conflict("活动已结束，不能取消")
-        conn.execute(
-            "UPDATE activity SET status = ? WHERE id = ?",
-            (ActivityStatus.CANCELLED.value, activity.id),
+        # 第二轮审查 Q45：条件 UPDATE + rowcount，防止两个并发取消都拿着
+        # 事务外的旧状态对象进入，第二个重复写活动审计/通知。
+        cursor = conn.execute(
+            """
+            UPDATE activity
+               SET status = ?
+             WHERE id = ? AND status NOT IN (?, ?)
+            """,
+            (
+                ActivityStatus.CANCELLED.value,
+                activity.id,
+                ActivityStatus.CANCELLED.value,
+                ActivityStatus.ENDED.value,
+            ),
         )
+        if cursor.rowcount != 1:
+            raise Conflict("活动已取消或已结束，不能重复取消")
         conn.execute(
             "UPDATE activity_session SET status = ? WHERE activity_id = ?",
             (SessionStatus.CANCELLED.value, activity.id),
@@ -214,6 +233,12 @@ class RefundService:
     # 3) 写报名审计；
     # 4) write_event=True 时写 Outbox，触发候补递补；notify 非空时发站内消息。
     # 状态区分：参与者/强制退票传 SELF_CANCELLED；活动取消传 ACTIVITY_CANCELLED。
+
+    # 第二轮审查：退票后 tickets.release() 把 occupied 减 1，余票不是单独字段，
+    # 而是实时计算 capacity - occupied；有候补时 Outbox 事件触发递补（重新占用），
+    # 没有候补时事件被消费后直接结束，名额就留在余票池里。
+    # 场次的 FULL 状态由 Scheduler.tick 的 refresh_statuses() 在下一次菜单循环
+    # 重算为 OPEN，不需要额外的“回补”操作。
     def _refund_registration_conn(
         self,
         conn: sqlite3.Connection,

@@ -36,6 +36,8 @@ test_pending_requests_mask_phone (tests.test_lifecycle.CheckinTests) ... ok
 test_force_refund_checked_in_rejected (tests.test_lifecycle.RefundTests) ... ok
 test_force_refund_refunds_notifies_and_audits (tests.test_lifecycle.RefundTests) ... ok
 test_refund_after_deadline_fails (tests.test_lifecycle.RefundTests) ... ok
+test_stale_cancel_does_not_duplicate_activity_audit (tests.test_lifecycle.RefundTests)
+并发取消时，第二个持有旧活动对象的调用不能重复写审计/通知。 ... ok
 test_activity_status_moves_with_time (tests.test_lifecycle.SchedulerTests) ... ok
 test_session_end_marks_no_show_and_normal_end (tests.test_lifecycle.SchedulerTests) ... ok
 test_cancel_refunds_full_amount (tests.test_lifecycle.WaitlistTests) ... ok
@@ -50,6 +52,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 49 tests in 34.664s
+Ran 50 tests in 35.083s
 
 OK
