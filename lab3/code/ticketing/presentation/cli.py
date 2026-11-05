@@ -536,8 +536,8 @@ class ConsoleApp:
         self._print_detail(detail)
         print("  1. 提交发布审核")
         print("  2. 修改表面信息（名称/描述/封面/标签，直接生效）")
-        print("  3. 修改地点/场次时间（提交修改审核）")
-        print("  4. 修改票价/容量（开售前，提交修改审核）")
+        print("  3. 修改地点/场次时间（草稿直接生效，发布后需审核）")
+        print("  4. 修改票价/容量（草稿直接生效，发布后开售前需审核）")
         print("  5. 申请取消活动（需管理员审批）")
         print("  0. 返回")
         choice = input("请选择：").strip()
@@ -579,6 +579,8 @@ class ConsoleApp:
             )
             if review is not None:
                 success(f"已提交修改审核，申请编号 {review.id}")
+            else:
+                success("修改已直接生效（草稿）。")
         elif choice == "4":
             print_table(
                 ["票种 ID", "类型", "价格", "容量", "已占用"],
@@ -610,6 +612,8 @@ class ConsoleApp:
             )
             if review is not None:
                 success(f"已提交修改审核，申请编号 {review.id}")
+            else:
+                success("修改已直接生效（草稿）。")
         elif choice == "5":
             reason = ask("取消原因")
             review = self.services.activities.request_cancel(

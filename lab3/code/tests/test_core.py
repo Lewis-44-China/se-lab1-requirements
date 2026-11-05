@@ -85,6 +85,49 @@ class ActivityTests(ServiceTestCase):
             ActivityStatus.DRAFT,
         )
 
+    def test_draft_modification_applied_directly(self) -> None:
+        now = self.clock.now()
+        draft = self.make_activity(publish=False)
+        ticket = self.ticket(draft, TicketKind.NORMAL)
+        session = self.s.activities.get_sessions(draft.id)[0]
+        review = self.s.activities.modify_activity(
+            self.organizer,
+            draft.id,
+            location="新地点",
+            session_updates=[
+                {
+                    "session_id": session.id,
+                    "start_time": now + timedelta(days=3),
+                    "end_time": now + timedelta(days=3, hours=3),
+                    "checkin_open_time": now + timedelta(days=2, hours=23),
+                }
+            ],
+            ticket_updates=[
+                {
+                    "ticket_type_id": ticket.id,
+                    "price_cents": 8800,
+                    "capacity": 5,
+                }
+            ],
+        )
+        self.assertIsNone(review)
+        updated = self.s.activities.get_activity(draft.id)
+        self.assertIs(updated.status, ActivityStatus.DRAFT)
+        self.assertEqual(updated.location, "新地点")
+        updated_ticket = self.s.tickets.get_ticket_type(ticket.id)
+        self.assertEqual(updated_ticket.price_cents, 8800)
+        self.assertEqual(updated_ticket.capacity, 5)
+        updated_session = self.s.activities.get_session(session.id)
+        self.assertNotEqual(updated_session.start_time, session.start_time)
+        rows = self.db.query_all(
+            """
+            SELECT * FROM review_application
+             WHERE activity_id = ? AND type = 'MODIFY' AND status = 'PENDING'
+            """,
+            (draft.id,),
+        )
+        self.assertEqual(rows, [])
+
     def test_ticket_change_before_sale_needs_review(self) -> None:
         now = self.clock.now()
         activity = self.make_activity(

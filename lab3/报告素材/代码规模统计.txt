@@ -1,9 +1,9 @@
 实验三代码规模统计
 说明：行数按 wc -l 口径；有效代码行=非空且非纯注释行；AST 统计类/函数数量。
 
-主代码 ticketing/: 文件 30 个，总行 6741，空行 627，注释行 285，有效代码行 5829，类 64，函数/方法 267
-测试 tests/: 文件 5 个，总行 974，空行 102，注释行 4，有效代码行 868，类 10，函数/方法 55
-合计: 文件 35 个，总行 7715，空行 729，注释行 289，有效代码行 6697，类 74，函数/方法 322
+主代码 ticketing/: 文件 30 个，总行 6790，空行 628，注释行 286，有效代码行 5876，类 64，函数/方法 267
+测试 tests/: 文件 5 个，总行 1017，空行 103，注释行 4，有效代码行 910，类 10，函数/方法 56
+合计: 文件 35 个，总行 7807，空行 731，注释行 290，有效代码行 6786，类 74，函数/方法 323
 
 主代码文件明细：
   ticketing/__init__.py                            12 行
@@ -18,7 +18,7 @@
   ticketing/common/permissions.py                  71 行
   ticketing/container.py                           98 行
   ticketing/domain/__init__.py                      1 行
-  ticketing/domain/activities.py                  819 行
+  ticketing/domain/activities.py                  864 行
   ticketing/domain/auth.py                        209 行
   ticketing/domain/checkin.py                     335 行
   ticketing/domain/errors.py                       49 行
@@ -34,5 +34,5 @@
   ticketing/infrastructure/db.py                   84 行
   ticketing/infrastructure/security.py             96 行
   ticketing/presentation/__init__.py                1 行
-  ticketing/presentation/cli.py                  1150 行
+  ticketing/presentation/cli.py                  1154 行
   ticketing/presentation/render.py                213 行

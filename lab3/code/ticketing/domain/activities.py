@@ -256,7 +256,8 @@ class ActivityService:
     ) -> ReviewApplication | None:
         """修改活动。
 
-        返回 None 表示只改了表面信息；返回审核申请表示有待审修改。
+        返回 None 表示没有待审修改（表面信息或草稿直接修改）；
+        返回审核申请表示发布后的修改已进入审核。
         """
         activity = self.get_activity(activity_id)
         PermissionService.require_activity_owner(organizer, activity.organizer_id)
@@ -288,8 +289,48 @@ class ActivityService:
             )
         if ticket_updates:
             payload["tickets"] = self._build_ticket_updates(
-                activity, ticket_updates
+                activity,
+                ticket_updates,
+                check_sale=activity.status is not ActivityStatus.DRAFT,
             )
+        # 草稿尚未公开，所有修改直接生效，不生成修改审核单。
+        if activity.status is ActivityStatus.DRAFT:
+            changes: list[str] = []
+            with self.db.transaction() as conn:
+                if direct_changes:
+                    self._apply_direct_changes(
+                        conn, activity, direct_changes, organizer.id
+                    )
+                if "location" in payload:
+                    conn.execute(
+                        "UPDATE activity SET location = ? WHERE id = ?",
+                        (payload["location"], activity.id),
+                    )
+                    changes.append(f"地点改为 {payload['location']}")
+                for item in payload.get("sessions", []):
+                    self._apply_session_update(conn, activity.id, item)
+                    changes.append(f"场次 {item['session_id']} 时间调整")
+                for item in payload.get("tickets", []):
+                    self.tickets.update_ticket(
+                        conn,
+                        int(item["ticket_type_id"]),
+                        int(item["price_cents"]),
+                        int(item["capacity"]),
+                    )
+                    changes.append(f"票种 {item['ticket_type_id']} 价格/容量调整")
+                if changes:
+                    self.audit.record(
+                        conn,
+                        organizer.id,
+                        "ACTIVITY",
+                        activity.id,
+                        "ACTIVITY_UPDATED",
+                        "草稿直接修改：" + "；".join(changes),
+                        activity.status.value,
+                        activity.status.value,
+                    )
+            return None
+
         if payload and self._has_pending_review(activity_id, ReviewType.MODIFY):
             raise Conflict("该活动已有待处理的修改审核")
 
@@ -313,10 +354,10 @@ class ActivityService:
                 )
         return self.get_review(review_id) if review_id is not None else None
 
-    # 审查通过：修改规则与 REQ-010 一致——
-    #   容量/票价：开售前可改，须审核；开售后禁止（_build_ticket_updates）；
-    #   时间/地点：开售前后都须审核；
-    #   名称/描述/封面/标签：表面信息直接生效。
+    # 审查通过：修改规则——
+    #   草稿 DRAFT：所有字段直接生效（未公开，无需审核）；
+    #   发布后（PUBLISHED/ONGOING）：容量/票价开售前可改须审核、开售后禁止；
+    #   时间/地点须审核；名称/描述/封面/标签直接生效。
     # 名称归类需求未明确，按表面信息处理（已在实现基线说明）。
     # 申请取消（事务内）：插入 CANCEL 审核单并写审计，不直接改活动状态；
     # 是否真正取消由管理员审核决定。
@@ -747,12 +788,16 @@ class ActivityService:
             )
         return result
 
-    # 票价/容量修改校验：开售后禁止；容量不能低于已占用。
+    # 票价/容量修改校验：发布后开售禁止；草稿不检查开售时间；容量不能低于已占用。
     def _build_ticket_updates(
-        self, activity: Activity, updates: list[dict]
+        self,
+        activity: Activity,
+        updates: list[dict],
+        *,
+        check_sale: bool = True,
     ) -> list[dict]:
-        """校验容量/票价修改：开售后禁止。"""
-        if self.clock.now() >= parse_dt(activity.sale_start):
+        """校验容量/票价修改。"""
+        if check_sale and self.clock.now() >= parse_dt(activity.sale_start):
             raise PermissionDenied("开售后禁止修改容量与票价")
         result: list[dict] = []
         for update in updates:
