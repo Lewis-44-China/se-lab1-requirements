@@ -207,7 +207,7 @@ class ActivityTests(ServiceTestCase):
         now = self.clock.now()
         activity = self.make_activity(
             sale_start=now - timedelta(days=1),
-            sale_end=now + timedelta(days=1),
+            sale_end=now + timedelta(minutes=30),
             refund_deadline=now + timedelta(days=1),
             session_start=now + timedelta(days=2),
             checkin_open=now + timedelta(days=1, hours=23),
@@ -223,6 +223,41 @@ class ActivityTests(ServiceTestCase):
                         "start_time": now + timedelta(hours=1),
                         "end_time": now + timedelta(hours=4),
                         "checkin_open_time": now,
+                    }
+                ],
+            )
+
+    def test_sale_end_must_be_before_first_session_start(self) -> None:
+        now = self.clock.now()
+        with self.assertRaises(ValidationError):
+            self.make_activity(
+                sale_end=now + timedelta(days=1),
+                waitlist_deadline=now + timedelta(hours=12),
+                refund_deadline=now + timedelta(hours=12),
+                session_start=now + timedelta(days=1),
+                checkin_open=now + timedelta(hours=12),
+            )
+
+    def test_session_change_cannot_start_before_sale_end(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            sale_end=now + timedelta(days=1),
+            waitlist_deadline=now + timedelta(hours=20),
+            refund_deadline=now + timedelta(hours=20),
+            session_start=now + timedelta(days=2),
+            checkin_open=now + timedelta(hours=23),
+        )
+        session = self.s.activities.get_sessions(activity.id)[0]
+        with self.assertRaises(ValidationError):
+            self.s.activities.modify_activity(
+                self.organizer,
+                activity.id,
+                session_updates=[
+                    {
+                        "session_id": session.id,
+                        "start_time": now + timedelta(hours=23, minutes=30),
+                        "end_time": now + timedelta(days=1, hours=3),
+                        "checkin_open_time": now + timedelta(hours=22),
                     }
                 ],
             )

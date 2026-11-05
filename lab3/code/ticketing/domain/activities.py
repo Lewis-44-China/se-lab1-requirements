@@ -663,6 +663,9 @@ class ActivityService:
         if not draft.sessions:
             raise ValidationError("至少需要一个场次")
         first_start = min(item.start_time for item in draft.sessions)
+        # 第二轮审查 Q34：场次开始后不应还能售票，售票截止必须严格早于最早场次开始。
+        if draft.sale_end >= first_start:
+            raise ValidationError("售票截止时间必须早于最早场次开始时间")
         if not draft.sale_start <= draft.waitlist_deadline <= first_start:
             raise ValidationError("候补截止必须不早于开售时间，且不晚于最早场次开始")
         if not draft.sale_start <= draft.refund_deadline <= first_start:
@@ -746,6 +749,7 @@ class ActivityService:
 
     # 校验场次时间修改：除了 start < end、checkin <= start，还要保持活动级
     # 时间不变量（与创建时的 _validate_draft 一致）：
+    #   sale_end < start（场次开始后不能还在售票）
     #   sale_start <= checkin_open <= start
     #   refund_deadline <= start
     #   waitlist_deadline <= start
@@ -755,6 +759,7 @@ class ActivityService:
     ) -> list[dict]:
         """校验并序列化场次时间修改。"""
         sale_start = parse_dt(activity.sale_start)
+        sale_end = parse_dt(activity.sale_end)
         refund_deadline = parse_dt(activity.refund_deadline)
         waitlist_deadline = parse_dt(activity.waitlist_deadline)
         result: list[dict] = []
@@ -772,6 +777,9 @@ class ActivityService:
             )
             if start_dt >= end_dt:
                 raise ValidationError("场次开始时间必须早于结束时间")
+            # 第二轮审查 Q34：场次开始必须严格晚于售票截止。
+            if start_dt <= sale_end:
+                raise ValidationError("场次开始时间必须晚于售票截止时间")
             if not sale_start <= checkin_dt <= start_dt:
                 raise ValidationError("检票开放时间必须不早于开售时间且不晚于场次开始")
             if refund_deadline > start_dt:

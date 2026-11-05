@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS account (
 
 -- 活动：聚合根，组织者创建；状态由组织者、管理员和时间共同推动
 -- 与实验二略有不同，将活动时间属性细化到下面的session中，是合理的
+-- 第二轮审查 Q34：应用层不变量 sale_end < 最早场次 start_time（场次开始后不能售票）；
+-- 该约束跨表，SQLite CHECK 无法表达，由 ActivityService 的创建与场次修改校验保证。
 CREATE TABLE IF NOT EXISTS activity (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     organizer_id           INTEGER NOT NULL REFERENCES account(id),

@@ -5,6 +5,8 @@ test_modification_approval_after_cancel_rejected (tests.test_core.ActivityTests)
 test_publish_approval_after_cancel_rejected (tests.test_core.ActivityTests) ... ok
 test_publish_reject_returns_draft (tests.test_core.ActivityTests) ... ok
 test_publish_review_flow (tests.test_core.ActivityTests) ... ok
+test_sale_end_must_be_before_first_session_start (tests.test_core.ActivityTests) ... ok
+test_session_change_cannot_start_before_sale_end (tests.test_core.ActivityTests) ... ok
 test_session_time_change_respects_deadlines (tests.test_core.ActivityTests) ... ok
 test_ticket_change_after_sale_forbidden (tests.test_core.ActivityTests) ... ok
 test_ticket_change_approved_after_sale_forbidden (tests.test_core.ActivityTests) ... ok
@@ -46,6 +48,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 46 tests in 30.843s
+Ran 48 tests in 33.386s
 
 OK

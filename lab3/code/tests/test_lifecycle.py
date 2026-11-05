@@ -54,7 +54,7 @@ class WaitlistTests(ServiceTestCase):
         now = self.clock.now()
         activity = self.make_activity(
             normal_capacity=1,
-            sale_end=now + timedelta(hours=1),
+            sale_end=now + timedelta(minutes=30),
             refund_deadline=now,
             session_start=now + timedelta(hours=1),
             session_end=now + timedelta(hours=2),
@@ -107,10 +107,11 @@ class RefundTests(ServiceTestCase):
     def test_force_refund_checked_in_rejected(self) -> None:
         now = self.clock.now()
         activity = self.make_activity(
-            refund_deadline=now - timedelta(hours=2),
-            session_start=now - timedelta(hours=1),
-            session_end=now + timedelta(hours=2),
-            checkin_open=now - timedelta(hours=2),
+            sale_end=now + timedelta(hours=1),
+            refund_deadline=now + timedelta(hours=1),
+            session_start=now + timedelta(hours=2),
+            session_end=now + timedelta(hours=3),
+            checkin_open=now - timedelta(hours=1),
         )
         registration = self.register(self.people[0], activity)
         request = self.s.checkin.request_checkin(
@@ -124,17 +125,19 @@ class RefundTests(ServiceTestCase):
 class CheckinTests(ServiceTestCase):
     """检票请求、通过、异常与权限。"""
 
-    def _ongoing(self):
+    def _checkin_ready(self):
+        # 售票截止必须早于场次开始；把场次放在未来，检票窗口现在已开放。
         now = self.clock.now()
         return self.make_activity(
-            refund_deadline=now - timedelta(hours=2),
-            session_start=now - timedelta(hours=1),
-            session_end=now + timedelta(hours=2),
-            checkin_open=now - timedelta(hours=2),
+            sale_end=now + timedelta(hours=1),
+            refund_deadline=now + timedelta(hours=1),
+            session_start=now + timedelta(hours=2),
+            session_end=now + timedelta(hours=3),
+            checkin_open=now - timedelta(hours=1),
         )
 
     def test_checkin_pass_and_duplicate(self) -> None:
-        activity = self._ongoing()
+        activity = self._checkin_ready()
         registration = self.register(self.people[0], activity)
         request = self.s.checkin.request_checkin(
             self.people[0], registration.id
@@ -151,7 +154,7 @@ class CheckinTests(ServiceTestCase):
             )
 
     def test_pending_requests_mask_phone(self) -> None:
-        activity = self._ongoing()
+        activity = self._checkin_ready()
         registration = self.register(self.people[0], activity)
         self.s.checkin.request_checkin(self.people[0], registration.id)
         requests = self.s.checkin.list_pending_requests(self.inspector)
@@ -160,7 +163,7 @@ class CheckinTests(ServiceTestCase):
         self.assertNotEqual(requests[0].buyer_phone, self.people[0].phone)
 
     def test_abnormal_does_not_change_registration(self) -> None:
-        activity = self._ongoing()
+        activity = self._checkin_ready()
         registration = self.register(self.people[0], activity)
         request = self.s.checkin.request_checkin(
             self.people[0], registration.id
@@ -175,6 +178,7 @@ class CheckinTests(ServiceTestCase):
     def test_checkin_before_window_fails(self) -> None:
         now = self.clock.now()
         activity = self.make_activity(
+            sale_end=now + timedelta(minutes=30),
             refund_deadline=now + timedelta(hours=1),
             session_start=now + timedelta(hours=2),
             session_end=now + timedelta(hours=4),
@@ -190,7 +194,7 @@ class CheckinTests(ServiceTestCase):
         other = self.s.auth.create_inspector(
             self.admin, "13900000099", "Inspect@123", "另一检票员"
         )
-        activity = self._ongoing()
+        activity = self._checkin_ready()
         registration = self.register(self.people[0], activity)
         request = self.s.checkin.request_checkin(
             self.people[0], registration.id
@@ -206,8 +210,9 @@ class SchedulerTests(ServiceTestCase):
         now = self.clock.now()
         activity = self.make_activity(
             normal_capacity=2,
+            sale_end=now + timedelta(minutes=15),
             refund_deadline=now - timedelta(hours=1),
-            session_start=now,
+            session_start=now + timedelta(minutes=30),
             session_end=now + timedelta(hours=1),
             checkin_open=now - timedelta(hours=1),
         )
@@ -230,6 +235,7 @@ class SchedulerTests(ServiceTestCase):
     def test_activity_status_moves_with_time(self) -> None:
         now = self.clock.now()
         activity = self.make_activity(
+            sale_end=now + timedelta(minutes=30),
             refund_deadline=now + timedelta(hours=1),
             session_start=now + timedelta(hours=2),
             session_end=now + timedelta(hours=3),

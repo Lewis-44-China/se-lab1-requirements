@@ -1,38 +1,38 @@
 实验三代码规模统计
 说明：行数按 wc -l 口径；有效代码行=非空且非纯注释行；AST 统计类/函数数量。
 
-主代码 ticketing/: 文件 30 个，总行 6806，空行 627，注释行 285，有效代码行 5894，类 63，函数/方法 268
-测试 tests/: 文件 5 个，总行 1017，空行 103，注释行 4，有效代码行 910，类 10，函数/方法 56
-合计: 文件 35 个，总行 7823，空行 730，注释行 289，有效代码行 6804，类 73，函数/方法 324
+主代码 ticketing/: 文件 30 个，总行 6821，空行 627，注释行 295，有效代码行 5899，类 63，函数/方法 268
+测试 tests/: 文件 5 个，总行 1058，空行 105，注释行 5，有效代码行 948，类 10，函数/方法 58
+合计: 文件 35 个，总行 7879，空行 732，注释行 300，有效代码行 6847，类 73，函数/方法 326
 
 主代码文件明细：
-  ticketing/__init__.py                            12 行
-  ticketing/application/__init__.py                 1 行
-  ticketing/application/admin.py                  373 行
-  ticketing/application/promotion.py              195 行
-  ticketing/application/scheduler.py               99 行
-  ticketing/application/seed.py                   303 行
-  ticketing/common/__init__.py                      1 行
-  ticketing/common/audit.py                        87 行
-  ticketing/common/notifications.py                67 行
-  ticketing/common/permissions.py                  71 行
-  ticketing/container.py                           98 行
-  ticketing/domain/__init__.py                      1 行
-  ticketing/domain/activities.py                  864 行
-  ticketing/domain/auth.py                        209 行
-  ticketing/domain/checkin.py                     335 行
-  ticketing/domain/errors.py                       43 行
-  ticketing/domain/models.py                      515 行
-  ticketing/domain/queries.py                     653 行
-  ticketing/domain/refunds.py                     299 行
-  ticketing/domain/registrations.py               265 行
-  ticketing/domain/reports.py                      87 行
-  ticketing/domain/tickets.py                     120 行
-  ticketing/domain/waitlist.py                    441 行
-  ticketing/infrastructure/__init__.py              1 行
-  ticketing/infrastructure/clock.py                96 行
-  ticketing/infrastructure/db.py                   84 行
-  ticketing/infrastructure/security.py             96 行
-  ticketing/presentation/__init__.py                1 行
-  ticketing/presentation/cli.py                  1176 行
-  ticketing/presentation/render.py                213 行
+  ticketing/__init__.py                                12 行
+  ticketing/application/__init__.py                     1 行
+  ticketing/application/admin.py                      373 行
+  ticketing/application/promotion.py                  195 行
+  ticketing/application/scheduler.py                   99 行
+  ticketing/application/seed.py                       303 行
+  ticketing/common/__init__.py                          1 行
+  ticketing/common/audit.py                            87 行
+  ticketing/common/notifications.py                    67 行
+  ticketing/common/permissions.py                      71 行
+  ticketing/container.py                               98 行
+  ticketing/domain/__init__.py                          1 行
+  ticketing/domain/activities.py                      872 行
+  ticketing/domain/auth.py                            209 行
+  ticketing/domain/checkin.py                         335 行
+  ticketing/domain/errors.py                           43 行
+  ticketing/domain/models.py                          522 行
+  ticketing/domain/queries.py                         653 行
+  ticketing/domain/refunds.py                         299 行
+  ticketing/domain/registrations.py                   265 行
+  ticketing/domain/reports.py                          87 行
+  ticketing/domain/tickets.py                         120 行
+  ticketing/domain/waitlist.py                        441 行
+  ticketing/infrastructure/__init__.py                  1 行
+  ticketing/infrastructure/clock.py                    96 行
+  ticketing/infrastructure/db.py                       84 行
+  ticketing/infrastructure/security.py                 96 行
+  ticketing/presentation/__init__.py                    1 行
+  ticketing/presentation/cli.py                      1176 行
+  ticketing/presentation/render.py                    213 行
