@@ -41,9 +41,3 @@ class CapacityFull(AppError):
     def __init__(self, message: str, ticket_type_id: int) -> None:
         super().__init__(message)
         self.ticket_type_id = ticket_type_id
-
-
-# 注意：当前封禁由 PermissionService.require_active 抛 PermissionDenied 表达，
-# 本异常暂未使用；保留作为更细的语义预留，后续可统一替换或删除。
-class AccountBanned(AppError):
-    """账号被封禁，不能进行购票、候补等新增交易。"""
