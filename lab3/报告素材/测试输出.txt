@@ -1,4 +1,5 @@
 test_cancel_approval_refunds_and_fails_waitlist (tests.test_core.ActivityTests) ... ok
+test_draft_modification_applied_directly (tests.test_core.ActivityTests) ... ok
 test_location_change_notifies_registrants (tests.test_core.ActivityTests) ... ok
 test_modification_approval_after_cancel_rejected (tests.test_core.ActivityTests) ... ok
 test_publish_approval_after_cancel_rejected (tests.test_core.ActivityTests) ... ok
@@ -45,6 +46,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 45 tests in 30.236s
+Ran 46 tests in 31.494s
 
 OK
