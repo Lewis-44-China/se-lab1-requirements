@@ -100,6 +100,11 @@ class ActivityService:
         PermissionService.require_role(organizer, Role.ORGANIZER)
         self._validate_draft(draft)
         created_at = format_dt(self.clock.now())
+        # 审查通过：所有状态的活动都存在 activity 同一张表，用 status 区分
+        # （DRAFT/PENDING_REVIEW/PUBLISHED/ONGOING/ENDED/CANCELLED）；
+        # 创建时直接 INSERT，并明确写入 DRAFT。
+        # 审核单据单独存 review_application（按 activity_id 关联）；
+        # 创建/提交/审核的操作留痕单独存 audit_log，两者不是同一张表。
         with self.db.transaction() as conn:
             cursor = conn.execute(
                 """
@@ -206,6 +211,8 @@ class ActivityService:
 
     # ---------- 发布审核与修改审核 ----------
 
+    # 提交发布审核（事务内）：插入 PUBLISH 审核单、活动置 PENDING_REVIEW、写审计。
+    # 只有 DRAFT 可提交，且同类型不能有重复 PENDING。
     def submit_for_review(self, organizer, activity_id: int) -> ReviewApplication:
         """草稿提交发布审核。"""
         activity = self.get_activity(activity_id)
@@ -277,7 +284,7 @@ class ActivityService:
             payload["location"] = location.strip()
         if session_updates:
             payload["sessions"] = self._build_session_updates(
-                activity_id, session_updates
+                activity, session_updates
             )
         if ticket_updates:
             payload["tickets"] = self._build_ticket_updates(
@@ -306,6 +313,13 @@ class ActivityService:
                 )
         return self.get_review(review_id) if review_id is not None else None
 
+    # 审查通过：修改规则与 REQ-010 一致——
+    #   容量/票价：开售前可改，须审核；开售后禁止（_build_ticket_updates）；
+    #   时间/地点：开售前后都须审核；
+    #   名称/描述/封面/标签：表面信息直接生效。
+    # 名称归类需求未明确，按表面信息处理（已在实现基线说明）。
+    # 申请取消（事务内）：插入 CANCEL 审核单并写审计，不直接改活动状态；
+    # 是否真正取消由管理员审核决定。
     def request_cancel(self, organizer, activity_id: int, reason: str) -> ReviewApplication:
         """组织者申请取消活动，需管理员审批。"""
         activity = self.get_activity(activity_id)
@@ -334,6 +348,7 @@ class ActivityService:
 
     # ---------- 审核通过后的领域动作 ----------
 
+    # 审核通过后的领域动作：活动置 PUBLISHED，通知组织者；由 AdminService 在事务内调用。
     def approve_publish(
         self, conn: sqlite3.Connection, activity: Activity, admin_id: int
     ) -> None:
@@ -359,6 +374,7 @@ class ActivityService:
             f"活动《{activity.name}》发布审核已通过，现已公开。",
         )
 
+    # 审核驳回：活动退回 DRAFT，通知组织者；由 AdminService 在事务内调用。
     def reject_publish(
         self,
         conn: sqlite3.Connection,
@@ -388,6 +404,8 @@ class ActivityService:
             f"活动《{activity.name}》发布审核被驳回，原因：{comment or '未填写'}。",
         )
 
+    # 修改审核通过后落库：地点/场次时间/票价容量；票价容量应用前再次检查开售；
+    # 变更后通知有效购票人。由 AdminService 在事务内调用。
     def apply_modification(
         self,
         conn: sqlite3.Connection,
@@ -438,6 +456,8 @@ class ActivityService:
 
     # ---------- 时间推动 ----------
 
+    # 时间推动：PUBLISHED → ONGOING（最早场次检票开放）→ ENDED（最晚场次结束）；
+    # 每次菜单循环由 Scheduler.tick 调用。
     def refresh_statuses(self) -> None:
         """按服务器时间推进活动和场次状态；每次菜单循环都会调用。"""
         now = self.clock.now()
@@ -503,6 +523,8 @@ class ActivityService:
                     (new_status.value, row["id"]),
                 )
 
+    # 场次状态推导：活动/场次结束 → ENDED；未公开/未开售 → NOT_OPEN；
+    # 过售票截止 → CLOSED；全部票种满 → FULL；否则 OPEN。
     def _session_status_for(self, row, now: datetime) -> SessionStatus:
         """计算场次应有的状态。"""
         if row["activity_status"] == ActivityStatus.ENDED.value:
@@ -575,6 +597,7 @@ class ActivityService:
                     (int(ticket_cursor.lastrowid), created_at),
                 )
 
+    # 创建前完整校验：必填、时间顺序、场次/票种唯一、截止时间范围。
     def _validate_draft(self, draft: ActivityDraft) -> None:
         """创建活动前的完整校验。"""
         if not draft.name.strip():
@@ -671,35 +694,51 @@ class ActivityService:
             activity.status.value,
         )
 
+    # 校验场次时间修改：除了 start < end、checkin <= start，还要保持活动级
+    # 时间不变量（与创建时的 _validate_draft 一致）：
+    #   sale_start <= checkin_open <= start
+    #   refund_deadline <= start
+    #   waitlist_deadline <= start
+    # 否则修改审核通过后可能把场次改到开售/退票/候补截止之前。
     def _build_session_updates(
-        self, activity_id: int, updates: list[dict]
+        self, activity: Activity, updates: list[dict]
     ) -> list[dict]:
         """校验并序列化场次时间修改。"""
+        sale_start = parse_dt(activity.sale_start)
+        refund_deadline = parse_dt(activity.refund_deadline)
+        waitlist_deadline = parse_dt(activity.waitlist_deadline)
         result: list[dict] = []
         for update in updates:
             session = self.get_session(int(update["session_id"]))
-            if session.activity_id != activity_id:
+            if session.activity_id != activity.id:
                 raise ValidationError("场次不属于该活动")
             start = update["start_time"]
             end = update["end_time"]
+            start_dt = start if isinstance(start, datetime) else parse_dt(start)
+            end_dt = end if isinstance(end, datetime) else parse_dt(end)
             checkin = update.get("checkin_open_time", session.checkin_open_time)
             checkin_dt = (
                 checkin if isinstance(checkin, datetime) else parse_dt(checkin)
             )
-            if not start < end:
+            if start_dt >= end_dt:
                 raise ValidationError("场次开始时间必须早于结束时间")
-            if not checkin_dt <= start:
-                raise ValidationError("检票开放时间不能晚于场次开始")
+            if not sale_start <= checkin_dt <= start_dt:
+                raise ValidationError("检票开放时间必须不早于开售时间且不晚于场次开始")
+            if refund_deadline > start_dt:
+                raise ValidationError("场次开始不能早于退票截止时间")
+            if waitlist_deadline > start_dt:
+                raise ValidationError("场次开始不能早于候补截止时间")
             result.append(
                 {
                     "session_id": session.id,
-                    "start_time": format_dt(start),
-                    "end_time": format_dt(end),
+                    "start_time": format_dt(start_dt),
+                    "end_time": format_dt(end_dt),
                     "checkin_open_time": format_dt(checkin_dt),
                 }
             )
         return result
 
+    # 票价/容量修改校验：开售后禁止；容量不能低于已占用。
     def _build_ticket_updates(
         self, activity: Activity, updates: list[dict]
     ) -> list[dict]:
@@ -746,6 +785,7 @@ class ActivityService:
             ),
         )
 
+    # 给活动当前有效购票人发时间/地点变更通知。
     def _notify_registrants(
         self,
         conn: sqlite3.Connection,

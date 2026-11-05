@@ -153,6 +153,30 @@ class ActivityTests(ServiceTestCase):
         self.assertEqual(updated.price_cents, 5000)
         self.assertEqual(updated.capacity, 1)
 
+    def test_session_time_change_respects_deadlines(self) -> None:
+        now = self.clock.now()
+        activity = self.make_activity(
+            sale_start=now - timedelta(days=1),
+            sale_end=now + timedelta(days=1),
+            refund_deadline=now + timedelta(days=1),
+            session_start=now + timedelta(days=2),
+            checkin_open=now + timedelta(days=1, hours=23),
+        )
+        session = self.s.activities.get_sessions(activity.id)[0]
+        with self.assertRaises(ValidationError):
+            self.s.activities.modify_activity(
+                self.organizer,
+                activity.id,
+                session_updates=[
+                    {
+                        "session_id": session.id,
+                        "start_time": now + timedelta(hours=1),
+                        "end_time": now + timedelta(hours=4),
+                        "checkin_open_time": now,
+                    }
+                ],
+            )
+
     def test_location_change_notifies_registrants(self) -> None:
         activity = self.make_activity()
         self.register(self.people[0], activity)
