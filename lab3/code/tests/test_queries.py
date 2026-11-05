@@ -7,6 +7,7 @@ import unittest
 from datetime import timedelta
 from pathlib import Path
 
+from ticketing.domain.errors import Conflict, PermissionDenied
 from ticketing.domain.models import RegistrationStatus, Role
 
 from .helpers import ServiceTestCase
@@ -21,6 +22,28 @@ class QueryTests(ServiceTestCase):
         self.assertNotIn(draft.id, [view.activity.id for view in views])
         admin_views = self.s.queries.browse_activities(self.admin)
         self.assertIn(draft.id, [view.activity.id for view in admin_views])
+
+    def test_cannot_assign_inspector_to_draft(self) -> None:
+        draft = self.make_activity(publish=False)
+        with self.assertRaises(Conflict):
+            self.s.admin.assign_inspector(
+                self.admin, self.inspector.id, draft.id
+            )
+
+    def test_inspector_cannot_see_draft_even_if_assigned(self) -> None:
+        draft = self.make_activity(publish=False)
+        # 模拟历史遗留/手工写入的分配记录，服务层仍必须拒绝可见。
+        self.db.execute(
+            """
+            INSERT INTO activity_inspector (inspector_id, activity_id, assigned_at)
+            VALUES (?, ?, '2026-01-01 00:00:00')
+            """,
+            (self.inspector.id, draft.id),
+        )
+        with self.assertRaises(PermissionDenied):
+            self.s.queries.activity_detail(self.inspector, draft.id)
+        assigned = self.s.checkin.list_assigned_activities(self.inspector)
+        self.assertNotIn(draft.id, [item.id for item in assigned])
 
     def test_organizer_roster_masks_phone(self) -> None:
         activity = self.make_activity()

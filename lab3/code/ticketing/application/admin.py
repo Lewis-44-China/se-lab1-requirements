@@ -27,6 +27,7 @@ from ticketing.infrastructure.db import Database
 from ticketing.domain.errors import Conflict, NotFound, PermissionDenied, ValidationError
 from ticketing.domain.models import (
     Activity,
+    ActivityStatus,
     NotificationType,
     Report,
     ReportStatus,
@@ -190,6 +191,13 @@ class AdminService:
         if inspector.role is not Role.INSPECTOR:
             raise ValidationError("目标账号不是检票员")
         activity = self.activities.get_activity(activity_id)
+        # 第二轮审查 Q57：草稿/待审活动未公开，只允许组织者与管理员可见（REQ-003），
+        # 不能把检票员分配到这类活动上，否则会通过“已分配活动”看到未公开内容。
+        if activity.status in (
+            ActivityStatus.DRAFT,
+            ActivityStatus.PENDING_REVIEW,
+        ):
+            raise Conflict("只能给已公开的活动分配检票员")
         with self.db.transaction() as conn:
             conn.execute(
                 """

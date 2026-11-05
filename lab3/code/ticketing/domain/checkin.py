@@ -116,6 +116,7 @@ class CheckinService:
             SELECT a.* FROM activity a
               JOIN activity_inspector ai ON ai.activity_id = a.id
              WHERE ai.inspector_id = ?
+               AND a.status NOT IN ('DRAFT', 'PENDING_REVIEW')
              ORDER BY a.id DESC
             """,
             (inspector.id,),

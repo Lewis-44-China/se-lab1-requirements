@@ -51,13 +51,15 @@ test_waitlist_integrity_error_does_not_return_other_account_record (tests.test_l
 并发同号冲突时，不能把其他账号的候补记录当作幂等结果返回。 ... ok
 test_audit_scope_by_role (tests.test_queries.QueryTests) ... ok
 test_audit_scope_includes_reported_organizer (tests.test_queries.QueryTests) ... ok
+test_cannot_assign_inspector_to_draft (tests.test_queries.QueryTests) ... ok
 test_export_csv_has_no_phone (tests.test_queries.QueryTests) ... ok
+test_inspector_cannot_see_draft_even_if_assigned (tests.test_queries.QueryTests) ... ok
 test_organizer_roster_masks_phone (tests.test_queries.QueryTests) ... ok
 test_participant_cannot_see_draft (tests.test_queries.QueryTests) ... ok
 test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 53 tests in 37.426s
+Ran 55 tests in 37.815s
 
 OK

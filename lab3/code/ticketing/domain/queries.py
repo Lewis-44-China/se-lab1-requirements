@@ -274,6 +274,13 @@ class QueryService:
             PermissionService.require_activity_owner(viewer, activity.organizer_id)
             return
         if viewer.role is Role.INSPECTOR:
+            # 第二轮审查 Q57：即使存在历史分配记录，检票员也不能看到草稿/待审活动；
+            # REQ-003 规定未公开活动仅组织者与管理员可见。
+            if activity.status in (
+                ActivityStatus.DRAFT,
+                ActivityStatus.PENDING_REVIEW,
+            ):
+                raise PermissionDenied("未公开活动仅组织者与管理员可见")
             if not PermissionService.is_assigned_inspector(
                 self.db, viewer.id, activity.id
             ):
