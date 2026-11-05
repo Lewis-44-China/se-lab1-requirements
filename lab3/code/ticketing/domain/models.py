@@ -41,15 +41,20 @@ class ActivityStatus(str, Enum):
 
 # 场次状态，审核通过：allow_waitlist 是场次属性，候补截止 waitlistDeadline 是活动属性；
 # FULL 只表示容量已满，不区分能否候补。
+# 第二轮审查：对照 REQ-007 的六种中文状态逐项核实——NOT_OPEN=未开放、
+# OPEN=可报名、FULL=已满、CLOSED=已截止、CANCELLED=已取消、ENDED=已结束。
+# 其中 OPEN 指“处于活动级售票窗口内且未满”，不是场次开始；CLOSED 由活动级
+# sale_end 判定，表示售票/报名截止，不是场次开始或结束；ENDED 才由场次 end_time 判定。
+# 推导见 ActivityService._session_status_for()；CANCELLED 仅由活动取消联动写入。
 class SessionStatus(str, Enum):
     """场次状态（REQ-007）。"""
 
-    NOT_OPEN = "NOT_OPEN"
-    OPEN = "OPEN"
-    FULL = "FULL"
-    CLOSED = "CLOSED"
-    CANCELLED = "CANCELLED"
-    ENDED = "ENDED"
+    NOT_OPEN = "NOT_OPEN"    # 未开放：活动未公开或未到活动级开售时间
+    OPEN = "OPEN"            # 可报名：售票窗口内且未满
+    FULL = "FULL"            # 已满：全部票种容量用尽
+    CLOSED = "CLOSED"        # 已截止：已过活动级售票截止时间
+    CANCELLED = "CANCELLED"  # 已取消：活动取消时联动写入
+    ENDED = "ENDED"          # 已结束：场次结束时间已到
 
 
 # 票种类型，一致
@@ -513,3 +518,5 @@ class AuditLog:
 
 # 数据对象审查通过：字段与表、类图一致，from_row 与派生属性正确。
 # 第二部分审查完毕：数据库定义结构已用于实现相关类、转换方法与派生属性。
+# 第二轮审查：本文件职责是枚举与数据类定义、数据库行到对象的转换（from_row）
+# 及由字段计算的派生属性；业务规则和持久化逻辑不放在这里。

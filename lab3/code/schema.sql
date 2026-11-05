@@ -13,7 +13,7 @@ PRAGMA foreign_keys = ON;
 -- （登录标识），其他表统一用 account.id 做外键，不用手机号关联。
 CREATE TABLE IF NOT EXISTS account (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    phone         TEXT    NOT NULL UNIQUE,      -- 登录标识，不代替主键
+    phone         TEXT    NOT NULL UNIQUE,      -- 登录标识，不代替主键（手机号）
     password_hash TEXT    NOT NULL,
     password_salt TEXT    NOT NULL,
     name          TEXT    NOT NULL,
