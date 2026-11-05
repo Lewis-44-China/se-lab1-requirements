@@ -1,5 +1,7 @@
 """服务容器：集中装配各模块，避免 CLI 和测试重复写依赖注入。"""
 
+# 审查通过：组合根按依赖顺序手工装配，无循环依赖；新增服务时需要在 build_services 接线。
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,6 +25,7 @@ from ticketing.domain.waitlist import WaitlistService
 
 
 @dataclass(slots=True)
+# 所有服务的只读聚合对象，CLI/seed/测试共用。
 class Services:
     """所有服务实例。"""
 
@@ -44,6 +47,7 @@ class Services:
     scheduler: Scheduler
 
 
+# 装配顺序：基础设施（audit/notifications/tickets）→ 领域服务 → 编排（admin/scheduler）。
 def build_services(db: Database, clock: Clock) -> Services:
     """按依赖顺序装配服务。"""
     audit = AuditService(db, clock)

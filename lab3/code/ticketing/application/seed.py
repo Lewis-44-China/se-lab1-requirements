@@ -5,6 +5,9 @@
 运行：python3 -m ticketing.application.seed  （或 python3 main.py 首次启动自动生成）
 """
 
+# 审查通过：演示数据通过 ManualClock 在不同时间点调用真实服务生成，
+# 状态、名额、审计、通知均与业务规则一致；数据库已有账号时直接跳过。
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -17,6 +20,7 @@ from ticketing.domain.models import Role, TicketKind
 from ticketing.infrastructure.security import new_request_id
 
 
+# 仅在空库生成演示数据；用真实服务走完创建/审核/报名/候补/检票/退票流程。
 def seed_demo(db: Database, clock: ManualClock | None = None) -> bool:
     """若数据库为空则生成演示数据；返回是否实际生成。"""
     if db.query_one("SELECT 1 FROM account LIMIT 1") is not None:
@@ -186,6 +190,7 @@ def seed_demo(db: Database, clock: ManualClock | None = None) -> bool:
     return True
 
 
+# 创建草稿 → 提交发布审核 → 管理员通过，返回已公开活动。
 def _create_and_publish(
     services,
     organizer,
@@ -224,6 +229,7 @@ def _create_and_publish(
     return services.activities.get_activity(activity.id)
 
 
+# 创建单个场次的草稿活动。
 def _create_draft(
     services,
     organizer,

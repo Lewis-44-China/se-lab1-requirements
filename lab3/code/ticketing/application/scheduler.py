@@ -10,6 +10,9 @@
 模拟定时任务，行为与设计基线 ADR-12 一致。
 """
 
+# 审查通过：tick 的四步顺序是“状态推进 → 候补过期 → 报名终态 → Outbox 消费”；
+# 每步独立事务且幂等，下一次 tick 会继续处理未完成的部分。
+
 from __future__ import annotations
 
 from ticketing.domain.activities import ActivityService
@@ -40,6 +43,7 @@ class Scheduler:
         self.waitlist = waitlist
         self.promotion = promotion
 
+    # 一次时间任务：先推进活动和场次状态，再处理候补过期/报名终态，最后消费退票事件。
     def tick(self) -> dict[str, int]:
         """执行一轮时间任务，返回本轮处理数量。"""
         self.activities.refresh_statuses()
@@ -48,6 +52,8 @@ class Scheduler:
         promoted = self.promotion.dispatch_pending()
         return {"expired": expired, "finalized": finalized, "promoted": promoted}
 
+    # 场次结束后：PURCHASED → NO_SHOW（缺席不释放名额），CHECKED_IN → NORMAL_END；
+    # 逐条条件 UPDATE + rowcount，避免重复推进。
     def _finalize_sessions(self) -> int:
         """场次结束后推进报名记录终态。"""
         now = format_dt(self.clock.now())
