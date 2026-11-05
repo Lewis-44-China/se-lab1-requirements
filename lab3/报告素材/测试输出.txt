@@ -27,6 +27,7 @@ test_abnormal_does_not_change_registration (tests.test_lifecycle.CheckinTests) .
 test_checkin_before_window_fails (tests.test_lifecycle.CheckinTests) ... ok
 test_checkin_pass_and_duplicate (tests.test_lifecycle.CheckinTests) ... ok
 test_inspector_must_be_assigned (tests.test_lifecycle.CheckinTests) ... ok
+test_pending_requests_mask_phone (tests.test_lifecycle.CheckinTests) ... ok
 test_force_refund_checked_in_rejected (tests.test_lifecycle.RefundTests) ... ok
 test_force_refund_refunds_notifies_and_audits (tests.test_lifecycle.RefundTests) ... ok
 test_refund_after_deadline_fails (tests.test_lifecycle.RefundTests) ... ok
@@ -43,6 +44,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 43 tests in 28.944s
+Ran 44 tests in 29.836s
 
 OK

@@ -13,6 +13,10 @@ import sqlite3
 from ticketing.infrastructure.clock import Clock, format_dt
 from ticketing.domain.models import AuditLog
 
+# 审查通过：对照 REQ-039，活动/审核/报名/退票/候补/检票/账号/举报的关键操作
+# 均已留痕；报名失败用独立事务记录原因；通知本身不写审计（REQ-028）。
+# 场次自动状态刷新不写审计（需求未明确要求，Q23）。
+
 
 class AuditService:
     """写审计记录。"""
@@ -21,6 +25,7 @@ class AuditService:
         self.db = db
         self.clock = clock
 
+    # 同事务留痕；operator_id=None 表示系统任务；创建类操作前状态可为空。
     def record(
         self,
         conn: sqlite3.Connection,
@@ -52,6 +57,7 @@ class AuditService:
             ),
         )
 
+    # 业务回滚后的失败留痕，独立事务。
     def record_standalone(
         self,
         operator_id: int | None,

@@ -150,6 +150,15 @@ class CheckinTests(ServiceTestCase):
                 self.people[0], registration.id
             )
 
+    def test_pending_requests_mask_phone(self) -> None:
+        activity = self._ongoing()
+        registration = self.register(self.people[0], activity)
+        self.s.checkin.request_checkin(self.people[0], registration.id)
+        requests = self.s.checkin.list_pending_requests(self.inspector)
+        self.assertEqual(len(requests), 1)
+        self.assertIn("****", requests[0].buyer_phone)
+        self.assertNotEqual(requests[0].buyer_phone, self.people[0].phone)
+
     def test_abnormal_does_not_change_registration(self) -> None:
         activity = self._ongoing()
         registration = self.register(self.people[0], activity)

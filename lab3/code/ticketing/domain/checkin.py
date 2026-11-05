@@ -29,7 +29,7 @@ from ticketing.domain.models import (
     SessionStatus,
 )
 from ticketing.common.permissions import PermissionService
-from ticketing.infrastructure.security import new_request_id
+from ticketing.infrastructure.security import mask_phone, new_request_id
 
 
 @dataclass(slots=True)
@@ -145,7 +145,8 @@ class CheckinService:
                 request_no=row["request_no"],
                 registration_id=row["registration_id"],
                 buyer_name=row["buyer_name"],
-                buyer_phone=row["buyer_phone"],
+                # 检票员只能看遮挡版手机号（REQ-003/045）；CLI 再遮挡是幂等的。
+                buyer_phone=mask_phone(row["buyer_phone"]),
                 activity_name=row["activity_name"],
                 session_no=row["session_no"],
                 start_time=row["start_time"],
