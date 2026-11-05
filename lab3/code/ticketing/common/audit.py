@@ -17,6 +17,14 @@ from ticketing.domain.models import AuditLog
 # 均已留痕；报名失败用独立事务记录原因；通知本身不写审计（REQ-028）。
 # 场次自动状态刷新不写审计（需求未明确要求，Q23）。
 
+# 第二轮审查：对照 REQ-039/REQ-040 逐项核对覆盖范围——
+# 活动创建/修改/提交审核/取消、管理员审核通过/驳回/直接取消、活动状态变更；
+# 时间/地点/票价/容量修改；报名成功/失败、退票、强制退票；候补加入/递补/取消/
+# 失败；检票发起/通过/异常；封禁/解封、举报提交/处理，均有对应 action。
+# 管理员强行取消活动走 RefundService.cancel_activity_conn，记 ACTIVITY_CANCELLED。
+# 修改类操作的变更值保存在 review_application.payload，审计描述记录变更项（Q37）。
+# 每条记录包含 REQ-040 的操作人、时间、对象、action、前后状态和描述。
+
 
 class AuditService:
     """写审计记录。"""

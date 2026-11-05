@@ -27,6 +27,8 @@ class PermissionService:
 
     @staticmethod
     # 新增交易边界：封禁账号不能购票/候补；查看已有票不受限。
+    # 第二轮审查：对照 REQ-018，封禁后仅禁止新增交易（报名/候补，本方法只在这两处
+# 调用）；已有票仍可检票入场、退票、查询和接收通知，不做限制。
     def require_active(account: Account) -> None:
         """购票、候补等新增交易要求账号未被封禁。"""
         if account.status is AccountStatus.BANNED:
@@ -34,6 +36,8 @@ class PermissionService:
 
     @staticmethod
     # 数据所有者边界。
+    # 第二轮审查：仅用于参与者自己的数据（退票/检票/取消候补）；管理员操作走各自的
+# require_role(ADMIN) 入口，不调用本方法，因此“管理员除外”由调用边界保证。
     def require_owner(account: Account, owner_id: int, what: str = "数据") -> None:
         """要求当前账号是对象所有者。"""
         if account.id != owner_id:
