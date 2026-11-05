@@ -12,6 +12,8 @@ from ticketing.domain.errors import NotFound, ValidationError
 from ticketing.domain.models import Activity, ActivityStatus, Report, ReportStatus, Role
 from ticketing.common.permissions import PermissionService
 
+# 审查通过：提交举报直接 INSERT report（PENDING）并写审计；
+# 管理员处理时只更新该条记录的状态/处理人/结果/时间，不删除记录。
 
 class ReportService:
     """举报提交与个人举报查询。"""
@@ -21,6 +23,7 @@ class ReportService:
         self.clock = clock
         self.audit = audit
 
+    # 参与者提交举报：只能举报已公开/已结束/已取消的活动；原因必填；同事务写审计。
     def submit_report(self, participant, activity_id: int, reason: str) -> Report:
         """参与者举报一个已公开活动。"""
         PermissionService.require_role(participant, Role.PARTICIPANT)
@@ -66,6 +69,7 @@ class ReportService:
             )
         return self.get_report(report_id)
 
+    # 参与者只查看自己提交的举报。
     def list_for_account(self, participant) -> list[Report]:
         """参与者查看自己提交的举报。"""
         PermissionService.require_role(participant, Role.PARTICIPANT)

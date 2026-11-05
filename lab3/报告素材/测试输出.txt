@@ -8,6 +8,7 @@ test_session_time_change_respects_deadlines (tests.test_core.ActivityTests) ... 
 test_ticket_change_after_sale_forbidden (tests.test_core.ActivityTests) ... ok
 test_ticket_change_approved_after_sale_forbidden (tests.test_core.ActivityTests) ... ok
 test_ticket_change_before_sale_needs_review (tests.test_core.ActivityTests) ... ok
+test_bootstrap_admin_rejects_non_admin_phone (tests.test_core.AuthTests) ... ok
 test_duplicate_phone_rejected (tests.test_core.AuthTests) ... ok
 test_password_is_not_plaintext (tests.test_core.AuthTests) ... ok
 test_register_and_login (tests.test_core.AuthTests) ... ok
@@ -42,6 +43,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 42 tests in 27.765s
+Ran 43 tests in 28.944s
 
 OK

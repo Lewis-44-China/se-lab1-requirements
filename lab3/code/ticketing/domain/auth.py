@@ -5,6 +5,10 @@
 - 被封禁账号仍可登录查看已有票，但服务层会阻止其新增购票/候补。
 """
 
+# 审查通过：三种创建方式——参与者/组织者自助 register（角色受限）；
+# 管理员系统初始化 bootstrap_admin；检票员由管理员 create_inspector。
+# 重复手机号由唯一约束 + Conflict 拦截；手机号/密码/姓名在注册前校验。
+
 from __future__ import annotations
 
 import sqlite3
@@ -31,6 +35,7 @@ class AuthService:
         self.clock = clock
         self.audit = audit
 
+    # 自助注册：只允许参与者/组织者；校验手机号/密码/姓名；唯一手机号冲突转 Conflict。
     def register(
         self, phone: str, password: str, name: str, role: Role
     ) -> Account:
@@ -73,6 +78,7 @@ class AuthService:
             raise Conflict("该手机号已注册") from exc
         return self.get_account(account_id)
 
+    # 登录：手机号 + 密码；失败统一提示“手机号或密码错误”，不泄露账号是否存在。
     def login(self, phone: str, password: str) -> Account:
         """手机号 + 密码登录；失败时不区分“账号不存在/密码错误”。"""
         normalized = normalize_phone(phone)
@@ -97,6 +103,7 @@ class AuthService:
         )
         return Account.from_row(row) if row else None
 
+    # 管理员创建检票员账号；检票员不能自助注册。
     def create_inspector(
         self, admin: Account, phone: str, password: str, name: str
     ) -> Account:
@@ -138,12 +145,16 @@ class AuthService:
             raise Conflict("该手机号已注册") from exc
         return self.get_account(inspector_id)
 
+    # 系统初始化管理员：手机号已存在时只接受已有管理员，防止普通账号占号。
     def bootstrap_admin(
         self, phone: str, password: str, name: str = "平台管理员"
     ) -> Account:
         """首次初始化时创建管理员；已存在则返回现有账号。"""
         existing = self.find_by_phone(phone)
         if existing is not None:
+            # 防止普通账号占用管理员手机号后，初始化直接返回该账号导致系统没有管理员。
+            if existing.role is not Role.ADMIN:
+                raise Conflict("该手机号已被非管理员账号占用，无法初始化管理员")
             return existing
         password_hash, salt = hash_password(password)
         with self.db.transaction() as conn:
@@ -176,6 +187,7 @@ class AuthService:
             )
         return self.get_account(account_id)
 
+    # 查询账号：由 AdminService 先做管理员权限校验后调用。
     def list_accounts(self, role: Role | None = None) -> list[Account]:
         """列出账号；仅供管理员查询。"""
         if role is None:

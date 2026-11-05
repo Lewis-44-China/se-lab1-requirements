@@ -39,6 +39,13 @@ class AuthTests(ServiceTestCase):
                 self.people[0].phone, "Pass@123", "重复", Role.PARTICIPANT
             )
 
+    def test_bootstrap_admin_rejects_non_admin_phone(self) -> None:
+        self.s.auth.register(
+            "13600000099", "Pass@123", "占号用户", Role.PARTICIPANT
+        )
+        with self.assertRaises(Conflict):
+            self.s.auth.bootstrap_admin("13600000099", "Admin@123")
+
     def test_wrong_password_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             self.s.auth.login(self.people[0].phone, "wrong")

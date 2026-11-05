@@ -7,6 +7,12 @@ Q1 只读，不产生业务副作用；数据范围与字段脱敏在这里统�
 - 管理员可查全平台数据和全部审计。
 """
 
+# 审查通过：数据范围按角色在 browse_activities / _check_activity_visible /
+# _audit_scope 等处分别实现；被封禁账号仍可查看已有票和候补，新增交易由服务层阻止。
+# 组合查询（关键词/时间/状态/票种）和 ORDER BY 排序已实现。
+# 实验二 UI-04 的“我的票”筛选分类（待检票/已检票/已结束/已取消）在当前终端界面未实现，
+# 留到 CLI 初审时补（属表现层筛选，不改变系统状态）。
+
 from __future__ import annotations
 
 import csv
@@ -124,6 +130,8 @@ class QueryService:
 
     # ---------- 活动查询 ----------
 
+    # 活动浏览：参与者看公开/进行中/已结束/已取消；管理员可看全部；
+    # 支持关键词/时间/状态/票种组合，按最早场次倒序。
     def browse_activities(
         self,
         viewer,
@@ -250,6 +258,7 @@ class QueryService:
             session_count=len(sessions),
         )
 
+    # 活动详情数据范围：管理员全部；参与者非草稿/待审；组织者仅自己；检票员仅分配活动。
     def _check_activity_visible(self, viewer, activity: Activity) -> None:
         """活动详情的数据范围。"""
         if viewer.role is Role.ADMIN:
@@ -274,6 +283,8 @@ class QueryService:
 
     # ---------- 我的票与候补 ----------
 
+    # 我的票：只返回当前参与者自己的报名，按创建时间倒序；
+    # can_refund 由“已购票 + 未过退票截止”共同决定。
     def my_registrations(self, participant) -> list[RegistrationView]:
         """参与者自己的报名记录。"""
         PermissionService.require_role(participant, Role.PARTICIPANT)
@@ -312,6 +323,7 @@ class QueryService:
             )
         return result
 
+    # 我的候补：只返回当前参与者自己的候补记录。
     def my_waitlists(self, participant) -> list[WaitlistView]:
         """参与者自己的候补记录。"""
         PermissionService.require_role(participant, Role.PARTICIPANT)
@@ -345,6 +357,7 @@ class QueryService:
 
     # ---------- 组织者名单与统计 ----------
 
+    # 组织者名单：仅活动所有者；手机号遮挡；只含有效/终态报名。
     def organizer_roster(self, organizer, activity_id: int) -> list[RosterEntry]:
         """组织者查看本活动有效报名名单；手机号遮挡。"""
         activity = self.get_activity(activity_id)
@@ -373,6 +386,7 @@ class QueryService:
             for row in rows
         ]
 
+    # 导出名单：仅姓名/场次/票种，不含手机号。
     def export_roster_csv(self, organizer, activity_id: int, path: str | Path) -> int:
         """导出姓名、场次、票种三列；不含完整手机号（REQ-031）。"""
         roster = self.organizer_roster(organizer, activity_id)
@@ -386,6 +400,7 @@ class QueryService:
                 writer.writerow([entry.buyer_name, entry.session_no, kind_label])
         return len(roster)
 
+    # 统计：仅活动所有者；全部场次结束后开放；按活动/场次计算出席率/退票率。
     def activity_statistics(self, organizer, activity_id: int) -> Statistics:
         """全部场次结束后才统计；已取消/候补不计入。"""
         activity = self.get_activity(activity_id)
@@ -569,6 +584,8 @@ class QueryService:
         )
         return [AuditLog.from_row(row) for row in rows]
 
+    # 审计数据范围：管理员全部；组织者本活动相关；参与者本人报名/候补/检票/举报；
+    # 检票员本人处理的请求。
     def _audit_scope(self, viewer) -> tuple[str, ...] | None:
         """返回 (SQL 条件, 参数...)，None 表示管理员看全部。"""
         if viewer.role is Role.ADMIN:
