@@ -8,6 +8,9 @@
 
 # 审查说明：参与者“发起请求”，检票员“处理请求”；报名状态只由 _pass 修改，
 # 异常处理只改请求。重复检票由“报名状态检查 + 条件 UPDATE 的 rowcount”双重兜底。
+# 第二轮审查（2026-11-05）：核对请求/处理职责、时间窗、重复检票与异常留痕；
+# 通过请求会连带更新报名状态，这是 REQ-014 规定的正常结果，不是检票员绕过
+# 请求直接改报名（Q51）。并发发起可能产生两条 PENDING，单进程模型不触发（Q52）。
 
 from __future__ import annotations
 
@@ -179,6 +182,11 @@ class CheckinService:
     # 通过检票（事务内）：请求置 PASSED + 报名置 CHECKED_IN + 两条审计。
     # 两个 UPDATE 都带状态条件并检查 rowcount：并发/重复处理时只有一个成功，
     # 另一个回滚并提示已处理，保证“重复检票只有第一次有效”。
+
+    # 第二轮审查 Q51：“检票员不得直接修改报名状态”指的是不提供任意改状态的
+    # 入口；检票员只能对检票请求选择“通过/异常”。通过请求后，由领域动作把
+    # 报名置为 CHECKED_IN，这是 REQ-014 明确规定的正常结果，仍是“请求 → 状态”
+    # 的受控推导；异常分支则完全不修改报名。
     def _pass(
         self, inspector, request: CheckRequest, registration: Registration
     ) -> CheckRequest:
