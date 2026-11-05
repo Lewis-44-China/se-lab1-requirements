@@ -67,7 +67,7 @@ cd lab3/code
 python3 main.py                 # 首次启动自动建库并生成演示数据
 python3 main.py --reset         # 删除数据库后重建（仅演示）
 python3 main.py --no-seed       # 不使用演示数据
-make test                       # 运行 50 个测试
+make test                       # 运行 53 个测试
 make lint                       # pylint 检查
 ```
 

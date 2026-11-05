@@ -8,6 +8,8 @@
 # 嗯我看了 就是这边还是很保守的防护的，对于其实我们刚开始允许进入候补时候的条件这边又进行了判断，确保没问题还是很严谨的
 # 审查通过：_process_event 在消费时再次检查账号状态、队首、原子占名额和重复报名，
 # 与入队条件形成双保险；失败事件重试 5 次后丢弃，避免卡死。
+# 第二轮审查 Q49：账号不可用/已有报名导致某人无法递补时，事件保持 NEW，
+# 下一次继续尝试下一位，避免“队首失败就丢掉名额”的问题。
 
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ from typing import Mapping, Any
 from ticketing.common.audit import AuditService
 from ticketing.infrastructure.clock import Clock, format_dt
 from ticketing.infrastructure.db import Database
+from ticketing.domain.errors import AppError
 from ticketing.domain.models import (
     Activity,
     PaymentStatus,
@@ -81,8 +84,9 @@ class PromotionService:
                     self.waitlist.mark_failed_conn(
                         conn, record, "账号不可用", None
                     )
-                    self._mark_processed(conn, int(event["id"]))
-                    return True
+                    # 第二轮审查 Q49：失败者转 FAILED 后不消费事件，留到下一次
+                    # 继续尝试队首的下一位，符合 REQ-020“直到无人补上为止”。
+                    return False
                 if not self.tickets.try_occupy(conn, ticket_type_id):
                     # 名额已被其他请求占用，等下一次释放事件
                     self._mark_processed(conn, int(event["id"]))
@@ -93,9 +97,13 @@ class PromotionService:
                     self.waitlist.mark_failed_conn(
                         conn, record, "该账号已有报名记录", None
                     )
+                    # 同上：让事件保持 NEW，下一次尝试下一位候补者。
+                    return False
                 self._mark_processed(conn, int(event["id"]))
                 return True
-        except sqlite3.Error:
+        except (sqlite3.Error, AppError):
+            # 第二轮审查 Q49：业务冲突（如并发导致候补状态变化）也按可重试处理，
+            # 不把异常抛到调度循环。
             self._retry_or_drop(int(event["id"]))
             return False
 
@@ -193,3 +201,7 @@ class PromotionService:
                     "UPDATE outbox_message SET status = 'PROCESSED' WHERE id = ?",
                     (event_id,),
                 )
+
+# 第二轮审查：事件只存 ticket_type_id/registration_id，场次与活动由票种反查；
+# 消费顺序为“取队首 → 二次校验账号 → 原子占位 → 生成报名 → 改候补状态”，
+# 事务失败回滚并由 _retry_or_drop 控制重试次数。

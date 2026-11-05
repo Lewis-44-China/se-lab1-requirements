@@ -7,6 +7,9 @@
 - 同一账号同一场次同时只允许一条“候补中”记录。
 """
 
+# 第二轮审查（2026-11-05）：对照 REQ-019/020/023/049 复核入队条件、FIFO、
+# 取消/截止失败退款与状态迁移；补并发唯一约束兜底和队列创建竞态处理（Q48）。
+
 from __future__ import annotations
 
 import sqlite3
@@ -92,12 +95,15 @@ class WaitlistService:
     ) -> WaitlistRecord:
         participant = self._fresh_account(participant.id)
         PermissionService.require_role(participant, Role.PARTICIPANT)
+        # 第二轮审查：这里的 require_active 不是重复检查——CLI 用的是登录时的
+        # 账号对象，可能在会话期间被封禁；重新读库才能让封禁立即生效（REQ-018）。
         PermissionService.require_active(participant)
         if not buyer_name.strip():
             raise ValidationError("候补人姓名不能为空")
         if normalize_phone(buyer_phone) != participant.phone:
             raise ValidationError("候补人手机号必须与当前账号一致")
-        if not request_id.strip():
+        request_id = request_id.strip()
+        if not request_id:
             raise ValidationError("请求编号不能为空")
         existing = self.find_by_request_id(request_id)
         if existing is not None:
@@ -126,41 +132,53 @@ class WaitlistService:
             raise NotFound("该场次没有此票种")
         if ticket.remaining > 0:
             raise Conflict("该票种仍有余票，请直接报名")
-        with self.db.transaction() as conn:
-            waitlist_id = self._ensure_waitlist(conn, ticket.id)
-            cursor = conn.execute(
-                """
-                INSERT INTO waitlist_record (
-                    waitlist_id, account_id, activity_id, session_id, join_time,
-                    payment_status, payment_amount_cents, status,
-                    refund_amount_cents, refund_time, request_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)
-                """,
-                (
-                    waitlist_id,
+        try:
+            with self.db.transaction() as conn:
+                waitlist_id = self._ensure_waitlist(conn, ticket.id)
+                cursor = conn.execute(
+                    """
+                    INSERT INTO waitlist_record (
+                        waitlist_id, account_id, activity_id, session_id, join_time,
+                        payment_status, payment_amount_cents, status,
+                        refund_amount_cents, refund_time, request_id, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)
+                    """,
+                    (
+                        waitlist_id,
+                        participant.id,
+                        activity.id,
+                        session_id,
+                        format_dt(now),
+                        PaymentStatus.PAID.value,
+                        ticket.price_cents,
+                        WaitlistStatus.WAITING.value,
+                        request_id,
+                        format_dt(now),
+                    ),
+                )
+                record_id = int(cursor.lastrowid)
+                self.audit.record(
+                    conn,
                     participant.id,
-                    activity.id,
-                    session_id,
-                    format_dt(now),
-                    PaymentStatus.PAID.value,
-                    ticket.price_cents,
+                    "WAITLIST_RECORD",
+                    record_id,
+                    "WAITLIST_JOINED",
+                    f"加入候补：《{activity.name}》{session.session_no} {kind.value}",
+                    None,
                     WaitlistStatus.WAITING.value,
-                    request_id.strip(),
-                    format_dt(now),
-                ),
-            )
-            record_id = int(cursor.lastrowid)
-            self.audit.record(
-                conn,
-                participant.id,
-                "WAITLIST_RECORD",
-                record_id,
-                "WAITLIST_JOINED",
-                f"加入候补：《{activity.name}》{session.session_no} {kind.value}",
-                None,
-                WaitlistStatus.WAITING.value,
-            )
-        return self.get_record(record_id)
+                )
+            return self.get_record(record_id)
+        except sqlite3.IntegrityError as exc:
+            # 第二轮审查 Q48：并发下唯一约束兜底，与报名链路保持一致。
+            # 先确认 request_id 归属，避免把其他账号的记录当幂等结果返回。
+            existing = self.find_by_request_id(request_id)
+            if existing is not None and existing.account_id != participant.id:
+                raise Conflict("请求编号已被其他账号使用") from exc
+            if existing is None:
+                existing = self.active_for_account_session(participant.id, session_id)
+            if existing is not None:
+                return existing
+            raise Conflict("候补冲突，请重试") from exc
 
     def cancel(self, participant, record_id: int) -> WaitlistRecord:
         """参与者取消候补，退全款。"""
@@ -400,16 +418,17 @@ class WaitlistService:
 
     def _ensure_waitlist(self, conn: sqlite3.Connection, ticket_type_id: int) -> int:
         """确保票种存在一条候补队列，返回队列 id。"""
+        # 第二轮审查 Q48：并发首次入队时用 INSERT OR IGNORE，避免两个事务
+        # 同时 SELECT 不到队列、又同时 INSERT 触发唯一约束。
+        conn.execute(
+            "INSERT OR IGNORE INTO waitlist (ticket_type_id, created_at) "
+            "VALUES (?, ?)",
+            (ticket_type_id, format_dt(self.clock.now())),
+        )
         row = conn.execute(
             "SELECT id FROM waitlist WHERE ticket_type_id = ?", (ticket_type_id,)
         ).fetchone()
-        if row is not None:
-            return int(row["id"])
-        cursor = conn.execute(
-            "INSERT INTO waitlist (ticket_type_id, created_at) VALUES (?, ?)",
-            (ticket_type_id, format_dt(self.clock.now())),
-        )
-        return int(cursor.lastrowid)
+        return int(row["id"])
 
     def _get_waitlist(self, ticket_type_id: int):
         row = self.db.query_one(
@@ -439,3 +458,7 @@ class WaitlistService:
             (account_id, session_id),
         )
         return row is not None
+
+# 第二轮审查：入队要求“活动公开/进行中 + 未过候补截止 + 场次未结束 +
+# 场次允许候补 + 票种已满 + 无报名/无候补中记录”，与 REQ-019/049 一致；
+# FIFO 由 head() 的 (join_time, id) 排序保证；取消/截止失败都退全款并留痕。

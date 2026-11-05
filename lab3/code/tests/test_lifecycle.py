@@ -1,10 +1,11 @@
 """候补、退票、检票、时间推进与封禁测试。"""
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring,protected-access
 
 from __future__ import annotations
 
 import unittest
 from datetime import timedelta
+from unittest.mock import patch
 
 from ticketing.domain.errors import Conflict, DeadlinePassed, PermissionDenied
 from ticketing.domain.models import (
@@ -14,6 +15,7 @@ from ticketing.domain.models import (
     RegistrationStatus,
     WaitlistStatus,
 )
+from ticketing.infrastructure.security import new_request_id
 
 from .helpers import ServiceTestCase
 
@@ -67,6 +69,72 @@ class WaitlistTests(ServiceTestCase):
         expired = self.s.waitlist.get_record(record.id)
         self.assertIs(expired.status, WaitlistStatus.FAILED)
         self.assertEqual(expired.refund_amount_cents, 5000)
+
+    def test_duplicate_enqueue_returns_existing_on_unique_conflict(self) -> None:
+        """并发重复入队撞唯一索引时，返回已有记录而不是抛 IntegrityError。"""
+        activity = self.make_activity(normal_capacity=1)
+        self.register(self.people[0], activity)
+        record = self.enqueue(self.people[1], activity)
+        with patch.object(
+            self.s.waitlist,
+            "active_for_account_session",
+            side_effect=[None, record],
+        ):
+            again = self.enqueue(self.people[1], activity)
+        self.assertEqual(again.id, record.id)
+
+    def test_waitlist_integrity_error_does_not_return_other_account_record(self) -> None:
+        """并发同号冲突时，不能把其他账号的候补记录当作幂等结果返回。"""
+        activity = self.make_activity(normal_capacity=1)
+        self.register(self.people[0], activity)
+        request_id = new_request_id("TEST")
+        other = self.enqueue(self.people[1], activity, request_id=request_id)
+        with patch.object(
+            self.s.waitlist,
+            "find_by_request_id",
+            side_effect=[None, other],
+        ):
+            with self.assertRaises(Conflict):
+                self.enqueue(self.people[2], activity, request_id=request_id)
+        self.assertIsNone(
+            self.s.waitlist.active_for_account_session(
+                self.people[2].id, self.session_id(activity)
+            )
+        )
+
+    def test_promotion_retries_next_candidate_after_failure(self) -> None:
+        """队首递补失败时，事件留待下一次并继续尝试下一位。"""
+        activity = self.make_activity(normal_capacity=1)
+        first = self.register(self.people[0], activity)
+        second = self.enqueue(self.people[1], activity)
+        third = self.enqueue(self.people[2], activity)
+        original = self.s.promotion._create_registration
+        calls = []
+
+        def fake_create(conn, record, account):
+            if not calls:
+                calls.append(record.id)
+                return False
+            return original(conn, record, account)
+
+        self.s.refunds.refund_by_participant(self.people[0], first.id)
+        with patch.object(
+            self.s.promotion, "_create_registration", side_effect=fake_create
+        ):
+            self.s.scheduler.tick()
+            self.assertIs(
+                self.s.waitlist.get_record(second.id).status,
+                WaitlistStatus.FAILED,
+            )
+            self.assertIs(
+                self.s.waitlist.get_record(third.id).status,
+                WaitlistStatus.WAITING,
+            )
+            self.s.scheduler.tick()
+        self.assertIs(
+            self.s.waitlist.get_record(third.id).status,
+            WaitlistStatus.PROMOTED,
+        )
 
 
 class RefundTests(ServiceTestCase):
