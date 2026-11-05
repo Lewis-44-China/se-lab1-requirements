@@ -539,6 +539,7 @@ class ConsoleApp:
         print("  3. 修改地点/场次时间（草稿直接生效，发布后需审核）")
         print("  4. 修改票价/容量（草稿直接生效，发布后开售前需审核）")
         print("  5. 申请取消活动（需管理员审批）")
+        print("  6. 查看审核记录")
         print("  0. 返回")
         choice = input("请选择：").strip()
         if choice == "1":
@@ -620,7 +621,28 @@ class ConsoleApp:
                 account, activity.id, reason
             )
             success(f"已提交取消申请，申请编号 {review.id}，等待管理员审批。")
+        elif choice == "6":
+            self._show_reviews(activity)
         self._pause()
+
+    # 审查通过：组织者可查看本活动的发布/修改/取消申请及审核结果。
+    def _show_reviews(self, activity: Activity) -> None:
+        reviews = self.services.activities.list_reviews_for_activity(activity.id)
+        section("审核记录")
+        print_table(
+            ["申请 ID", "类型", "状态", "提交时间", "审核意见", "处理时间"],
+            [
+                [
+                    item.id,
+                    label(item.type),
+                    label(item.status),
+                    item.submitted_at,
+                    item.comment or "-",
+                    item.reviewed_at or "-",
+                ]
+                for item in reviews
+            ],
+        )
 
     # 审查通过：统计在全部场次结束后才开放；服务层返回 open=False 时只显示提示（REQ-030）。
     def _roster_statistics(self, account: Account) -> None:
