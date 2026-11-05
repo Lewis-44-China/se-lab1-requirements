@@ -10,6 +10,9 @@
 管理员审核的编排放在 admin.py，避免 D1 直接依赖退票/候补服务。
 """
 
+# 第二轮审查（2026-11-05）：核对修改范围（Q53）、取消的前置状态（Q54）与
+# 审核通过时的状态/时间复核（Q55）；状态新鲜度依赖每次菜单操作前的 tick。
+
 from __future__ import annotations
 
 import json
@@ -241,6 +244,11 @@ class ActivityService:
             )
         return self.get_review(review_id)
 
+    # 第二轮审查 Q53：对照 REQ-010 逐项核实修改范围——
+    #   直接生效：名称/描述/封面/标签（草稿全部字段都直接生效，Q3）；
+    #   须审核：地点、场次时间/检票时间、票价、容量；
+    #   禁止：活动 CANCELLED/ENDED、正在 PENDING_REVIEW；票价/容量开售后禁止。
+    # PENDING_REVIEW 只用于发布审核；已发布活动的修改不改活动状态（Q11）。
     def modify_activity(
         self,
         organizer,
@@ -361,6 +369,11 @@ class ActivityService:
     # 名称归类需求未明确，按表面信息处理（已在实现基线说明）。
     # 申请取消（事务内）：插入 CANCEL 审核单并写审计，不直接改活动状态；
     # 是否真正取消由管理员审核决定。
+
+    # 第二轮审查 Q54：对照 REQ-011，活动需“存在且未结束”。这里拒绝
+    # CANCELLED/ENDED；时间到点由 Scheduler.tick 在每次菜单操作前推进状态，
+    # 再进入本入口，因此正常路径下“已结束”已经体现为 ENDED。DRAFT/PUBLISHED/
+    # ONGOING 都可提交取消申请；已有 PENDING 的 CANCEL 申请时拒绝重复提交。
     def request_cancel(self, organizer, activity_id: int, reason: str) -> ReviewApplication:
         """组织者申请取消活动，需管理员审批。"""
         activity = self.get_activity(activity_id)
@@ -503,6 +516,12 @@ class ActivityService:
                 activity.status.value,
                 activity.status.value,
             )
+    # 第二轮审查 Q55：审核通过时按“当前状态 + 当前时间”复核——
+    #   PUBLISH：approve_publish 要求活动仍为 PENDING_REVIEW；
+    #   MODIFY：重新检查 CANCELLED/ENDED 和“是否已开售”（票价/容量）；
+    #   CANCEL：cancel_activity_conn 用条件 UPDATE 排除 CANCELLED/ENDED。
+    # 活动/场次状态由每次菜单操作前的 Scheduler.tick 刷新，审核动作看到的是
+    # 当前状态；多进程同时操作时的时间窗口见 Q56。
 
     # ---------- 时间推动 ----------
 
