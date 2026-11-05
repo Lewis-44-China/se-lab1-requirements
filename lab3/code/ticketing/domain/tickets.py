@@ -9,6 +9,7 @@
 """
 
 # 主要就是实现票的相关操作的接口，向下是对于数据库信息的查询
+# 利用事务去保证并发安全，对于数据库操作安全
 
 from __future__ import annotations
 
@@ -78,9 +79,11 @@ class TicketService:
             raise Conflict("名额释放失败：票种占用数异常")
 
 
-    # 审查通过：本方法只做低层校验（价格/容量/已占用）。开售时间检查分两处：
-    # 申请修改时 _build_ticket_updates 拒绝已开售；审核通过时 apply_modification
-    # 再次校验，避免“申请后拖到开售再通过”的时间窗口。
+    # 第二轮审查：本方法只做低层写入；REQ-010 的“开售后禁改票价/容量”由
+    # ActivityService 在两处保证：
+    #   1. 申请修改时 _build_ticket_updates 拒绝已开售；
+    #   2. 审核通过时 apply_modification 再查一次，堵住“申请后拖到开售再通过”。
+    # 当前规则下能走到这里的只有草稿或开售前的活动，occupied 必为 0。
     def update_ticket(
         self,
         conn: sqlite3.Connection,
@@ -88,10 +91,13 @@ class TicketService:
         price_cents: int,
         capacity: int,
     ) -> None:
-        """修改票价与容量；容量不得低于当前已占用数。"""
+        """修改票价与容量（低层写入，开售冻结由 ActivityService 保证）。"""
         if price_cents < 0:
             raise ValidationError("票价不能为负数")
         ticket = self.get_ticket_type(ticket_type_id)
+        # 防御性检查：正常路径不可达（草稿/开售前 occupied 为 0，开售后上层的
+        # 冻结校验已拒绝）。保留它，防止将来规则变动或有人绕过活动服务时，
+        # 把容量改到低于已占用数、破坏 occupied <= capacity 的约束。
         if capacity < ticket.occupied:
             raise ValidationError(
                 f"容量不能小于已占用名额（当前已占用 {ticket.occupied}）"
