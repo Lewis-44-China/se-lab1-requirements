@@ -18,6 +18,8 @@ test_register_and_login (tests.test_core.AuthTests) ... ok
 test_wrong_password_rejected (tests.test_core.AuthTests) ... ok
 test_capacity_full_and_failure_audit (tests.test_core.RegistrationTests) ... ok
 test_concurrent_last_seat_only_one_wins (tests.test_core.RegistrationTests) ... ok
+test_integrity_error_does_not_return_other_account_record (tests.test_core.RegistrationTests)
+并发同号冲突时，不能把其他账号的记录当作幂等结果返回。 ... ok
 test_register_after_sale_end_fails (tests.test_core.RegistrationTests) ... ok
 test_register_at_sale_end_is_allowed (tests.test_core.RegistrationTests) ... ok
 test_register_success (tests.test_core.RegistrationTests) ... ok
@@ -48,6 +50,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 48 tests in 32.351s
+Ran 49 tests in 34.664s
 
 OK

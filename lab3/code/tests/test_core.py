@@ -6,6 +6,7 @@ from __future__ import annotations
 import threading
 import unittest
 from datetime import timedelta
+from unittest.mock import patch
 
 from ticketing.container import build_services
 from ticketing.infrastructure.db import Database
@@ -357,6 +358,28 @@ class RegistrationTests(ServiceTestCase):
             (self.session_id(activity),),
         )["amount"]
         self.assertEqual(count, 1)
+
+    def test_integrity_error_does_not_return_other_account_record(self) -> None:
+        """并发同号冲突时，不能把其他账号的记录当作幂等结果返回。"""
+        first_activity = self.make_activity()
+        second_activity = self.make_activity()
+        request_id = new_request_id("TEST")
+        other_record = self.register(
+            self.people[0], first_activity, request_id=request_id
+        )
+        # 模拟并发：第一次查号发生在对方提交前（None），插入撞唯一约束后
+        # 兜底查询才看到对方账号的记录。
+        with patch.object(
+            self.s.registrations,
+            "_find_by_request_id",
+            side_effect=[None, other_record],
+        ):
+            with self.assertRaises(Conflict):
+                self.register(
+                    self.people[1], second_activity, request_id=request_id
+                )
+        # 失败事务已回滚，第二个活动的名额没有被占用。
+        self.assertEqual(self.ticket(second_activity).occupied, 0)
 
     def test_same_session_second_request_rejected(self) -> None:
         activity = self.make_activity()

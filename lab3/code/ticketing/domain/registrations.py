@@ -9,6 +9,11 @@
 6. 事务提交后才返回成功。
 """
 
+# 第二轮审查（2026-11-05）：复核报名顺序、双重幂等、售票窗口、原子占位、
+# 事务回滚与失败审计，结论通过；补 IntegrityError 兜底分支的 request_id
+# 归属检查（Q43）。已知边界：活动状态在事务外校验，多进程同时取消与报名
+# 之间存在时间窗口（Q44）；当前单进程菜单模型不触发。
+
 from __future__ import annotations
 
 import sqlite3
@@ -91,7 +96,8 @@ class RegistrationService:
         PermissionService.require_role(participant, Role.PARTICIPANT)
         PermissionService.require_active(participant)
         self._validate_buyer(participant, buyer_name, buyer_phone)
-        if not request_id.strip():
+        request_id = request_id.strip()
+        if not request_id:
             raise ValidationError("请求编号不能为空")
 
         existing = self._find_by_request_id(request_id)
@@ -141,7 +147,7 @@ class RegistrationService:
                         RegistrationStatus.PURCHASED.value,
                         PaymentStatus.PAID.value,
                         ticket.price_cents,
-                        request_id.strip(),
+                        request_id,
                         format_dt(self.clock.now()),
                     ),
                 )
@@ -165,8 +171,12 @@ class RegistrationService:
                         (SessionStatus.FULL.value, session_id),
                     )
         except sqlite3.IntegrityError as exc:
-            # 并发下唯一约束兜底：如果已有记录，按幂等处理
+            # 并发下唯一约束兜底：如果已有记录，按幂等处理。
+            # 第二轮审查：必须先确认 request_id 属于当前账号，避免并发同号时
+            # 把其他账号的报名记录当作幂等结果返回（数据泄露）。
             existing = self._find_by_request_id(request_id)
+            if existing is not None and existing.account_id != participant.id:
+                raise Conflict("请求编号已被其他账号使用") from exc
             if existing is None:
                 existing = self._find_by_account_session(participant.id, session_id)
             if existing is not None:
