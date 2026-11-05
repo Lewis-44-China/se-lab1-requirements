@@ -8,6 +8,12 @@
 另外提供：创建检票账号、分配检票活动、封禁/解封、举报处理。
 """
 
+
+# 审查通过：管理员编排分为审核、检票分配、封禁、举报四块。
+# 封禁规则对照 REQ-018：组织者封禁 → 其活动自动取消并退款；
+# 参与者封禁 → 已购票保留、不退款，仅取消候补，后续不能新增购票。
+# 审核与举报的状态更新、审计、通知都在同一事务内。
+
 from __future__ import annotations
 
 import json
@@ -68,6 +74,9 @@ class AdminService:
         PermissionService.require_role(admin, Role.ADMIN)
         return self.activities.list_pending_reviews()
 
+    # 审核入口：校验管理员、审核单仍 PENDING、驳回必须填意见；
+    # 事务内先执行领域动作（发布/修改/取消），再更新审核单并写审计；
+    # 审核单 UPDATE 检查 rowcount，防止并发重复审核/重复通知。
     def review(
         self, admin, review_id: int, approve: bool, comment: str = ""
     ) -> ReviewApplication:
@@ -84,7 +93,7 @@ class AdminService:
             new_status = (
                 ReviewStatus.APPROVED if approve else ReviewStatus.REJECTED
             )
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE review_application
                    SET status = ?, reviewer_id = ?, comment = ?, reviewed_at = ?
@@ -98,6 +107,8 @@ class AdminService:
                     review.id,
                 ),
             )
+            if cursor.rowcount != 1:
+                raise Conflict("该审核申请已处理")
             self.audit.record(
                 conn,
                 admin.id,
@@ -110,6 +121,9 @@ class AdminService:
             )
         return self.activities.get_review(review_id)
 
+    # 按审核类型分派领域动作：PUBLISH/MODIFY 由 activities 执行，
+    # CANCEL 批准时调 refunds.cancel_activity_conn（批量退款+候补失败）。
+    # 本方法不自开事务，由 review 在事务内调用。
     def _apply_review(
         self,
         conn: sqlite3.Connection,
@@ -168,6 +182,7 @@ class AdminService:
         PermissionService.require_role(admin, Role.ADMIN)
         return self.auth.list_accounts(Role.INSPECTOR)
 
+    # 分配检票员到活动（管理员）；INSERT OR IGNORE 幂等，重复分配不报错。
     def assign_inspector(self, admin, inspector_id: int, activity_id: int) -> None:
         """把检票员分配到活动。"""
         PermissionService.require_role(admin, Role.ADMIN)
@@ -197,6 +212,8 @@ class AdminService:
 
     # ---------- 封禁 / 解封 ----------
 
+    # 封禁/解封入口：管理员、原因必填、不能封管理员/自己；
+    # 事务内调用 _ban_account_conn 完成账号状态与关联业务。
     def ban_account(self, admin, account_id: int, reason: str, ban: bool = True) -> None:
         """封禁或解封账号；封禁组织者会取消其活动，封禁参与者会取消其候补。"""
         PermissionService.require_role(admin, Role.ADMIN)
@@ -210,6 +227,10 @@ class AdminService:
         with self.db.transaction() as conn:
             self._ban_account_conn(conn, admin, target, reason, ban)
 
+    # 封禁规则对照 REQ-018：
+    #   组织者 → 其所有非终态活动自动取消，并按 REQ-037 向报名者退款；
+    #   参与者 → 保留已购票（可正常入场、不退款），只取消 WAITING 候补；
+    #   检票员 → 只封账号，分配记录保留（无法登录，无实际影响）。
     def _ban_account_conn(
         self, conn: sqlite3.Connection, admin, target, reason: str, ban: bool
     ) -> None:
@@ -270,6 +291,9 @@ class AdminService:
             raise NotFound("举报不存在")
         return Report.from_row(row)
 
+    # 举报处理：举报必须仍 PENDING；可选择取消活动或封禁组织者（封禁优先）；
+    # 全部在同一事务内，最后更新举报状态并通知举报人。
+    # 举报状态 UPDATE 检查 rowcount，防止并发重复处理。
     def handle_report(
         self,
         admin,
@@ -302,11 +326,11 @@ class AdminService:
             new_status = (
                 ReportStatus.DISMISSED if dismiss else ReportStatus.RESOLVED
             )
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE report
                    SET status = ?, handler_id = ?, result = ?, handled_at = ?
-                 WHERE id = ?
+                 WHERE id = ? AND status = 'PENDING'
                 """,
                 (
                     new_status.value,
@@ -316,6 +340,8 @@ class AdminService:
                     report.id,
                 ),
             )
+            if cursor.rowcount != 1:
+                raise Conflict("该举报已处理")
             self.audit.record(
                 conn,
                 admin.id,
