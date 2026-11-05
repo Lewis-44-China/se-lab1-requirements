@@ -353,6 +353,9 @@ class ActivityService:
         self, conn: sqlite3.Connection, activity: Activity, admin_id: int
     ) -> None:
         """发布审核通过：活动变为公开。"""
+        # 终态保护：取消/结束后不能通过发布审核把活动重新上线。
+        if activity.status is not ActivityStatus.PENDING_REVIEW:
+            raise Conflict("活动状态已变化，不能通过发布审核")
         conn.execute(
             "UPDATE activity SET status = ? WHERE id = ?",
             (ActivityStatus.PUBLISHED.value, activity.id),
@@ -383,6 +386,9 @@ class ActivityService:
         comment: str,
     ) -> None:
         """发布审核驳回：退回草稿。"""
+        # 终态保护：已取消/已结束的活动不能被驳回改回草稿。
+        if activity.status is not ActivityStatus.PENDING_REVIEW:
+            raise Conflict("活动状态已变化，不能驳回发布审核")
         conn.execute(
             "UPDATE activity SET status = ? WHERE id = ?",
             (ActivityStatus.DRAFT.value, activity.id),
@@ -414,6 +420,9 @@ class ActivityService:
         admin_id: int,
     ) -> None:
         """修改审核通过后，把 payload 中的修改真正落库。"""
+        # 终态保护：取消/结束后不能再应用修改审核。
+        if activity.status in (ActivityStatus.CANCELLED, ActivityStatus.ENDED):
+            raise Conflict("活动已取消或已结束，不能应用修改")
         data = json.loads(payload)
         # 审查通过：申请时 _build_ticket_updates 已检查一次；这里再检查一次，
         # 防止申请后时间推进到开售、管理员再审核通过而绕过“开售后禁改容量/票价”。

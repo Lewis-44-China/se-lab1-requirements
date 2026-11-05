@@ -45,7 +45,7 @@ lab3/
 │   │   │   ├── clock.py
 │   │   │   └── security.py
 │   │   └── container.py      # 组合根
-│   ├── tests/                # 40 个 unittest 测试
+│   ├── tests/                # 42 个 unittest 测试
 │   ├── schema.sql            # 数据库表、约束、索引（数据层）
 │   ├── main.py               # 入口
 │   ├── Makefile              # run/test/lint/seed/clean
@@ -67,7 +67,7 @@ cd lab3/code
 python3 main.py                 # 首次启动自动建库并生成演示数据
 python3 main.py --reset         # 删除数据库后重建（仅演示）
 python3 main.py --no-seed       # 不使用演示数据
-make test                       # 运行 40 个测试
+make test                       # 运行 42 个测试
 make lint                       # pylint 检查
 ```
 

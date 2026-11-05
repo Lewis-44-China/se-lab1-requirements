@@ -215,6 +215,38 @@ class ActivityTests(ServiceTestCase):
         self.assertEqual(record.refund_amount_cents, 5000)
 
 
+    def test_publish_approval_after_cancel_rejected(self) -> None:
+        activity = self.make_activity(publish=False)
+        publish_review = self.s.activities.submit_for_review(
+            self.organizer, activity.id
+        )
+        cancel_review = self.s.activities.request_cancel(
+            self.organizer, activity.id, "取消"
+        )
+        self.s.admin.review(self.admin, cancel_review.id, True, "同意取消")
+        with self.assertRaises(Conflict):
+            self.s.admin.review(self.admin, publish_review.id, True, "同意发布")
+        with self.assertRaises(Conflict):
+            self.s.admin.review(self.admin, publish_review.id, False, "驳回")
+        self.assertIs(
+            self.s.activities.get_activity(activity.id).status,
+            ActivityStatus.CANCELLED,
+        )
+
+    def test_modification_approval_after_cancel_rejected(self) -> None:
+        activity = self.make_activity()
+        review = self.s.activities.modify_activity(
+            self.organizer, activity.id, location="新地点"
+        )
+        self.assertIsNotNone(review)
+        self.s.refunds.cancel_activity(self.admin, activity.id, "活动取消")
+        with self.assertRaises(Conflict):
+            self.s.admin.review(self.admin, review.id, True, "同意修改")
+        updated = self.s.activities.get_activity(activity.id)
+        self.assertIs(updated.status, ActivityStatus.CANCELLED)
+        self.assertNotEqual(updated.location, "新地点")
+
+
 class RegistrationTests(ServiceTestCase):
     """报名幂等、重复报名与名额。"""
 
