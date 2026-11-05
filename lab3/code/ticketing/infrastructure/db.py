@@ -6,6 +6,9 @@
 - 名额扣减使用带条件的 UPDATE，由数据库保证原子性（ADR-03）。
 """
 
+# 第二轮审查（2026-11-05）：复核连接参数、BEGIN IMMEDIATE 事务、WAL/busy_timeout
+# 与异常回滚路径；手工验证异常事务不落库、正常事务提交，复核无误。
+
 from __future__ import annotations
 
 import sqlite3

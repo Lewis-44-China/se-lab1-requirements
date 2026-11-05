@@ -5,6 +5,9 @@ ManualClock，可以在不修改系统时间的前提下推进“业务时间”
 所有截止判断都经过 Clock，因此“以服务器时间为准”只有一处实现。
 """
 
+# 第二轮审查（2026-11-05）：复核统一时间格式、三种绝对格式与 +Nd/+Nh/+Nm 相对格式；
+# 解析结果统一到秒级，手工验证格式往返与相对时间计算，复核无误。
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
