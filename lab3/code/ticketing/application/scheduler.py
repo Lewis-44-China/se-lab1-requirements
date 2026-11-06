@@ -54,6 +54,11 @@ class Scheduler:
 
     # 场次结束后：PURCHASED → NO_SHOW（缺席不释放名额），CHECKED_IN → NORMAL_END；
     # 逐条条件 UPDATE + rowcount，避免重复推进。
+    # 第二轮审查 Q65：取消与时间推进是两条互斥的终态路径。取消要求活动未 ENDED；
+    # 取消事务把报名置 ACTIVITY_CANCELLED、场次置 CANCELLED；本方法只选
+    # PURCHASED/CHECKED_IN，所以不会再把已取消报名改成 NO_SHOW/NORMAL_END。
+    # 反之活动到期后，refresh_statuses 先把活动置 ENDED，取消入口会拒绝。
+    # 单进程 tick 顺序保证两者不交叉；多进程时间窗见 Q56。
     def _finalize_sessions(self) -> int:
         """场次结束后推进报名记录终态。"""
         now = format_dt(self.clock.now())

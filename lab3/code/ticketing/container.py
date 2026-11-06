@@ -23,6 +23,9 @@ from ticketing.application.scheduler import Scheduler
 from ticketing.domain.tickets import TicketService
 from ticketing.domain.waitlist import WaitlistService
 
+# 第二轮审查 Q69：container 只做装配，不绕过服务层权限；每个服务仍在校验
+# require_role / require_owner / require_active。装配顺序无循环依赖，所有
+# 服务共享同一个 db / clock / audit，事务边界留在各服务内部。
 
 @dataclass(slots=True)
 # 所有服务的只读聚合对象，CLI/seed/测试共用。

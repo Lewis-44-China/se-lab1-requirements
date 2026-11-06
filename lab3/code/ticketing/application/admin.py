@@ -125,6 +125,9 @@ class AdminService:
     # 按审核类型分派领域动作：PUBLISH/MODIFY 由 activities 执行，
     # CANCEL 批准时调 refunds.cancel_activity_conn（批量退款+候补失败）。
     # 本方法不自开事务，由 review 在事务内调用。
+    # 第二轮审查 Q66：审计分两层——领域动作写 ACTIVITY（发布/修改/取消/退款），
+    # review() 再写 REVIEW_APPLICATION；对象不同，不是重复。驳回只写审核单并
+    # 通知组织者；CANCEL 的报名/候补退款审计由 cancel_activity_conn 写。
     def _apply_review(
         self,
         conn: sqlite3.Connection,
@@ -173,7 +176,8 @@ class AdminService:
         raise ValidationError("未知的审核类型")
 
     # ---------- 检票账号与分配 ----------
-
+    # 第二轮审查 Q67：重复分配必须拒绝，否则 INSERT OR IGNORE 不会改表，
+    # 但仍会重复写 INSPECTOR_ASSIGNED 审计。用 rowcount 判断是否真的插入。
     def create_inspector(self, admin, phone: str, password: str, name: str):
         """创建检票员账号。"""
         return self.auth.create_inspector(admin, phone, password, name)
@@ -199,7 +203,7 @@ class AdminService:
         ):
             raise Conflict("只能给已公开的活动分配检票员")
         with self.db.transaction() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 """
                 INSERT OR IGNORE INTO activity_inspector (
                     inspector_id, activity_id, assigned_at
@@ -207,6 +211,8 @@ class AdminService:
                 """,
                 (inspector_id, activity_id, format_dt(self.clock.now())),
             )
+            if cursor.rowcount != 1:
+                raise Conflict("该检票员已被分配到该活动")
             self.audit.record(
                 conn,
                 admin.id,

@@ -39,7 +39,10 @@ test_refund_after_deadline_fails (tests.test_lifecycle.RefundTests) ... ok
 test_stale_cancel_does_not_duplicate_activity_audit (tests.test_lifecycle.RefundTests)
 并发取消时，第二个持有旧活动对象的调用不能重复写审计/通知。 ... ok
 test_activity_status_moves_with_time (tests.test_lifecycle.SchedulerTests) ... ok
+test_cancelled_activity_not_finalized_by_time (tests.test_lifecycle.SchedulerTests)
+取消后的报名不会被场次结束的时间任务改成缺席/正常结束。 ... ok
 test_session_end_marks_no_show_and_normal_end (tests.test_lifecycle.SchedulerTests) ... ok
+test_demo_data_is_complete (tests.test_lifecycle.SeedDataTests) ... ok
 test_cancel_refunds_full_amount (tests.test_lifecycle.WaitlistTests) ... ok
 test_duplicate_enqueue_returns_existing_on_unique_conflict (tests.test_lifecycle.WaitlistTests)
 并发重复入队撞唯一索引时，返回已有记录而不是抛 IntegrityError。 ... ok
@@ -52,6 +55,7 @@ test_waitlist_integrity_error_does_not_return_other_account_record (tests.test_l
 test_audit_scope_by_role (tests.test_queries.QueryTests) ... ok
 test_audit_scope_includes_reported_organizer (tests.test_queries.QueryTests) ... ok
 test_cannot_assign_inspector_to_draft (tests.test_queries.QueryTests) ... ok
+test_duplicate_inspector_assignment_rejected (tests.test_queries.QueryTests) ... ok
 test_export_csv_has_no_phone (tests.test_queries.QueryTests) ... ok
 test_inspector_cannot_see_draft_even_if_assigned (tests.test_queries.QueryTests) ... ok
 test_organizer_roster_masks_phone (tests.test_queries.QueryTests) ... ok
@@ -60,6 +64,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 55 tests in 37.815s
+Ran 58 tests in 40.955s
 
 OK

@@ -7,6 +7,7 @@ import unittest
 from datetime import timedelta
 from unittest.mock import patch
 
+from ticketing.application.seed import seed_demo
 from ticketing.domain.errors import Conflict, DeadlinePassed, PermissionDenied
 from ticketing.domain.models import (
     AccountStatus,
@@ -15,6 +16,7 @@ from ticketing.domain.models import (
     RegistrationStatus,
     WaitlistStatus,
 )
+from ticketing.infrastructure.db import Database
 from ticketing.infrastructure.security import new_request_id
 
 from .helpers import ServiceTestCase
@@ -324,6 +326,25 @@ class SchedulerTests(ServiceTestCase):
         )
         self.assertEqual(self.ticket(activity).occupied, 2)
 
+    def test_cancelled_activity_not_finalized_by_time(self) -> None:
+        """取消后的报名不会被场次结束的时间任务改成缺席/正常结束。"""
+        now = self.clock.now()
+        activity = self.make_activity(
+            sale_end=now + timedelta(minutes=30),
+            refund_deadline=now + timedelta(minutes=15),
+            session_start=now + timedelta(hours=1),
+            session_end=now + timedelta(hours=2),
+            checkin_open=now,
+        )
+        registration = self.register(self.people[0], activity)
+        self.s.refunds.cancel_activity(self.admin, activity.id, "测试取消")
+        self.clock.set(now + timedelta(hours=3))
+        self.s.scheduler.tick()
+        self.assertIs(
+            self.s.registrations.get_registration(registration.id).status,
+            RegistrationStatus.ACTIVITY_CANCELLED,
+        )
+
     def test_activity_status_moves_with_time(self) -> None:
         now = self.clock.now()
         activity = self.make_activity(
@@ -386,6 +407,53 @@ class BanTests(ServiceTestCase):
         refreshed = self.s.waitlist.get_record(record.id)
         self.assertIs(refreshed.status, WaitlistStatus.FAILED)
         self.assertEqual(refreshed.refund_amount_cents, 5000)
+
+
+class SeedDataTests(unittest.TestCase):
+    """演示数据的完整性：场景齐全、状态与运行记录一致。"""
+
+    def test_demo_data_is_complete(self) -> None:
+        db = Database(":memory:")
+        db.initialize()
+        try:
+            self.assertTrue(seed_demo(db))
+            statuses = [
+                row["status"]
+                for row in db.query_all("SELECT status FROM activity ORDER BY id")
+            ]
+            self.assertEqual(
+                statuses, ["PUBLISHED", "ONGOING", "ENDED", "DRAFT"]
+            )
+            # 检票员工作台应有一条 PENDING 请求（p4）
+            pending = db.query_one(
+                "SELECT COUNT(*) AS amount FROM check_request "
+                "WHERE status = 'PENDING'"
+            )
+            self.assertEqual(pending["amount"], 1)
+            waiting = db.query_one(
+                "SELECT COUNT(*) AS amount FROM waitlist_record "
+                "WHERE status = 'WAITING'"
+            )
+            self.assertEqual(waiting["amount"], 1)
+            rows = db.query_all(
+                """
+                SELECT r.status, COUNT(*) AS amount
+                  FROM registration r
+                  JOIN activity a ON a.id = r.activity_id
+                 WHERE a.name = '秋季摄影展'
+                 GROUP BY r.status
+                """
+            )
+            self.assertEqual(
+                {row["status"]: row["amount"] for row in rows},
+                {"NORMAL_END": 2, "NO_SHOW": 1, "SELF_CANCELLED": 1},
+            )
+            report = db.query_one(
+                "SELECT COUNT(*) AS amount FROM report WHERE status = 'PENDING'"
+            )
+            self.assertEqual(report["amount"], 1)
+        finally:
+            db.close()
 
 
 if __name__ == "__main__":

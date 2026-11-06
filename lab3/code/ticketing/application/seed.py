@@ -8,6 +8,10 @@
 # 审查通过：演示数据通过 ManualClock 在不同时间点调用真实服务生成，
 # 状态、名额、审计、通知均与业务规则一致；数据库已有账号时直接跳过。
 
+# 第二轮审查 Q68：演示数据通过真实服务生成，覆盖发布/售票/候补/检票/退票/
+# 统计/草稿/举报；原先活动二缺少 p4 的待处理检票请求，与注释和运行记录不符，
+# 已补。新增 seed 完整性测试防止演示数据再次“看起来完整、实际缺场景”。
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -118,6 +122,10 @@ def seed_demo(db: Database, clock: ManualClock | None = None) -> bool:
         p3, _registration_id(services, p3.id, act2.id)
     )
     services.checkin.process(inspector, request.id, passed=True)
+    # p4 留下一條 PENDING 请求，供检票员工作台演示“待处理”。
+    services.checkin.request_checkin(
+        p4, _registration_id(services, p4.id, act2.id)
+    )
 
     # 活动三：已结束，用来演示统计（出席率/退票率）
     clock.set(now - timedelta(days=10))

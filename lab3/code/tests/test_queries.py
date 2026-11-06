@@ -45,6 +45,20 @@ class QueryTests(ServiceTestCase):
         assigned = self.s.checkin.list_assigned_activities(self.inspector)
         self.assertNotIn(draft.id, [item.id for item in assigned])
 
+    def test_duplicate_inspector_assignment_rejected(self) -> None:
+        # make_activity 发布时已经分配过一次；再次分配应被拒绝。
+        activity = self.make_activity()
+        with self.assertRaises(Conflict):
+            self.s.admin.assign_inspector(
+                self.admin, self.inspector.id, activity.id
+            )
+        audits = self.db.query_all(
+            "SELECT * FROM audit_log WHERE action = 'INSPECTOR_ASSIGNED' "
+            "AND object_id = ?",
+            (activity.id,),
+        )
+        self.assertEqual(len(audits), 1)
+
     def test_organizer_roster_masks_phone(self) -> None:
         activity = self.make_activity()
         self.register(self.people[0], activity)
