@@ -1209,8 +1209,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     db_path = Path(args.db)
-    if args.reset and db_path.exists():
-        db_path.unlink()
+    if args.reset:
+        for suffix in ("", "-wal", "-shm"):
+            Path(f"{db_path}{suffix}").unlink(missing_ok=True)
     database = Database(db_path)
     database.initialize()
     if not args.no_seed:
@@ -1218,6 +1219,15 @@ def main(argv: list[str] | None = None) -> int:
         if created:
             print(DEMO_HINT)
     services = build_services(database, SystemClock())
+    # --no-seed 空库也必须能进入管理员菜单（REQ-047：管理员账号由系统预创建）。
+    if args.no_seed and database.query_one(
+        "SELECT 1 FROM account WHERE role = 'ADMIN' LIMIT 1"
+    ) is None:
+        try:
+            services.auth.bootstrap_admin("13800000000", "Admin@123", "平台管理员")
+            print("空库且 --no-seed：已创建默认管理员 13800000000 / Admin@123")
+        except AppError as exc:
+            print(f"警告：无法创建默认管理员：{exc.message}", file=sys.stderr)
     try:
         ConsoleApp(services).run()
     finally:

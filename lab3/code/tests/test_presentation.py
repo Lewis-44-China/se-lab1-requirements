@@ -8,9 +8,11 @@ import json
 import unittest
 from contextlib import redirect_stdout
 from datetime import timedelta
+from pathlib import Path
 from unittest.mock import patch
 
-from ticketing.presentation_表现层.cli import ConsoleApp
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.presentation_表现层.cli import ConsoleApp, main
 
 from .helpers import ServiceTestCase
 
@@ -95,6 +97,32 @@ class ConsoleEntryTests(ServiceTestCase):
         self.assertIn("ACTIVITY_CREATED", text)
         # 管理员审核留痕的操作人是管理员，不应出现在组织者筛选结果里。
         self.assertNotIn("PUBLISH_APPROVED", text)
+
+    def test_no_seed_empty_db_creates_admin(self) -> None:
+        path = Path(self.temp_dir.name) / "empty.db"
+        with patch.object(ConsoleApp, "run", return_value=None):
+            self.assertEqual(main(["--no-seed", "--db", str(path)]), 0)
+        db = Database(path)
+        try:
+            row = db.query_one(
+                "SELECT role FROM account WHERE phone = '13800000000'"
+            )
+            self.assertIsNotNone(row)
+            self.assertEqual(row["role"], "ADMIN")
+        finally:
+            db.close()
+
+    def test_reset_removes_wal_and_shm(self) -> None:
+        path = Path(self.temp_dir.name) / "reset.db"
+        for suffix in ("", "-wal", "-shm"):
+            Path(f"{path}{suffix}").write_text("stale", encoding="utf-8")
+        with patch.object(ConsoleApp, "run", return_value=None):
+            self.assertEqual(
+                main(["--reset", "--no-seed", "--db", str(path)]), 0
+            )
+        self.assertTrue(path.exists())
+        self.assertFalse(Path(f"{path}-wal").exists())
+        self.assertFalse(Path(f"{path}-shm").exists())
 
     def test_my_tickets_has_waitlist_category(self) -> None:
         activity = self.make_activity(normal_capacity=1)
