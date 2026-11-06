@@ -164,7 +164,10 @@ class CheckinService:
     # passed=True → _pass；passed=False → _mark_abnormal。
     def process(self, inspector, request_id: int, passed: bool) -> CheckRequest:
         """检票员处理请求：通过或标记异常。"""
-        PermissionService.require_role(inspector, Role.INSPECTOR)
+        # 第三轮缺陷 BUG-02：处理前重新读库，封禁检票员不能继续处理请求。
+        inspector = PermissionService.reload_active(
+            self.db, inspector, Role.INSPECTOR
+        )
         request = self.get_request(request_id)
         registration = self.get_registration(request.registration_id)
         session = self.get_session(registration.session_id)

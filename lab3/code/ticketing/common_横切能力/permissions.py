@@ -27,12 +27,30 @@ class PermissionService:
 
     @staticmethod
     # 新增交易边界：封禁账号不能购票/候补；查看已有票不受限。
-    # 第二轮审查：对照 REQ-018，封禁后仅禁止新增交易（报名/候补，本方法只在这两处
-# 调用）；已有票仍可检票入场、退票、查询和接收通知，不做限制。
+    # 第二轮审查：对照 REQ-018，封禁后仅禁止新增交易；
+    # 已有票仍可检票入场、退票、查询和接收通知，不做限制。
     def require_active(account: Account) -> None:
         """购票、候补等新增交易要求账号未被封禁。"""
         if account.status is AccountStatus.BANNED:
             raise PermissionDenied("账号已被封禁，不能进行购票或候补")
+
+    @staticmethod
+    def reload_active(db, account: Account, *roles: Role) -> Account:
+        """重新读库校验账号状态和角色，供受封禁影响的写入口使用。
+
+        登录时拿到的 Account 只是快照；封禁后旧对象仍可能是 NORMAL。
+        组织者写活动、检票员处理请求等入口必须先经过这里。
+        """
+        row = db.query_one(
+            "SELECT * FROM account WHERE id = ?", (account.id,)
+        )
+        if row is None:
+            raise PermissionDenied("账号不存在或不可用")
+        fresh = Account.from_row(row)
+        PermissionService.require_active(fresh)
+        if roles:
+            PermissionService.require_role(fresh, *roles)
+        return fresh
 
     @staticmethod
     # 数据所有者边界。

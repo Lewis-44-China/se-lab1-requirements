@@ -100,7 +100,10 @@ class ActivityService:
 
     def create_activity(self, organizer, draft: ActivityDraft) -> Activity:
         """组织者创建草稿活动。"""
-        PermissionService.require_role(organizer, Role.ORGANIZER)
+        # 第三轮缺陷 BUG-01：登录对象可能是封禁前的快照，创建前必须重新读库。
+        organizer = PermissionService.reload_active(
+            self.db, organizer, Role.ORGANIZER
+        )
         self._validate_draft(draft)
         created_at = format_dt(self.clock.now())
         # 审查通过：所有状态的活动都存在 activity 同一张表，用 status 区分
@@ -219,6 +222,9 @@ class ActivityService:
     def submit_for_review(self, organizer, activity_id: int) -> ReviewApplication:
         """草稿提交发布审核。"""
         activity = self.get_activity(activity_id)
+        organizer = PermissionService.reload_active(
+            self.db, organizer, Role.ORGANIZER
+        )
         PermissionService.require_activity_owner(organizer, activity.organizer_id)
         if activity.status is not ActivityStatus.DRAFT:
             raise Conflict("只有草稿状态的活动可以提交发布审核")
@@ -268,6 +274,9 @@ class ActivityService:
         返回审核申请表示发布后的修改已进入审核。
         """
         activity = self.get_activity(activity_id)
+        organizer = PermissionService.reload_active(
+            self.db, organizer, Role.ORGANIZER
+        )
         PermissionService.require_activity_owner(organizer, activity.organizer_id)
         if activity.status in {ActivityStatus.CANCELLED, ActivityStatus.ENDED}:
             raise Conflict("已取消或已结束的活动不能修改")
@@ -381,6 +390,9 @@ class ActivityService:
     def request_cancel(self, organizer, activity_id: int, reason: str) -> ReviewApplication:
         """组织者申请取消活动，需管理员审批。"""
         activity = self.get_activity(activity_id)
+        organizer = PermissionService.reload_active(
+            self.db, organizer, Role.ORGANIZER
+        )
         PermissionService.require_activity_owner(organizer, activity.organizer_id)
         if activity.status in {ActivityStatus.CANCELLED, ActivityStatus.ENDED}:
             raise Conflict("活动已取消或已结束")
