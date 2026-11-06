@@ -10,7 +10,7 @@
 | 语言 | Python 3.10 | 业务规则多、状态机多；`dataclass`/`Enum`/`sqlite3` 能把 UML 类和规则直接落成代码，便于逐行审查和后续测试 |
 | 存储 | SQLite 3（标准库 `sqlite3`） | 无外部依赖；单文件；支持事务、唯一约束和原子条件更新，可以落地“不超发、幂等、审计同事务” |
 | 界面 | 终端菜单 | 手册不要求图形界面；四角色菜单足以展示权限、状态和业务流程，且便于自动化测试 |
-| 规范 | pylint | 手册推荐的 Python 代码规范工具；当前 `pylint ticketing tests` 为 10.00/10 |
+| 规范 | pylint | 手册推荐的 Python 代码规范工具；当前 `pylint ticketing tests` 为 10.00/10（另有 2 条 R0915 函数长度提示，不影响正确性） |
 | 构建/运行 | Python 解释器 + Makefile | `python3 main.py` 直接运行；`make test` / `make lint` 统一入口 |
 
 ## 二、目录
