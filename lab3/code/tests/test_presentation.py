@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import io
+import json
 import unittest
 from contextlib import redirect_stdout
 from datetime import timedelta
@@ -62,6 +63,25 @@ class ConsoleEntryTests(ServiceTestCase):
             "SELECT allow_waitlist FROM activity_session ORDER BY id DESC LIMIT 1"
         )
         self.assertEqual(row["allow_waitlist"], 0)
+
+    def test_location_only_modification_does_not_require_session_times(self) -> None:
+        activity = self.make_activity()
+        app = ConsoleApp(self.s)
+        output = io.StringIO()
+        # 选项 3 → 只填地点 → 不改场次时间 → pause
+        with patch("builtins.input", side_effect=["3", "新地点", "n", ""]):
+            with redirect_stdout(output):
+                app._manage_activity(self.organizer, activity)
+        row = self.db.query_one(
+            "SELECT payload FROM review_application "
+            "WHERE activity_id = ? AND type = 'MODIFY' "
+            "ORDER BY id DESC LIMIT 1",
+            (activity.id,),
+        )
+        self.assertIsNotNone(row)
+        payload = json.loads(row["payload"])
+        self.assertEqual(payload["location"], "新地点")
+        self.assertNotIn("sessions", payload)
 
     def test_my_tickets_has_waitlist_category(self) -> None:
         activity = self.make_activity(normal_capacity=1)

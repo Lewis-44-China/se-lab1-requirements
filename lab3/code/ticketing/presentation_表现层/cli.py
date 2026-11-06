@@ -592,27 +592,37 @@ class ConsoleApp:
             success("表面信息已直接生效。")
         elif choice == "3":
             location = ask_optional("新地点（回车保持不变）")
-            session_id = ask_int("要修改的场次 ID", 1)
-            start = ask_time("新的场次开始时间", format_dt(datetime.now()))
-            end = ask_time("新的场次结束时间", format_dt(datetime.now() + timedelta(hours=3)))
-            checkin = ask_time("新的检票开放时间", format_dt(datetime.now()))
-            review = self.services.activities.modify_activity(
-                account,
-                activity.id,
-                location=location or None,
-                session_updates=[
+            change_session = ask_yes_no("同时修改场次时间？", False)
+            session_updates = None
+            if change_session:
+                session_id = ask_int("要修改的场次 ID", 1)
+                session = self.services.activities.get_session(session_id)
+                start = ask_time("新的场次开始时间", session.start_time)
+                end = ask_time("新的场次结束时间", session.end_time)
+                checkin = ask_time(
+                    "新的检票开放时间", session.checkin_open_time
+                )
+                session_updates = [
                     {
                         "session_id": session_id,
                         "start_time": start,
                         "end_time": end,
                         "checkin_open_time": checkin,
                     }
-                ],
-            )
-            if review is not None:
-                success(f"已提交修改审核，申请编号 {review.id}")
+                ]
+            if not location and session_updates is None:
+                warn("未填写任何修改")
             else:
-                success("修改已直接生效（草稿）。")
+                review = self.services.activities.modify_activity(
+                    account,
+                    activity.id,
+                    location=location or None,
+                    session_updates=session_updates,
+                )
+                if review is not None:
+                    success(f"已提交修改审核，申请编号 {review.id}")
+                else:
+                    success("修改已直接生效（草稿）。")
         elif choice == "4":
             if tickets_locked:
                 warn("活动已开售，票价与容量不可修改")
