@@ -120,6 +120,10 @@ class WaitlistService:
         # “截止时仍未递补即失败”口径一致，避免最后一刻入队后立刻失败。
         if now >= parse_dt(activity.waitlist_deadline):
             raise DeadlinePassed("候补已截止")
+        # 第三轮缺陷 BUG-03：即使读到历史数据（候补截止晚于售票截止），
+        # 售票截止后也不能再加入候补；新数据由创建校验保证两者相等。
+        if now >= parse_dt(activity.sale_end):
+            raise DeadlinePassed("售票已截止，不能加入候补")
         if now >= parse_dt(session.end_time):
             raise DeadlinePassed("场次已结束")
         if not session.allow_waitlist:

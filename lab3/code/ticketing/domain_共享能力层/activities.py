@@ -701,8 +701,11 @@ class ActivityService:
         # 第二轮审查 Q34：场次开始后不应还能售票，售票截止必须严格早于最早场次开始。
         if draft.sale_end >= first_start:
             raise ValidationError("售票截止时间必须早于最早场次开始时间")
-        if not draft.sale_start <= draft.waitlist_deadline <= first_start:
-            raise ValidationError("候补截止必须不早于开售时间，且不晚于最早场次开始")
+        # 第三轮缺陷 BUG-03/04：候补与售票必须同一时刻关闭。
+        # REQ-019 把“候补截止 = 售票截止”列为边界规则；相等可同时避免
+        # “售票结束后还能候补”和“候补先关闭、售票后卖完”的死路。
+        if draft.waitlist_deadline != draft.sale_end:
+            raise ValidationError("候补截止时间必须等于售票截止时间")
         if not draft.sale_start <= draft.refund_deadline <= first_start:
             raise ValidationError("退票截止必须不早于开售时间，且不晚于最早场次开始")
         for session in draft.sessions:

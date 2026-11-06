@@ -310,14 +310,14 @@ class WaitlistDeadlineTests(ServiceTestCase):
         activity = self.make_activity(
             normal_capacity=1,
             sale_end=now + timedelta(hours=1),
-            waitlist_deadline=now + timedelta(minutes=30),
+            waitlist_deadline=now + timedelta(hours=1),
             refund_deadline=now + timedelta(minutes=45),
             session_start=now + timedelta(hours=2),
             session_end=now + timedelta(hours=3),
             checkin_open=now + timedelta(hours=1),
         )
         self.register(self.people[0], activity)
-        self.clock.set(now + timedelta(hours=1))
+        self.clock.set(now + timedelta(hours=1, minutes=1))
         with self.assertRaises(DeadlinePassed):
             self.enqueue(self.people[1], activity)
 
@@ -326,14 +326,14 @@ class WaitlistDeadlineTests(ServiceTestCase):
         activity = self.make_activity(
             normal_capacity=1,
             sale_end=now + timedelta(hours=1),
-            waitlist_deadline=now + timedelta(minutes=30),
+            waitlist_deadline=now + timedelta(hours=1),
             refund_deadline=now + timedelta(minutes=45),
             session_start=now + timedelta(hours=2),
             session_end=now + timedelta(hours=3),
             checkin_open=now + timedelta(hours=1),
         )
         self.register(self.people[0], activity)
-        self.clock.set(now + timedelta(minutes=30))
+        self.clock.set(now + timedelta(hours=1))
         with self.assertRaises(DeadlinePassed):
             self.enqueue(self.people[1], activity)
 

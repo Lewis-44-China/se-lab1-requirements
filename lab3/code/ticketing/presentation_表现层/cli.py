@@ -504,7 +504,9 @@ class ConsoleApp:
         estimated = ask_int("参与人数估计", 1)
         sale_start = ask_time("售票开始", "+0d")
         sale_end = ask_time("售票截止", "+3d")
-        waitlist_deadline = ask_time("候补截止", "+3d")
+        # 第三轮缺陷 BUG-03/04：候补截止与售票截止保持同一时刻，不再单独询问。
+        waitlist_deadline = sale_end
+        print("候补截止自动与售票截止相同。")
         refund_deadline = ask_time("退票截止", "+2d")
         session_start = ask_time("场次开始", "+4d")
         checkin_open = ask_time("检票开放", "+3d")

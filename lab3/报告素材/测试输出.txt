@@ -92,8 +92,46 @@ test_organizer_roster_masks_phone (tests.test_queries.QueryTests) ... ok
 test_participant_cannot_see_draft (tests.test_queries.QueryTests) ... ok
 test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
+test_req021_cancel_cancels_all_sessions (tests.test_round3_audit.ActivityAuditTests) ... ok
+test_req028_session_time_change_notifies_purchasers (tests.test_round3_audit.ActivityAuditTests) ... ok
+test_req029_combined_query_and_role_scope (tests.test_round3_audit.ActivityAuditTests) ... ok
+test_req038_activity_is_not_cancelled_when_underfilled (tests.test_round3_audit.ActivityAuditTests) ... ok
+test_req039_audit_covers_key_actions (tests.test_round3_audit.AuditTraceTests) ... ok
+test_req040_audit_fields_are_complete (tests.test_round3_audit.AuditTraceTests) ... ok
+test_bug01_banned_organizer_cannot_create_activity (tests.test_round3_audit.KnownDefectTests)
+BUG-01（REQ-018）：封禁组织者仍能创建并发布新活动。 ... ok
+test_bug02_banned_inspector_cannot_process (tests.test_round3_audit.KnownDefectTests)
+BUG-02（REQ-018）：封禁检票员仍能通过检票请求。 ... ok
+test_bug03_waitlist_closes_at_sale_end (tests.test_round3_audit.KnownDefectTests)
+BUG-03（REQ-012/019）：售票截止后不能加入候补。 ... ok
+test_bug04_waitlist_deadline_cannot_precede_sale_end (tests.test_round3_audit.KnownDefectTests)
+BUG-04（REQ-019）：候补截止必须等于售票截止。 ... ok
+test_bug05_cancelled_activity_review_can_be_closed (tests.test_round3_audit.KnownDefectTests)
+BUG-05（REQ-009）：活动取消后发布审核单永久 PENDING。 ... expected failure
+test_bug06_refund_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
+BUG-06（REQ-013/014）：退票后待处理检票请求仍留在检票员工作台。 ... expected failure
+test_bug07_cancel_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
+BUG-07（REQ-011/014）：活动取消后待处理检票请求仍显示。 ... expected failure
+test_bug08_failed_registration_audit_visible_to_participant (tests.test_round3_audit.KnownDefectTests)
+BUG-08（REQ-041）：参与者看不到自己的“报名失败”留痕。 ... expected failure
+test_bug09_session_end_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
+BUG-09（REQ-014/016）：场次结束后待处理检票请求仍留在工作台。 ... expected failure
+test_req012_buyer_must_match_account (tests.test_round3_audit.RegistrationAuditTests) ... ok
+test_req014_checkin_requires_own_purchased_ticket (tests.test_round3_audit.RegistrationAuditTests) ... ok
+test_req022_terminal_registration_cannot_change (tests.test_round3_audit.RegistrationAuditTests) ... ok
+test_req026_no_show_keeps_seat (tests.test_round3_audit.RegistrationAuditTests) ... ok
+test_req026_refund_then_tick_restores_open_status (tests.test_round3_audit.RegistrationAuditTests) ... ok
+test_req002_admin_cannot_be_banned (tests.test_round3_audit.RolePermissionAuditTests) ... ok
+test_req002_admin_cannot_self_register (tests.test_round3_audit.RolePermissionAuditTests) ... ok
+test_req002_organizer_cannot_touch_other_organizer (tests.test_round3_audit.RolePermissionAuditTests) ... ok
+test_req002_phone_is_unique_across_roles (tests.test_round3_audit.RolePermissionAuditTests) ... ok
+test_req003_inspector_cannot_read_roster_or_export (tests.test_round3_audit.RolePermissionAuditTests) ... ok
+test_req045_phone_visibility_follows_role (tests.test_round3_audit.RolePermissionAuditTests) ... ok
+test_req019_allow_waitlist_false_blocks_enqueue (tests.test_round3_audit.WaitlistAuditTests) ... ok
+test_req023_waitlist_terminal_states_are_immutable (tests.test_round3_audit.WaitlistAuditTests) ... ok
+test_req049_promotion_generates_registration_with_snapshot (tests.test_round3_audit.WaitlistAuditTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 85 tests in 57.629s
+Ran 114 tests in 75.489s
 
-OK
+OK (expected failures=5)

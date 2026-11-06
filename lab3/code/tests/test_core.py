@@ -233,7 +233,7 @@ class ActivityTests(ServiceTestCase):
         with self.assertRaises(ValidationError):
             self.make_activity(
                 sale_end=now + timedelta(days=1),
-                waitlist_deadline=now + timedelta(hours=12),
+                waitlist_deadline=now + timedelta(days=1),
                 refund_deadline=now + timedelta(hours=12),
                 session_start=now + timedelta(days=1),
                 checkin_open=now + timedelta(hours=12),
@@ -243,7 +243,7 @@ class ActivityTests(ServiceTestCase):
         now = self.clock.now()
         activity = self.make_activity(
             sale_end=now + timedelta(days=1),
-            waitlist_deadline=now + timedelta(hours=20),
+            waitlist_deadline=now + timedelta(days=1),
             refund_deadline=now + timedelta(hours=20),
             session_start=now + timedelta(days=2),
             checkin_open=now + timedelta(hours=23),

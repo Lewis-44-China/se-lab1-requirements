@@ -290,7 +290,7 @@ class WaitlistAuditTests(_AuditBase):
             "候补终态",
             [TicketKind.NORMAL],
             capacity=1,
-            sale_end=now + timedelta(days=1),
+            sale_end=now + timedelta(hours=2),
             waitlist_deadline=now + timedelta(hours=2),
             refund_deadline=now + timedelta(hours=1),
             session_start=now + timedelta(days=2),
@@ -598,16 +598,15 @@ class KnownDefectTests(_AuditBase):
         with self.assertRaises(PermissionDenied):
             self.s.checkin.process(self.inspector, request.id, True)
 
-    @unittest.expectedFailure
     def test_bug03_waitlist_closes_at_sale_end(self) -> None:
-        """BUG-03（REQ-012/019）：售票截止后仍可加入候补。"""
+        """BUG-03（REQ-012/019）：售票截止后不能加入候补。"""
         now = self.clock.now()
         activity = self._custom_activity(
-            "候补晚于售票截止",
+            "候补与售票同截止",
             [TicketKind.NORMAL],
             capacity=1,
             sale_end=now + timedelta(hours=1),
-            waitlist_deadline=now + timedelta(hours=3),
+            waitlist_deadline=now + timedelta(hours=1),
             refund_deadline=now + timedelta(hours=1),
             session_start=now + timedelta(hours=5),
             session_end=now + timedelta(hours=8),
@@ -618,9 +617,8 @@ class KnownDefectTests(_AuditBase):
         with self.assertRaises(DeadlinePassed):
             self.enqueue(self.people[1], activity)
 
-    @unittest.expectedFailure
     def test_bug04_waitlist_deadline_cannot_precede_sale_end(self) -> None:
-        """BUG-04（REQ-019）：候补截止早于售票截止会形成“买不到也候补不了”。"""
+        """BUG-04（REQ-019）：候补截止必须等于售票截止。"""
         now = self.clock.now()
         with self.assertRaises(ValidationError):
             self._custom_activity(
