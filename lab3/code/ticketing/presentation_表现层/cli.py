@@ -656,8 +656,21 @@ class ConsoleApp:
             ],
         )
         ticket_id = ask_int("票种 ID", 1)
-        price = ask_money("新票价（元）", "0")
-        capacity = ask_int("新容量", 1)
+        ticket = next(
+            (
+                item
+                for tickets in detail.tickets.values()
+                for item in tickets
+                if item.id == ticket_id
+            ),
+            None,
+        )
+        if ticket is None:
+            error("票种不属于该活动")
+            return
+        price_default = f"{ticket.price_cents // 100}.{ticket.price_cents % 100:02d}"
+        price = ask_money("新票价（元）", price_default)
+        capacity = ask_int("新容量", 1, default=ticket.capacity)
         review = self.services.activities.modify_activity(
             account,
             activity.id,
@@ -1167,8 +1180,13 @@ class ConsoleApp:
         return None
 
     def _choose_kind(self) -> TicketKind:
-        choice = input("票种：1. VIP  2. 普通票：").strip()
-        return TicketKind.NORMAL if choice == "2" else TicketKind.VIP
+        while True:
+            choice = input("票种：1. VIP  2. 普通票：").strip()
+            if choice == "1":
+                return TicketKind.VIP
+            if choice == "2":
+                return TicketKind.NORMAL
+            warn("请输入 1 或 2")
 
     def _optional_kind(self) -> TicketKind | None:
         choice = input("票种筛选：0. 全部  1. VIP  2. 普通票：").strip()

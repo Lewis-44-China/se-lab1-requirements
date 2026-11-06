@@ -160,15 +160,23 @@ def ask_optional(prompt: str) -> str:
     return input(f"{prompt}（可空）：").strip()
 
 
-def ask_int(prompt: str, minimum: int | None = None, maximum: int | None = None) -> int:
-    """读取整数并检查范围。"""
+def ask_int(
+    prompt: str,
+    minimum: int | None = None,
+    maximum: int | None = None,
+    default: int | None = None,
+) -> int:
+    """读取整数并检查范围；提供 default 时回车采用默认值。"""
     while True:
         text = input(f"{prompt}：").strip()
-        try:
-            value = int(text)
-        except ValueError:
-            warn("请输入整数")
-            continue
+        if not text and default is not None:
+            value = default
+        else:
+            try:
+                value = int(text)
+            except ValueError:
+                warn("请输入整数")
+                continue
         if minimum is not None and value < minimum:
             warn(f"不能小于 {minimum}")
             continue

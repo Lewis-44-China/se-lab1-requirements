@@ -124,6 +124,25 @@ class ConsoleEntryTests(ServiceTestCase):
         self.assertFalse(Path(f"{path}-wal").exists())
         self.assertFalse(Path(f"{path}-shm").exists())
 
+    def test_invalid_ticket_kind_reprompts(self) -> None:
+        app = ConsoleApp(self.s)
+        with patch("builtins.input", side_effect=["x", "2"]):
+            kind = app._choose_kind()
+        self.assertEqual(kind.value, "NORMAL")
+
+    def test_modify_ticket_defaults_to_current_values(self) -> None:
+        draft = self.make_activity(publish=False)
+        ticket = self.ticket(draft)
+        detail = self.s.queries.activity_detail(self.organizer, draft.id)
+        app = ConsoleApp(self.s)
+        # 票种 ID、票价回车、容量回车 → 应保持原值，而不是 0/1。
+        with patch("builtins.input", side_effect=[str(ticket.id), "", ""]):
+            with redirect_stdout(io.StringIO()):
+                app._modify_tickets(self.organizer, draft, detail)
+        updated = self.s.tickets.get_ticket_type(ticket.id)
+        self.assertEqual(updated.price_cents, ticket.price_cents)
+        self.assertEqual(updated.capacity, ticket.capacity)
+
     def test_my_tickets_has_waitlist_category(self) -> None:
         activity = self.make_activity(normal_capacity=1)
         self.register(self.people[0], activity)
