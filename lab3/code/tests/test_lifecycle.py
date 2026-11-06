@@ -7,17 +7,17 @@ import unittest
 from datetime import timedelta
 from unittest.mock import patch
 
-from ticketing.application.seed import seed_demo
-from ticketing.domain.errors import Conflict, DeadlinePassed, PermissionDenied
-from ticketing.domain.models import (
+from ticketing.application_应用层.seed import seed_demo
+from ticketing.domain_共享能力层.errors import Conflict, DeadlinePassed, PermissionDenied
+from ticketing.domain_共享能力层.models import (
     AccountStatus,
     ActivityStatus,
     CheckRequestStatus,
     RegistrationStatus,
     WaitlistStatus,
 )
-from ticketing.infrastructure.db import Database
-from ticketing.infrastructure.security import new_request_id
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.infrastructure_基础设施.security import new_request_id
 
 from .helpers import ServiceTestCase
 

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.domain.models import AuditLog
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.domain_共享能力层.models import AuditLog
 
 # 审查通过：对照 REQ-039，活动/审核/报名/退票/候补/检票/账号/举报的关键操作
 # 均已留痕；报名失败用独立事务记录原因；通知本身不写审计（REQ-028）。

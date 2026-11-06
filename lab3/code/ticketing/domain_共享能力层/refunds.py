@@ -22,11 +22,11 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from ticketing.common.audit import AuditService
-from ticketing.infrastructure.clock import Clock, format_dt, parse_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import Conflict, DeadlinePassed, NotFound, ValidationError
-from ticketing.domain.models import (
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt, parse_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import Conflict, DeadlinePassed, NotFound, ValidationError
+from ticketing.domain_共享能力层.models import (
     Activity,
     ActivityStatus,
     NotificationType,
@@ -36,10 +36,10 @@ from ticketing.domain.models import (
     SessionStatus,
     WaitlistRecord,
 )
-from ticketing.common.notifications import NotificationService
-from ticketing.common.permissions import PermissionService
-from ticketing.domain.tickets import TicketService
-from ticketing.domain.waitlist import WaitlistService
+from ticketing.common_横切能力.notifications import NotificationService
+from ticketing.common_横切能力.permissions import PermissionService
+from ticketing.domain_共享能力层.tickets import TicketService
+from ticketing.domain_共享能力层.waitlist import WaitlistService
 
 
 class RefundService:

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.domain.models import Notification, NotificationType
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.domain_共享能力层.models import Notification, NotificationType
 
 
 # 审查通过：审核结果、活动变更、候补递补/失败、强制退票、活动取消、举报处理

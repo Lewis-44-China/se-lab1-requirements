@@ -7,8 +7,8 @@ import unittest
 from datetime import timedelta
 from pathlib import Path
 
-from ticketing.domain.errors import Conflict, PermissionDenied
-from ticketing.domain.models import RegistrationStatus, Role
+from ticketing.domain_共享能力层.errors import Conflict, PermissionDenied
+from ticketing.domain_共享能力层.models import RegistrationStatus, Role
 
 from .helpers import ServiceTestCase
 

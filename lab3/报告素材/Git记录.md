@@ -21,7 +21,7 @@
 | `17e9fca` | 添加四角色终端界面、演示数据、Makefile 与运行入口 |
 | `dcc7abd` | 添加 38 个自动化测试；修复封禁状态过期、候补递补票种查找、时钟注入等问题；pylint 10.00/10 |
 | `f042582` | 添加 UML 交付、49 条需求追踪表、AI 使用记录、进度记录与打包工具 |
-| `735be3d` | 按分层重组 `ticketing/` 为 presentation/application/domain/common/infrastructure，更新绝对导入与 SCHEMA_PATH |
+| `735be3d` | 按分层重组 `ticketing/` 为 presentation_表现层/application_应用层/domain_共享能力层/common_横切能力/infrastructure，更新绝对导入与 SCHEMA_PATH |
 | `652fd8a` | 同步目录结构文档、UML 实现映射、进度记录与代码规模/测试素材 |
 | `629618e` | 同步实验二修订版 UML（5 张图 + 设计说明），核对失败审计、重复候补、活动取消候补失败、分配检票等实现 |
 | `31867c1` | 为活动创建补充独立候补截止输入，更新实现映射、基线、需求追踪与代码规模素材 |

@@ -5,7 +5,9 @@ max-line-length = 100
 [MESSAGES CONTROL]
 # 课程项目按业务职责拆分服务，部分方法参数较多、局部变量较多；
 # 这些是规模提示，不是正确性问题。其余可读性/未使用变量等检查保留。
+# non-ascii-file-name：五个分层目录按人工审查要求加了中文后缀，属有意命名。
 disable =
+    non-ascii-file-name,
     duplicate-code,
     too-many-arguments,
     too-many-positional-arguments,

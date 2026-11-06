@@ -19,13 +19,13 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from ticketing.domain.activities import ActivityService
-from ticketing.common.audit import AuditService
-from ticketing.domain.auth import AuthService
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import Conflict, NotFound, PermissionDenied, ValidationError
-from ticketing.domain.models import (
+from ticketing.domain_共享能力层.activities import ActivityService
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.domain_共享能力层.auth import AuthService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import Conflict, NotFound, PermissionDenied, ValidationError
+from ticketing.domain_共享能力层.models import (
     Activity,
     ActivityStatus,
     NotificationType,
@@ -36,11 +36,11 @@ from ticketing.domain.models import (
     ReviewType,
     Role,
 )
-from ticketing.common.notifications import NotificationService
-from ticketing.common.permissions import PermissionService
-from ticketing.domain.queries import QueryService
-from ticketing.domain.refunds import RefundService
-from ticketing.domain.waitlist import WaitlistService
+from ticketing.common_横切能力.notifications import NotificationService
+from ticketing.common_横切能力.permissions import PermissionService
+from ticketing.domain_共享能力层.queries import QueryService
+from ticketing.domain_共享能力层.refunds import RefundService
+from ticketing.domain_共享能力层.waitlist import WaitlistService
 
 
 class AdminService:

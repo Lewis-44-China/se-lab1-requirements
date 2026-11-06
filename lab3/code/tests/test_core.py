@@ -9,16 +9,16 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from ticketing.container import build_services
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import (
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import (
     CapacityFull,
     Conflict,
     DeadlinePassed,
     PermissionDenied,
     ValidationError,
 )
-from ticketing.domain.models import ActivityStatus, RegistrationStatus, Role, TicketKind
-from ticketing.infrastructure.security import new_request_id
+from ticketing.domain_共享能力层.models import ActivityStatus, RegistrationStatus, Role, TicketKind
+from ticketing.infrastructure_基础设施.security import new_request_id
 
 from .helpers import ServiceTestCase
 

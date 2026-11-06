@@ -13,7 +13,7 @@ lint:
 	$(PYTHON) -m pylint ticketing tests
 
 seed:
-	$(PYTHON) -m ticketing.application.seed
+	$(PYTHON) -m ticketing.application_应用层.seed
 
 clean:
 	rm -f $(DB) $(DB)-wal $(DB)-shm

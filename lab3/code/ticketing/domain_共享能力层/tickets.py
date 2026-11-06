@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import Conflict, NotFound, ValidationError
-from ticketing.domain.models import TicketKind, TicketType
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import Conflict, NotFound, ValidationError
+from ticketing.domain_共享能力层.models import TicketKind, TicketType
 
 
 class TicketService:

@@ -2,7 +2,7 @@
 
 用 ManualClock 在不同时间点调用真实服务，保证演示数据的状态、名额、
 审计和通知都与业务规则一致，而不是直接往表里塞“假数据”。
-运行：python3 -m ticketing.application.seed  （或 python3 main.py 首次启动自动生成）
+运行：python3 -m ticketing.application_应用层.seed  （或 python3 main.py 首次启动自动生成）
 """
 
 # 审查通过：演示数据通过 ManualClock 在不同时间点调用真实服务生成，
@@ -16,12 +16,12 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from ticketing.domain.activities import ActivityDraft, SessionDraft, TicketDraft
-from ticketing.infrastructure.clock import ManualClock
+from ticketing.domain_共享能力层.activities import ActivityDraft, SessionDraft, TicketDraft
+from ticketing.infrastructure_基础设施.clock import ManualClock
 from ticketing.container import build_services
-from ticketing.infrastructure.db import Database
-from ticketing.domain.models import Role, TicketKind
-from ticketing.infrastructure.security import new_request_id
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.models import Role, TicketKind
+from ticketing.infrastructure_基础设施.security import new_request_id
 
 
 # 仅在空库生成演示数据；用真实服务走完创建/审核/报名/候补/检票/退票流程。

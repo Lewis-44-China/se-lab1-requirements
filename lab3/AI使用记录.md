@@ -45,7 +45,7 @@
 
 - **使用场景**：把实验二类图、状态机、数据对象落成 SQLite 表与 Python 枚举/dataclass。
 - **输入提示词要点**：“按实验二设计基线与 UML 落地 account/activity/session/
-  ticket_type/registration/waitlist/check_request/review_application/report/
+  ticket_type/registration/waitlist/check_request/review_application_应用层/report/
   notification/audit_log/outbox 等表；金额用分；状态用封闭 CHECK；关键唯一约束
   和索引要写出来。”
 - **AI 输出**：`code/schema.sql`、`code/ticketing/models.py`；包括

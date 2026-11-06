@@ -17,15 +17,15 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from ticketing.domain.activities import ActivityDraft, SessionDraft, TicketDraft
-from ticketing.infrastructure.clock import ManualClock, SystemClock, format_dt, parse_dt
+from ticketing.domain_共享能力层.activities import ActivityDraft, SessionDraft, TicketDraft
+from ticketing.infrastructure_基础设施.clock import ManualClock, SystemClock, format_dt, parse_dt
 from ticketing.container import Services, build_services
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import AppError, CapacityFull
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import AppError, CapacityFull
 
 # 第二轮审查（2026-11-05）：Q42 开售后隐藏/拒绝票价容量修改；Q70 我的票增加
 # “候补中”分类；Q71 核对四角色菜单与服务层权限边界。
-from ticketing.domain.models import (
+from ticketing.domain_共享能力层.models import (
     Account,
     Activity,
     ActivityStatus,
@@ -34,7 +34,7 @@ from ticketing.domain.models import (
     TicketKind,
     WaitlistStatus,
 )
-from ticketing.presentation.render import (
+from ticketing.presentation_表现层.render import (
     ask,
     ask_int,
     ask_money,
@@ -49,8 +49,8 @@ from ticketing.presentation.render import (
     success,
     warn,
 )
-from ticketing.infrastructure.security import mask_phone, new_request_id
-from ticketing.application.seed import seed_demo
+from ticketing.infrastructure_基础设施.security import mask_phone, new_request_id
+from ticketing.application_应用层.seed import seed_demo
 
 DEMO_HINT = """
 演示账号（首次启动自动创建）：

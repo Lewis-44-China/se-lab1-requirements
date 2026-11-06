@@ -21,10 +21,10 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
-from ticketing.infrastructure.clock import Clock, parse_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import NotFound, PermissionDenied
-from ticketing.domain.models import (
+from ticketing.infrastructure_基础设施.clock import Clock, parse_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import NotFound, PermissionDenied
+from ticketing.domain_共享能力层.models import (
     Activity,
     ActivityStatus,
     AuditLog,
@@ -36,8 +36,8 @@ from ticketing.domain.models import (
     TicketType,
     WaitlistRecord,
 )
-from ticketing.common.permissions import PermissionService
-from ticketing.infrastructure.security import mask_phone
+from ticketing.common_横切能力.permissions import PermissionService
+from ticketing.infrastructure_基础设施.security import mask_phone
 
 
 @dataclass(slots=True)

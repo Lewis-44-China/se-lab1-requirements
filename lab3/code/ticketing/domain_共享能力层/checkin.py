@@ -16,11 +16,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ticketing.common.audit import AuditService
-from ticketing.infrastructure.clock import Clock, format_dt, parse_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import Conflict, DeadlinePassed, NotFound
-from ticketing.domain.models import (
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt, parse_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import Conflict, DeadlinePassed, NotFound
+from ticketing.domain_共享能力层.models import (
     Activity,
     ActivityStatus,
     CheckRequest,
@@ -31,8 +31,8 @@ from ticketing.domain.models import (
     Session,
     SessionStatus,
 )
-from ticketing.common.permissions import PermissionService
-from ticketing.infrastructure.security import mask_phone, new_request_id
+from ticketing.common_横切能力.permissions import PermissionService
+from ticketing.infrastructure_基础设施.security import mask_phone, new_request_id
 
 
 @dataclass(slots=True)

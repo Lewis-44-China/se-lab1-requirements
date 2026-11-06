@@ -17,20 +17,20 @@ import json
 import sqlite3
 from typing import Mapping, Any
 
-from ticketing.common.audit import AuditService
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import AppError
-from ticketing.domain.models import (
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import AppError
+from ticketing.domain_共享能力层.models import (
     Activity,
     PaymentStatus,
     RegistrationStatus,
     Session,
     TicketType,
 )
-from ticketing.infrastructure.security import new_request_id
-from ticketing.domain.tickets import TicketService
-from ticketing.domain.waitlist import WaitlistService
+from ticketing.infrastructure_基础设施.security import new_request_id
+from ticketing.domain_共享能力层.tickets import TicketService
+from ticketing.domain_共享能力层.waitlist import WaitlistService
 
 
 class PromotionService:

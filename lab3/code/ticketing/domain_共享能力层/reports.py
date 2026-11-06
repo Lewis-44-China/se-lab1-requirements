@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-from ticketing.common.audit import AuditService
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import NotFound, ValidationError
-from ticketing.domain.models import Activity, ActivityStatus, Report, ReportStatus, Role
-from ticketing.common.permissions import PermissionService
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import NotFound, ValidationError
+from ticketing.domain_共享能力层.models import Activity, ActivityStatus, Report, ReportStatus, Role
+from ticketing.common_横切能力.permissions import PermissionService
 
 # 审查通过：提交举报直接 INSERT report（PENDING）并写审计；
 # 管理员处理时只更新该条记录的状态/处理人/结果/时间，不删除记录。

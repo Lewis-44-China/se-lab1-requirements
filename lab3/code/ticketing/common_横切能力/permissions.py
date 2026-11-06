@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 
-from ticketing.domain.errors import PermissionDenied
-from ticketing.domain.models import Account, AccountStatus, Role
-from ticketing.infrastructure.security import mask_phone
+from ticketing.domain_共享能力层.errors import PermissionDenied
+from ticketing.domain_共享能力层.models import Account, AccountStatus, Role
+from ticketing.infrastructure_基础设施.security import mask_phone
 
 # 审查通过：公开用例入口都做了权限校验（角色/所有者/账号状态/检票员分配）。
 # 低层查询（get_*、list_by_organizer、notifications.list_for 等）依赖调用方传入

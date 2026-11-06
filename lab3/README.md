@@ -18,16 +18,16 @@
 ```text
 lab3/
 ├── code/
-│   ├── ticketing/            # 主代码（30 个 .py，约 6400 行）
-│   │   ├── presentation/     # 表现层：终端界面与渲染
+│   ├── ticketing/            # 主代码（30 个 .py，约 7070 行）
+│   │   ├── presentation_表现层/     # 表现层：终端界面与渲染
 │   │   │   ├── cli.py
 │   │   │   └── render.py
-│   │   ├── application/      # 应用层：用例编排与系统任务
+│   │   ├── application_应用层/      # 应用层：用例编排与系统任务
 │   │   │   ├── admin.py      # 审核、封禁、举报（A4）
 │   │   │   ├── promotion.py  # Outbox 递补编排（D3/D4）
 │   │   │   ├── scheduler.py  # 时间推动 + Outbox 消费
 │   │   │   └── seed.py       # 演示数据
-│   │   ├── domain/           # 共享能力层：领域对象与业务能力
+│   │   ├── domain_共享能力层/           # 共享能力层：领域对象与业务能力
 │   │   │   ├── models.py / errors.py
 │   │   │   ├── auth.py       # A0 + D6
 │   │   │   ├── activities.py # D1
@@ -36,16 +36,16 @@ lab3/
 │   │   │   ├── checkin.py    # D5
 │   │   │   ├── queries.py    # Q1
 │   │   │   └── reports.py    # A1
-│   │   ├── common/           # 横切能力
+│   │   ├── common_横切能力/           # 横切能力
 │   │   │   ├── audit.py      # M7
 │   │   │   ├── permissions.py# M7
 │   │   │   └── notifications.py # S1
-│   │   ├── infrastructure/   # 基础设施
+│   │   ├── infrastructure_基础设施/   # 基础设施
 │   │   │   ├── db.py         # S2
 │   │   │   ├── clock.py
 │   │   │   └── security.py
 │   │   └── container.py      # 组合根
-│   ├── tests/                # 46 个 unittest 测试
+│   ├── tests/                # 85 个 unittest 测试
 │   ├── schema.sql            # 数据库表、约束、索引（数据层）
 │   ├── main.py               # 入口
 │   ├── Makefile              # run/test/lint/seed/clean
@@ -57,7 +57,7 @@ lab3/
 └── 工具/打包.py              # 生成交付 zip
 ```
 
-分层依赖：`presentation → application → domain → common → infrastructure`；
+分层依赖：`presentation_表现层 → application_应用层 → domain_共享能力层 → common_横切能力 → infrastructure_基础设施`；
 `container.py` 是唯一可同时引用所有层的组合根。
 
 ## 三、运行

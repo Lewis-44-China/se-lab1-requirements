@@ -9,7 +9,7 @@ from contextlib import redirect_stdout
 from datetime import timedelta
 from unittest.mock import patch
 
-from ticketing.presentation.cli import ConsoleApp
+from ticketing.presentation_表现层.cli import ConsoleApp
 
 from .helpers import ServiceTestCase
 

@@ -15,13 +15,13 @@
 
 from __future__ import annotations
 
-from ticketing.domain.activities import ActivityService
-from ticketing.common.audit import AuditService
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.models import RegistrationStatus
-from ticketing.application.promotion import PromotionService
-from ticketing.domain.waitlist import WaitlistService
+from ticketing.domain_共享能力层.activities import ActivityService
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.models import RegistrationStatus
+from ticketing.application_应用层.promotion import PromotionService
+from ticketing.domain_共享能力层.waitlist import WaitlistService
 
 
 class Scheduler:

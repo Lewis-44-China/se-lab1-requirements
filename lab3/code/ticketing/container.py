@@ -6,22 +6,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ticketing.domain.activities import ActivityService
-from ticketing.application.admin import AdminService
-from ticketing.common.audit import AuditService
-from ticketing.domain.auth import AuthService
-from ticketing.domain.checkin import CheckinService
-from ticketing.infrastructure.clock import Clock
-from ticketing.infrastructure.db import Database
-from ticketing.common.notifications import NotificationService
-from ticketing.application.promotion import PromotionService
-from ticketing.domain.queries import QueryService
-from ticketing.domain.refunds import RefundService
-from ticketing.domain.registrations import RegistrationService
-from ticketing.domain.reports import ReportService
-from ticketing.application.scheduler import Scheduler
-from ticketing.domain.tickets import TicketService
-from ticketing.domain.waitlist import WaitlistService
+from ticketing.domain_共享能力层.activities import ActivityService
+from ticketing.application_应用层.admin import AdminService
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.domain_共享能力层.auth import AuthService
+from ticketing.domain_共享能力层.checkin import CheckinService
+from ticketing.infrastructure_基础设施.clock import Clock
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.common_横切能力.notifications import NotificationService
+from ticketing.application_应用层.promotion import PromotionService
+from ticketing.domain_共享能力层.queries import QueryService
+from ticketing.domain_共享能力层.refunds import RefundService
+from ticketing.domain_共享能力层.registrations import RegistrationService
+from ticketing.domain_共享能力层.reports import ReportService
+from ticketing.application_应用层.scheduler import Scheduler
+from ticketing.domain_共享能力层.tickets import TicketService
+from ticketing.domain_共享能力层.waitlist import WaitlistService
 
 # 第二轮审查 Q69：container 只做装配，不绕过服务层权限；每个服务仍在校验
 # require_role / require_owner / require_active。装配顺序无循环依赖，所有

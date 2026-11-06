@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Sequence
 
-# 审查通过：db.py 位于 code/ticketing/infrastructure/，向上三层才是 code/；
+# 审查通过：db.py 位于 code/ticketing/infrastructure_基础设施/，向上三层才是 code/；
 # schema.sql 保持在 code/ 根，打包脚本按该路径复制。
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema.sql"
 

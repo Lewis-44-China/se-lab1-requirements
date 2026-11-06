@@ -20,7 +20,7 @@ import secrets
 import uuid
 from decimal import Decimal, InvalidOperation
 
-from ticketing.domain.errors import ValidationError
+from ticketing.domain_共享能力层.errors import ValidationError
 
 PHONE_PATTERN = re.compile(r"^1\d{10}$")
 PBKDF2_ITERATIONS = 200_000

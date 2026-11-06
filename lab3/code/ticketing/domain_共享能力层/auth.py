@@ -15,13 +15,13 @@ from __future__ import annotations
 
 import sqlite3
 
-from ticketing.common.audit import AuditService
-from ticketing.infrastructure.clock import Clock, format_dt
-from ticketing.infrastructure.db import Database
-from ticketing.domain.errors import Conflict, NotFound, ValidationError
-from ticketing.domain.models import Account, AccountStatus, Role
-from ticketing.common.permissions import PermissionService
-from ticketing.infrastructure.security import (
+from ticketing.common_横切能力.audit import AuditService
+from ticketing.infrastructure_基础设施.clock import Clock, format_dt
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.domain_共享能力层.errors import Conflict, NotFound, ValidationError
+from ticketing.domain_共享能力层.models import Account, AccountStatus, Role
+from ticketing.common_横切能力.permissions import PermissionService
+from ticketing.infrastructure_基础设施.security import (
     hash_password,
     normalize_phone,
     validate_password,

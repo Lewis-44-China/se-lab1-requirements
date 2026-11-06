@@ -12,22 +12,22 @@ import unittest
 from datetime import timedelta
 
 from ticketing.container import build_services
-from ticketing.domain.activities import ActivityDraft, SessionDraft, TicketDraft
-from ticketing.domain.errors import (
+from ticketing.domain_共享能力层.activities import ActivityDraft, SessionDraft, TicketDraft
+from ticketing.domain_共享能力层.errors import (
     Conflict,
     DeadlinePassed,
     PermissionDenied,
     ValidationError,
 )
-from ticketing.domain.models import (
+from ticketing.domain_共享能力层.models import (
     ActivityStatus,
     NotificationType,
     RegistrationStatus,
     TicketKind,
     WaitlistStatus,
 )
-from ticketing.infrastructure.db import Database
-from ticketing.infrastructure.security import new_request_id
+from ticketing.infrastructure_基础设施.db import Database
+from ticketing.infrastructure_基础设施.security import new_request_id
 
 from .helpers import ServiceTestCase
 
