@@ -250,9 +250,13 @@ class AdminService:
     ) -> None:
         """在调用方事务内更新账号状态并处理关联业务。"""
         new_status = "BANNED" if ban else "NORMAL"
-        conn.execute(
-            "UPDATE account SET status = ? WHERE id = ?", (new_status, target.id)
+        # 第二轮测试补充：状态没变化时不再重复写封禁/解封审计。
+        cursor = conn.execute(
+            "UPDATE account SET status = ? WHERE id = ? AND status != ?",
+            (new_status, target.id, new_status),
         )
+        if cursor.rowcount != 1:
+            raise Conflict("账号状态未变化，无需重复操作")
         self.audit.record(
             conn,
             admin.id,

@@ -25,6 +25,34 @@ test_register_at_sale_end_is_allowed (tests.test_core.RegistrationTests) ... ok
 test_register_success (tests.test_core.RegistrationTests) ... ok
 test_same_request_id_is_idempotent (tests.test_core.RegistrationTests) ... ok
 test_same_session_second_request_rejected (tests.test_core.RegistrationTests) ... ok
+test_banned_participant_can_still_check_in (tests.test_edge_cases.BanEdgeTests) ... ok
+test_duplicate_ban_rejected_without_extra_audit (tests.test_edge_cases.BanEdgeTests) ... ok
+test_activity_cancel_audit_layers (tests.test_edge_cases.CancelRefundEdgeTests) ... ok
+test_cancel_refunds_checked_in_and_purchased_and_fails_waitlist (tests.test_edge_cases.CancelRefundEdgeTests) ... ok
+test_checkin_at_open_time_allowed (tests.test_edge_cases.CheckinBoundaryTests) ... ok
+test_checkin_at_session_end_rejected (tests.test_edge_cases.CheckinBoundaryTests) ... ok
+test_modification_notifies_only_active_registrants (tests.test_edge_cases.ModificationEdgeTests) ... ok
+test_session_change_after_sale_requires_review_and_applies (tests.test_edge_cases.ModificationEdgeTests) ... ok
+test_modify_and_cancel_after_end_rejected (tests.test_edge_cases.ModificationStateTests) ... ok
+test_same_account_can_register_two_sessions (tests.test_edge_cases.MultiSessionTests) ... ok
+test_statistics_by_session_and_activity (tests.test_edge_cases.MultiSessionTests) ... ok
+test_waitlist_queues_are_per_session (tests.test_edge_cases.MultiSessionTests) ... ok
+test_force_refund_promotes_waitlist_head (tests.test_edge_cases.PromotionEdgeTests) ... ok
+test_two_refunds_promote_two_waiters (tests.test_edge_cases.PromotionEdgeTests) ... ok
+test_banned_participant_cannot_register_or_waitlist (tests.test_edge_cases.RegistrationEdgeTests) ... ok
+test_concurrent_first_waitlist_queue_creation (tests.test_edge_cases.RegistrationEdgeTests)
+两个账号并发首次入队时，候补队列只创建一条。 ... ok
+test_concurrent_same_account_same_session_one_record (tests.test_edge_cases.RegistrationEdgeTests)
+同一账号并发报名同一场次，唯一约束兜底，只留一条记录。 ... ok
+test_concurrent_waitlist_enqueue_no_integrity_error (tests.test_edge_cases.RegistrationEdgeTests)
+并发入队不应把唯一约束异常漏出到调用方。 ... ok
+test_register_at_sale_start_allowed (tests.test_edge_cases.RegistrationEdgeTests) ... ok
+test_request_id_owned_by_other_account_rejected (tests.test_edge_cases.RegistrationEdgeTests) ... ok
+test_draft_activity_cannot_be_reported (tests.test_edge_cases.ReportStateTests) ... ok
+test_ended_activity_can_be_reported (tests.test_edge_cases.ReportStateTests) ... ok
+test_cancel_and_rejoin_waitlist_goes_to_tail (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
+test_join_after_waitlist_deadline_rejected (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
+test_join_at_waitlist_deadline_allowed (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
 test_ban_organizer_cancels_activities (tests.test_lifecycle.BanTests) ... ok
 test_ban_participant_blocks_new_purchase_but_keeps_ticket (tests.test_lifecycle.BanTests) ... ok
 test_ban_participant_cancels_waitlist (tests.test_lifecycle.BanTests) ... ok
@@ -52,6 +80,8 @@ test_promotion_retries_next_candidate_after_failure (tests.test_lifecycle.Waitli
 队首递补失败时，事件留待下一次并继续尝试下一位。 ... ok
 test_waitlist_integrity_error_does_not_return_other_account_record (tests.test_lifecycle.WaitlistTests)
 并发同号冲突时，不能把其他账号的候补记录当作幂等结果返回。 ... ok
+test_my_tickets_has_waitlist_category (tests.test_presentation.ConsoleEntryTests) ... ok
+test_ticket_modification_locked_after_sale (tests.test_presentation.ConsoleEntryTests) ... ok
 test_audit_scope_by_role (tests.test_queries.QueryTests) ... ok
 test_audit_scope_includes_reported_organizer (tests.test_queries.QueryTests) ... ok
 test_cannot_assign_inspector_to_draft (tests.test_queries.QueryTests) ... ok
@@ -64,6 +94,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 58 tests in 40.955s
+Ran 85 tests in 58.801s
 
 OK

@@ -337,7 +337,9 @@ class CheckinService:
         now = self.clock.now()
         if now < parse_dt(session.checkin_open_time):
             raise DeadlinePassed("检票尚未开放")
-        if now > parse_dt(session.end_time):
+        # 第二轮测试补充：场次结束时刻本身已不能检票，与报名/候补的
+        # `now >= end_time` 口径保持一致（避免结束瞬间还能创建请求）。
+        if now >= parse_dt(session.end_time):
             raise DeadlinePassed("场次已结束，不能检票")
 
 
