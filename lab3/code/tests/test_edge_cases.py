@@ -321,7 +321,7 @@ class WaitlistDeadlineTests(ServiceTestCase):
         with self.assertRaises(DeadlinePassed):
             self.enqueue(self.people[1], activity)
 
-    def test_join_at_waitlist_deadline_allowed(self) -> None:
+    def test_join_at_waitlist_deadline_rejected(self) -> None:
         now = self.clock.now()
         activity = self.make_activity(
             normal_capacity=1,
@@ -334,8 +334,8 @@ class WaitlistDeadlineTests(ServiceTestCase):
         )
         self.register(self.people[0], activity)
         self.clock.set(now + timedelta(minutes=30))
-        record = self.enqueue(self.people[1], activity)
-        self.assertIs(record.status, WaitlistStatus.WAITING)
+        with self.assertRaises(DeadlinePassed):
+            self.enqueue(self.people[1], activity)
 
     def test_cancel_and_rejoin_waitlist_goes_to_tail(self) -> None:
         activity = self.make_activity(normal_capacity=1)

@@ -116,7 +116,9 @@ class WaitlistService:
         if activity.status not in (ActivityStatus.PUBLISHED, ActivityStatus.ONGOING):
             raise PermissionDenied("活动尚未公开或已结束，不能候补")
         now = self.clock.now()
-        if now > parse_dt(activity.waitlist_deadline):
+        # 第二轮最终复核 Q77：截止瞬间也拒绝入队，与 expire_due 的
+        # “截止时仍未递补即失败”口径一致，避免最后一刻入队后立刻失败。
+        if now >= parse_dt(activity.waitlist_deadline):
             raise DeadlinePassed("候补已截止")
         if now >= parse_dt(session.end_time):
             raise DeadlinePassed("场次已结束")

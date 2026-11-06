@@ -52,7 +52,7 @@ test_draft_activity_cannot_be_reported (tests.test_edge_cases.ReportStateTests) 
 test_ended_activity_can_be_reported (tests.test_edge_cases.ReportStateTests) ... ok
 test_cancel_and_rejoin_waitlist_goes_to_tail (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
 test_join_after_waitlist_deadline_rejected (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
-test_join_at_waitlist_deadline_allowed (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
+test_join_at_waitlist_deadline_rejected (tests.test_edge_cases.WaitlistDeadlineTests) ... ok
 test_ban_organizer_cancels_activities (tests.test_lifecycle.BanTests) ... ok
 test_ban_participant_blocks_new_purchase_but_keeps_ticket (tests.test_lifecycle.BanTests) ... ok
 test_ban_participant_cancels_waitlist (tests.test_lifecycle.BanTests) ... ok
@@ -94,6 +94,6 @@ test_platform_summary (tests.test_queries.QueryTests) ... ok
 test_statistics_open_only_after_all_sessions_end (tests.test_queries.QueryTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 85 tests in 58.801s
+Ran 85 tests in 58.350s
 
 OK
