@@ -139,6 +139,7 @@ class CheckinService:
               JOIN activity_inspector ai
                 ON ai.activity_id = a.id AND ai.inspector_id = ?
              WHERE cr.status = 'PENDING'
+               AND r.status = 'PURCHASED'
              ORDER BY cr.created_at, cr.id
             """,
             (inspector.id,),
@@ -170,6 +171,10 @@ class CheckinService:
         )
         request = self.get_request(request_id)
         registration = self.get_registration(request.registration_id)
+        # 第三轮缺陷 BUG-06/07/09：只有“已购票”报名才能处理检票请求；
+        # 退票、活动取消、已检票/未检票等终态都不可再通过或标异常。
+        if registration.status is not RegistrationStatus.PURCHASED:
+            raise Conflict("报名记录已不可检票")
         session = self.get_session(registration.session_id)
         activity = self.get_activity(registration.activity_id)
         if not PermissionService.is_assigned_inspector(

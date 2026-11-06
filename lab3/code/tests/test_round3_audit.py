@@ -668,7 +668,6 @@ class KnownDefectTests(_AuditBase):
         ]
         self.assertEqual(pending, [])
 
-    @unittest.expectedFailure
     def test_bug06_refund_closes_pending_check_request(self) -> None:
         """BUG-06（REQ-013/014）：退票后待处理检票请求仍留在检票员工作台。"""
         activity = self._checkin_ready_activity()
@@ -680,8 +679,10 @@ class KnownDefectTests(_AuditBase):
             for item in self.s.checkin.list_pending_requests(self.inspector)
         }
         self.assertNotIn(request.id, pending_ids)
+        # 即使直接拿请求 id 处理，也必须被拒绝。
+        with self.assertRaises(Conflict):
+            self.s.checkin.process(self.inspector, request.id, True)
 
-    @unittest.expectedFailure
     def test_bug07_cancel_closes_pending_check_request(self) -> None:
         """BUG-07（REQ-011/014）：活动取消后待处理检票请求仍显示。"""
         activity = self._checkin_ready_activity()
@@ -708,7 +709,6 @@ class KnownDefectTests(_AuditBase):
             any(item.action == "REGISTRATION_FAILED" for item in logs)
         )
 
-    @unittest.expectedFailure
     def test_bug09_session_end_closes_pending_check_request(self) -> None:
         """BUG-09（REQ-014/016）：场次结束后待处理检票请求仍留在工作台。"""
         activity = self._checkin_ready_activity()

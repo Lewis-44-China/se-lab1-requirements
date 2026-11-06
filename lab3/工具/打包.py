@@ -60,7 +60,7 @@ AI使用记录.md
 --------
     cd code
     python3 main.py        # 首次启动自动建库并生成演示数据
-    make test              # 115 个测试（4 个 expectedFailure）
+    make test              # 115 个测试（1 个 expectedFailure）
     make lint              # pylint
 
 演示账号见 code/README.md。

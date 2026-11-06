@@ -111,13 +111,13 @@ BUG-04（REQ-019）：候补截止必须等于售票截止。 ... ok
 test_bug05_cancelled_activity_review_can_be_closed (tests.test_round3_audit.KnownDefectTests)
 BUG-05（REQ-009）：活动取消后发布审核单永久 PENDING。 ... ok
 test_bug06_refund_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
-BUG-06（REQ-013/014）：退票后待处理检票请求仍留在检票员工作台。 ... expected failure
+BUG-06（REQ-013/014）：退票后待处理检票请求仍留在检票员工作台。 ... ok
 test_bug07_cancel_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
-BUG-07（REQ-011/014）：活动取消后待处理检票请求仍显示。 ... expected failure
+BUG-07（REQ-011/014）：活动取消后待处理检票请求仍显示。 ... ok
 test_bug08_failed_registration_audit_visible_to_participant (tests.test_round3_audit.KnownDefectTests)
 BUG-08（REQ-041）：参与者看不到自己的“报名失败”留痕。 ... expected failure
 test_bug09_session_end_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
-BUG-09（REQ-014/016）：场次结束后待处理检票请求仍留在工作台。 ... expected failure
+BUG-09（REQ-014/016）：场次结束后待处理检票请求仍留在工作台。 ... ok
 test_req012_buyer_must_match_account (tests.test_round3_audit.RegistrationAuditTests) ... ok
 test_req014_checkin_requires_own_purchased_ticket (tests.test_round3_audit.RegistrationAuditTests) ... ok
 test_req022_terminal_registration_cannot_change (tests.test_round3_audit.RegistrationAuditTests) ... ok
@@ -134,6 +134,6 @@ test_req023_waitlist_terminal_states_are_immutable (tests.test_round3_audit.Wait
 test_req049_promotion_generates_registration_with_snapshot (tests.test_round3_audit.WaitlistAuditTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 115 tests in 90.969s
+Ran 115 tests in 91.307s
 
-OK (expected failures=4)
+OK (expected failures=1)
