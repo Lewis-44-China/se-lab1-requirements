@@ -22,9 +22,13 @@ from ticketing.infrastructure.clock import ManualClock, SystemClock, format_dt, 
 from ticketing.container import Services, build_services
 from ticketing.infrastructure.db import Database
 from ticketing.domain.errors import AppError, CapacityFull
+
+# 第二轮审查（2026-11-05）：Q42 开售后隐藏/拒绝票价容量修改；Q70 我的票增加
+# “候补中”分类；Q71 核对四角色菜单与服务层权限边界。
 from ticketing.domain.models import (
     Account,
     Activity,
+    ActivityStatus,
     RegistrationStatus,
     Role,
     TicketKind,
@@ -290,10 +294,16 @@ class ConsoleApp:
                 RegistrationStatus.ACTIVITY_CANCELLED,
             },
         }
+        # 第二轮审查 Q70：候补中作为“我的票”的并列分类；选择后复用
+        # _my_waitlists 并只显示 WAITING 记录，可在这里直接取消候补。
         choice = input(
-            "筛选：1.全部 2.待检票 3.已检票 4.已结束 5.已取消/已退票 0.返回："
+            "筛选：1.全部 2.待检票 3.已检票 4.已结束 5.已取消/已退票 "
+            "6.候补中 0.返回："
         ).strip()
         if choice == "0":
+            return
+        if choice == "6":
+            self._my_waitlists(account, only_waiting=True)
             return
         if choice not in filters:
             warn("无效选择")
@@ -345,9 +355,15 @@ class ConsoleApp:
         )
         self._pause()
 
-    def _my_waitlists(self, account: Account) -> None:
+    def _my_waitlists(self, account: Account, only_waiting: bool = False) -> None:
         views = self.services.queries.my_waitlists(account)
-        section("我的候补")
+        if only_waiting:
+            views = [
+                view
+                for view in views
+                if view.record.status is WaitlistStatus.WAITING
+            ]
+        section("我的票 · 候补中" if only_waiting else "我的候补")
         print_table(
             ["ID", "活动", "场次", "票种", "金额", "入队时间", "状态"],
             [
@@ -494,6 +510,8 @@ class ConsoleApp:
         checkin_open = ask_time("检票开放", "+3d")
         print("\n场次默认 3 小时；票种可只设置一种。")
         tickets: list[TicketDraft] = []
+        # 第二轮审查 Q72：票种价格/容量由组织者在创建时填写（REQ-008）；
+        # 创建后开售前可申请修改，开售后禁止改价/容量。
         if ask_yes_no("设置 VIP 票？", True):
             price = ask_money("VIP 票价（元）", "199")
             capacity = ask_int("VIP 容量", 1)
@@ -532,12 +550,22 @@ class ConsoleApp:
         self._pause()
 
     def _manage_activity(self, account: Account, activity: Activity) -> None:
+        # 第二轮审查 Q70/Q42：草稿全部直接生效；发布后表面信息直接生效，
+        # 地点/场次时间/票价容量走审核；开售后票价容量入口置灰并拒绝。
+        # 这里只是提前阻止，服务层仍会做最终校验（Q53）。
         detail = self.services.queries.activity_detail(account, activity.id)
         self._print_detail(detail)
+        tickets_locked = (
+            activity.status is not ActivityStatus.DRAFT
+            and self.services.clock.now() >= parse_dt(activity.sale_start)
+        )
         print("  1. 提交发布审核")
         print("  2. 修改表面信息（名称/描述/封面/标签，直接生效）")
         print("  3. 修改地点/场次时间（草稿直接生效，发布后需审核）")
-        print("  4. 修改票价/容量（草稿直接生效，发布后开售前需审核）")
+        if tickets_locked:
+            print("  4. 修改票价/容量（活动已开售，不可修改）")
+        else:
+            print("  4. 修改票价/容量（草稿直接生效，发布后开售前需审核）")
         print("  5. 申请取消活动（需管理员审批）")
         print("  6. 查看审核记录")
         print("  0. 返回")
@@ -583,38 +611,10 @@ class ConsoleApp:
             else:
                 success("修改已直接生效（草稿）。")
         elif choice == "4":
-            print_table(
-                ["票种 ID", "类型", "价格", "容量", "已占用"],
-                [
-                    [
-                        ticket.id,
-                        label(ticket.kind),
-                        money(ticket.price_cents),
-                        ticket.capacity,
-                        ticket.occupied,
-                    ]
-                    for tickets in detail.tickets.values()
-                    for ticket in tickets
-                ],
-            )
-            ticket_id = ask_int("票种 ID", 1)
-            price = ask_money("新票价（元）", "0")
-            capacity = ask_int("新容量", 1)
-            review = self.services.activities.modify_activity(
-                account,
-                activity.id,
-                ticket_updates=[
-                    {
-                        "ticket_type_id": ticket_id,
-                        "price_cents": price,
-                        "capacity": capacity,
-                    }
-                ],
-            )
-            if review is not None:
-                success(f"已提交修改审核，申请编号 {review.id}")
+            if tickets_locked:
+                warn("活动已开售，票价与容量不可修改")
             else:
-                success("修改已直接生效（草稿）。")
+                self._modify_tickets(account, activity, detail)
         elif choice == "5":
             reason = ask("取消原因")
             review = self.services.activities.request_cancel(
@@ -624,6 +624,41 @@ class ConsoleApp:
         elif choice == "6":
             self._show_reviews(activity)
         self._pause()
+
+    def _modify_tickets(self, account: Account, activity: Activity, detail) -> None:
+        """草稿或开售前修改票价/容量；发布后生成修改审核。"""
+        print_table(
+            ["票种 ID", "类型", "价格", "容量", "已占用"],
+            [
+                [
+                    ticket.id,
+                    label(ticket.kind),
+                    money(ticket.price_cents),
+                    ticket.capacity,
+                    ticket.occupied,
+                ]
+                for tickets in detail.tickets.values()
+                for ticket in tickets
+            ],
+        )
+        ticket_id = ask_int("票种 ID", 1)
+        price = ask_money("新票价（元）", "0")
+        capacity = ask_int("新容量", 1)
+        review = self.services.activities.modify_activity(
+            account,
+            activity.id,
+            ticket_updates=[
+                {
+                    "ticket_type_id": ticket_id,
+                    "price_cents": price,
+                    "capacity": capacity,
+                }
+            ],
+        )
+        if review is not None:
+            success(f"已提交修改审核，申请编号 {review.id}")
+        else:
+            success("修改已直接生效（草稿）。")
 
     # 审查通过：组织者可查看本活动的发布/修改/取消申请及审核结果。
     def _show_reviews(self, activity: Activity) -> None:
@@ -776,6 +811,8 @@ class ConsoleApp:
         self._pause()
 
     # ---------- 管理员 ----------
+    # 第二轮审查 Q71：四角色菜单覆盖 UI-01～09；菜单只是入口，真正的权限边界
+    # 仍由服务层的 require_role/require_owner/require_active 保证，隐藏按钮不算安全边界。
 
     def _admin_menu(self, account: Account) -> bool:
         section(f"管理员菜单 · {account.name}")
