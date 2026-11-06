@@ -42,6 +42,27 @@ class ConsoleEntryTests(ServiceTestCase):
         )
         self.assertEqual(reviews, [])
 
+    def test_create_wizard_can_disable_waitlist(self) -> None:
+        app = ConsoleApp(self.s)
+        output = io.StringIO()
+        inputs = [
+            "测试活动", "测试描述", "测试地点", "10",
+            "2026-12-01 10:00", "2026-12-01 12:00", "2026-12-01 11:00",
+            "2026-12-01 13:00", "2026-12-01 12:30",
+            "n",          # 不允许候补
+            "n",          # 不设置 VIP
+            "y", "100", "2",  # 普通票
+            "n",          # 不提交审核
+            "",           # pause
+        ]
+        with patch("builtins.input", side_effect=inputs):
+            with redirect_stdout(output):
+                app._create_activity(self.organizer)
+        row = self.db.query_one(
+            "SELECT allow_waitlist FROM activity_session ORDER BY id DESC LIMIT 1"
+        )
+        self.assertEqual(row["allow_waitlist"], 0)
+
     def test_my_tickets_has_waitlist_category(self) -> None:
         activity = self.make_activity(normal_capacity=1)
         self.register(self.people[0], activity)

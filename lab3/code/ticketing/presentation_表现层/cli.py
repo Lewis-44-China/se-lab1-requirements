@@ -510,6 +510,7 @@ class ConsoleApp:
         refund_deadline = ask_time("退票截止", "+2d")
         session_start = ask_time("场次开始", "+4d")
         checkin_open = ask_time("检票开放", "+3d")
+        allow_waitlist = ask_yes_no("允许候补？", True)
         print("\n场次默认 3 小时；票种可只设置一种。")
         tickets: list[TicketDraft] = []
         # 第二轮审查 Q72：票种价格/容量由组织者在创建时填写（REQ-008）；
@@ -529,7 +530,7 @@ class ConsoleApp:
             start_time=session_start,
             end_time=session_start + timedelta(hours=3),
             checkin_open_time=checkin_open,
-            allow_waitlist=True,
+            allow_waitlist=allow_waitlist,
             session_no="S1",
             tickets=tickets,
         )
