@@ -285,7 +285,11 @@ class ActivityService:
                 direct_changes[key] = value.strip()
         if name is not None and not name.strip():
             raise ValidationError("活动名称不能为空")
-
+        # 第二轮审查 Q76：先调用 _build_session_updates/_build_ticket_updates，
+        # 是为了统一做校验和归一化（时间格式、截止关系、票种归属），再按活动状态
+        # 决定“直接落库”还是“生成审核单”。草稿分支随后直接应用 payload，不会
+        # 创建审核单；发布后分支才把它写入 review_application。
+        # 没有先按 DRAFT 分叉，是为了避免草稿和发布后维护两套相同的校验逻辑。
         payload: dict[str, object] = {}
         if location is not None:
             if not location.strip():
