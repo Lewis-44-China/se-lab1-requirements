@@ -24,7 +24,7 @@ python3 main.py --db /tmp/x.db  # 指定数据库文件
 ## 测试与规范
 
 ```bash
-make test    # 123 个 unittest
+make test    # 124 个 unittest
 make lint    # pylint ticketing tests
 make clean   # 删除数据库、缓存、导出文件
 ```

@@ -115,8 +115,12 @@ class RegistrationService:
         same_session = self._find_by_account_session(participant.id, session_id)
         if same_session is not None:
             raise Conflict("同一账号在同一场次只能报名一次")
+        # 实现选择（A）：同一账号同一场次只保留一个“有效票或候补”；
+        # 已有候补时，购买其他票种需先取消候补，避免同时持有票和候补。
         if self._has_active_waitlist(participant.id, session_id):
-            raise Conflict("该账号在此场次已有候补记录，不能重复报名")
+            raise Conflict(
+                "该场次已有候补记录，请先取消候补后再购买其他票种"
+            )
 
         ticket = self.tickets.find_for_session_kind(session_id, kind)
         if ticket is None:

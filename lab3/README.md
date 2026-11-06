@@ -45,7 +45,7 @@ lab3/
 │   │   │   ├── clock.py
 │   │   │   └── security.py
 │   │   └── container.py      # 组合根
-│   ├── tests/                # 123 个 unittest 测试
+│   ├── tests/                # 124 个 unittest 测试
 │   ├── schema.sql            # 数据库表、约束、索引（数据层）
 │   ├── main.py               # 入口
 │   ├── Makefile              # run/test/lint/seed/clean
@@ -54,6 +54,7 @@ lab3/
 ├── 报告/                     # 报告正文与 PDF（由本人撰写）
 ├── 报告素材/                 # 行数、测试、运行、需求追踪等事实材料
 ├── AI使用记录.md             # AI 辅助实现的过程记录
+├── 需求与设计实现对照.md      # 需求/设计/UML 到实现的逐项对照与差异
 └── 工具/打包.py              # 生成交付 zip
 ```
 
@@ -67,7 +68,7 @@ cd lab3/code
 python3 main.py                 # 首次启动自动建库并生成演示数据
 python3 main.py --reset         # 删除数据库后重建（仅演示）
 python3 main.py --no-seed       # 不使用演示数据
-make test                       # 运行 123 个测试
+make test                       # 运行 124 个测试
 make lint                       # pylint 检查
 ```
 

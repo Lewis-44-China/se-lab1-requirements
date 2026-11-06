@@ -390,6 +390,16 @@ class RegistrationTests(ServiceTestCase):
         # 失败事务已回滚，第二个活动的名额没有被占用。
         self.assertEqual(self.ticket(second_activity).occupied, 0)
 
+    def test_waitlist_blocks_other_kind_with_clear_message(self) -> None:
+        activity = self.make_activity(normal_capacity=1)
+        self.register(self.people[0], activity)
+        self.enqueue(self.people[1], activity)
+        with self.assertRaises(Conflict) as context:
+            self.register(
+                self.people[1], activity, kind=TicketKind.VIP
+            )
+        self.assertIn("请先取消候补", str(context.exception))
+
     def test_same_session_second_request_rejected(self) -> None:
         activity = self.make_activity()
         self.register(self.people[0], activity)

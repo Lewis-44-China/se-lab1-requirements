@@ -25,6 +25,7 @@ test_register_at_sale_end_is_allowed (tests.test_core.RegistrationTests) ... ok
 test_register_success (tests.test_core.RegistrationTests) ... ok
 test_same_request_id_is_idempotent (tests.test_core.RegistrationTests) ... ok
 test_same_session_second_request_rejected (tests.test_core.RegistrationTests) ... ok
+test_waitlist_blocks_other_kind_with_clear_message (tests.test_core.RegistrationTests) ... ok
 test_banned_participant_can_still_check_in (tests.test_edge_cases.BanEdgeTests) ... ok
 test_duplicate_ban_rejected_without_extra_audit (tests.test_edge_cases.BanEdgeTests) ... ok
 test_activity_cancel_audit_layers (tests.test_edge_cases.CancelRefundEdgeTests) ... ok
@@ -142,6 +143,6 @@ test_req023_waitlist_terminal_states_are_immutable (tests.test_round3_audit.Wait
 test_req049_promotion_generates_registration_with_snapshot (tests.test_round3_audit.WaitlistAuditTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 123 tests in 93.912s
+Ran 124 tests in 91.967s
 
 OK

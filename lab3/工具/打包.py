@@ -7,6 +7,7 @@
     ├── UML/（11 对 PNG/PUML + 说明）
     ├── code/（可运行的 Python 包、测试、schema、Makefile）
     ├── AI使用记录.md
+    ├── 需求与设计实现对照.md
     └── README.txt
 
 用法：
@@ -56,11 +57,15 @@ AI使用记录.md
     AI 辅助代码实现的过程记录（场景、提示词要点、输出、问题、修复）。
     报告正文未使用大模型撰写。
 
+需求与设计实现对照.md
+    实验一需求、实验二设计与 UML 到实验三代码的逐项对照，
+    集中记录实现逻辑与所有不完全一致之处。
+
 运行方式
 --------
     cd code
     python3 main.py        # 首次启动自动建库并生成演示数据
-    make test              # 123 个测试
+    make test              # 124 个测试
     make lint              # pylint
 
 演示账号见 code/README.md。
@@ -129,6 +134,10 @@ def build_stage(skip_report: bool) -> None:
     copy_tree(code_src / "tests", STAGE / "code" / "tests", (".py",))
 
     copy_file(LAB3 / "AI使用记录.md", STAGE / "AI使用记录.md")
+    copy_file(
+        LAB3 / "需求与设计实现对照.md",
+        STAGE / "需求与设计实现对照.md",
+    )
     (STAGE / "README.txt").write_text(README, encoding="utf-8-sig")
 
 
@@ -174,6 +183,9 @@ def verify(zip_path: Path, skip_report: bool) -> None:
         print("禁止项：", bad or "无")
         if not skip_report:
             assert any(name.endswith("实验报告.pdf") for name in names), "缺少报告 PDF"
+        assert any(
+            name.endswith("需求与设计实现对照.md") for name in names
+        ), "缺少需求与设计实现对照.md"
         assert sum(name.endswith(".puml") for name in names) == 11, "puml 数量不对"
         assert (
             sum(name.endswith(".png") and "/UML/" in name for name in names) == 11
