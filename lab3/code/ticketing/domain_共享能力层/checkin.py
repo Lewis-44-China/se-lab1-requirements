@@ -110,7 +110,9 @@ class CheckinService:
     # 查询：检票员只能看到管理员分配给自己的活动。
     def list_assigned_activities(self, inspector) -> list[Activity]:
         """检票员被分配的活动。"""
-        PermissionService.require_role(inspector, Role.INSPECTOR)
+        inspector = PermissionService.reload_active(
+            self.db, inspector, Role.INSPECTOR
+        )
         rows = self.db.query_all(
             """
             SELECT a.* FROM activity a
@@ -126,7 +128,9 @@ class CheckinService:
     # 查询：只列自己负责活动中的 PENDING 请求，按创建时间排序。
     def list_pending_requests(self, inspector) -> list[CheckRequestView]:
         """检票员负责活动中的待处理请求。"""
-        PermissionService.require_role(inspector, Role.INSPECTOR)
+        inspector = PermissionService.reload_active(
+            self.db, inspector, Role.INSPECTOR
+        )
         rows = self.db.query_all(
             """
             SELECT cr.id AS request_id, cr.request_no, cr.registration_id,

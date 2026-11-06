@@ -203,13 +203,14 @@ class AdminService:
         PermissionService.require_role(admin, Role.ADMIN)
         return self.auth.list_accounts(Role.INSPECTOR)
 
-    # 分配检票员到活动（管理员）；INSERT OR IGNORE 幂等，重复分配不报错。
+    # 分配检票员到活动（管理员）；重复分配抛 Conflict；封禁检票员不允许分配。
     def assign_inspector(self, admin, inspector_id: int, activity_id: int) -> None:
         """把检票员分配到活动。"""
         PermissionService.require_role(admin, Role.ADMIN)
         inspector = self.auth.get_account(inspector_id)
         if inspector.role is not Role.INSPECTOR:
             raise ValidationError("目标账号不是检票员")
+        PermissionService.require_active(inspector)
         activity = self.activities.get_activity(activity_id)
         # 第二轮审查 Q57：草稿/待审活动未公开，只允许组织者与管理员可见（REQ-003），
         # 不能把检票员分配到这类活动上，否则会通过“已分配活动”看到未公开内容。

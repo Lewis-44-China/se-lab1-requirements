@@ -109,7 +109,10 @@ class ConsoleApp:
             return None
         success(f"欢迎，{account.name}（{label(account.role)}）")
         if account.is_banned:
-            warn("该账号已被封禁：仍可查看已有票，但不能新增购票或候补。")
+            if account.role is Role.PARTICIPANT:
+                warn("该账号已被封禁：仍可查看已有票，但不能新增购票或候补。")
+            else:
+                warn("该账号已被封禁：不能执行相关操作，仅可查看通知/账号信息。")
         return account
 
     def _register(self, role: Role) -> None:

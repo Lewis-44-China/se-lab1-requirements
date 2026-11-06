@@ -142,9 +142,6 @@ test_req023_waitlist_terminal_states_are_immutable (tests.test_round3_audit.Wait
 test_req049_promotion_generates_registration_with_snapshot (tests.test_round3_audit.WaitlistAuditTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 123 tests in 100.526s
+Ran 123 tests in 93.912s
 
 OK
-! 请输入 1 或 2
-空库且 --no-seed：已创建默认管理员 13800000000 / Admin@123
-空库且 --no-seed：已创建默认管理员 13800000000 / Admin@123

@@ -101,7 +101,8 @@ class ConsoleEntryTests(ServiceTestCase):
     def test_no_seed_empty_db_creates_admin(self) -> None:
         path = Path(self.temp_dir.name) / "empty.db"
         with patch.object(ConsoleApp, "run", return_value=None):
-            self.assertEqual(main(["--no-seed", "--db", str(path)]), 0)
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["--no-seed", "--db", str(path)]), 0)
         db = Database(path)
         try:
             row = db.query_one(
@@ -117,9 +118,10 @@ class ConsoleEntryTests(ServiceTestCase):
         for suffix in ("", "-wal", "-shm"):
             Path(f"{path}{suffix}").write_text("stale", encoding="utf-8")
         with patch.object(ConsoleApp, "run", return_value=None):
-            self.assertEqual(
-                main(["--reset", "--no-seed", "--db", str(path)]), 0
-            )
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    main(["--reset", "--no-seed", "--db", str(path)]), 0
+                )
         self.assertTrue(path.exists())
         self.assertFalse(Path(f"{path}-wal").exists())
         self.assertFalse(Path(f"{path}-shm").exists())
@@ -127,7 +129,8 @@ class ConsoleEntryTests(ServiceTestCase):
     def test_invalid_ticket_kind_reprompts(self) -> None:
         app = ConsoleApp(self.s)
         with patch("builtins.input", side_effect=["x", "2"]):
-            kind = app._choose_kind()
+            with redirect_stdout(io.StringIO()):
+                kind = app._choose_kind()
         self.assertEqual(kind.value, "NORMAL")
 
     def test_modify_ticket_defaults_to_current_values(self) -> None:

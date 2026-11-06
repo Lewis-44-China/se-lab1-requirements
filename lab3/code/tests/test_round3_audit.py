@@ -608,11 +608,22 @@ class KnownDefectTests(_AuditBase):
         request = self.s.checkin.request_checkin(self.people[0], registration.id)
         self.s.admin.ban_account(self.admin, self.inspector.id, "封禁测试")
         fresh = self.s.auth.get_account(self.inspector.id)
-        # 同样要覆盖“重新读库后”的账号与登录时留下的旧对象。
+        # 工作台读取、处理和再次分配都必须拒绝。
+        with self.assertRaises(PermissionDenied):
+            self.s.checkin.list_assigned_activities(fresh)
+        with self.assertRaises(PermissionDenied):
+            self.s.checkin.list_pending_requests(self.inspector)
         with self.assertRaises(PermissionDenied):
             self.s.checkin.process(fresh, request.id, True)
         with self.assertRaises(PermissionDenied):
             self.s.checkin.process(self.inspector, request.id, True)
+        other = self._custom_activity(
+            "分配测试", [TicketKind.NORMAL], assign_inspector=False
+        )
+        with self.assertRaises(PermissionDenied):
+            self.s.admin.assign_inspector(
+                self.admin, self.inspector.id, other.id
+            )
 
     def test_bug03_waitlist_closes_at_sale_end(self) -> None:
         """BUG-03（REQ-012/019）：售票截止后不能加入候补。"""

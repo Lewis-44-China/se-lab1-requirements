@@ -1,26 +1,26 @@
 实验三代码规模统计
 说明：行数按 wc -l 口径；有效代码行=非空且非纯注释行；AST 统计类/函数数量。
 
-主代码 ticketing/: 文件 30 个，总行 7206，空行 648，注释行 479，有效代码行 6079，类 63，函数/方法 271
-测试 tests/: 文件 8 个，总行 2846，空行 280，注释行 24，有效代码行 2542，类 30，函数/方法 142
-合计: 文件 38 个，总行 10052，空行 928，注释行 503，有效代码行 8621，类 93，函数/方法 413
+主代码 ticketing/: 文件 30 个，总行 7213，空行 648，注释行 478，有效代码行 6087，类 63，函数/方法 271
+测试 tests/: 文件 8 个，总行 2860，空行 280，注释行 24，有效代码行 2556，类 30，函数/方法 142
+合计: 文件 38 个，总行 10073，空行 928，注释行 502，有效代码行 8643，类 93，函数/方法 413
 
 主代码文件明细：
   ticketing/__init__.py                                12 行
   ticketing/application_应用层/__init__.py                 1 行
-  ticketing/application_应用层/admin.py                  407 行
+  ticketing/application_应用层/admin.py                  408 行
   ticketing/application_应用层/promotion.py              207 行
   ticketing/application_应用层/scheduler.py              104 行
   ticketing/application_应用层/seed.py                   311 行
   ticketing/common_横切能力/__init__.py                     1 行
   ticketing/common_横切能力/audit.py                       95 行
   ticketing/common_横切能力/notifications.py               73 行
-  ticketing/common_横切能力/permissions.py                 93 行
+  ticketing/common_横切能力/permissions.py                 92 行
   ticketing/container.py                              101 行
   ticketing/domain_共享能力层/__init__.py                    1 行
   ticketing/domain_共享能力层/activities.py                910 行
   ticketing/domain_共享能力层/auth.py                      216 行
-  ticketing/domain_共享能力层/checkin.py                   354 行
+  ticketing/domain_共享能力层/checkin.py                   358 行
   ticketing/domain_共享能力层/errors.py                     46 行
   ticketing/domain_共享能力层/models.py                    522 行
   ticketing/domain_共享能力层/queries.py                   678 行
@@ -34,5 +34,5 @@
   ticketing/infrastructure_基础设施/db.py                  87 行
   ticketing/infrastructure_基础设施/security.py           103 行
   ticketing/presentation_表现层/__init__.py                1 行
-  ticketing/presentation_表现层/cli.py                  1257 行
+  ticketing/presentation_表现层/cli.py                  1260 行
   ticketing/presentation_表现层/render.py                235 行
