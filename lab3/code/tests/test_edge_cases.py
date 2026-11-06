@@ -27,9 +27,18 @@ from ticketing.domain_共享能力层.models import (
     WaitlistStatus,
 )
 from ticketing.infrastructure_基础设施.db import Database
-from ticketing.infrastructure_基础设施.security import new_request_id
+from ticketing.infrastructure_基础设施.security import new_request_id, yuan_to_cents
 
 from .helpers import ServiceTestCase
+
+
+class MoneyUtilityTests(unittest.TestCase):
+    """金额工具的异常类型。"""
+
+    def test_non_finite_amount_is_validation_error(self) -> None:
+        for text in ("nan", "NaN", "inf", "Infinity"):
+            with self.assertRaises(ValidationError):
+                yuan_to_cents(text)
 
 
 class CheckinBoundaryTests(ServiceTestCase):

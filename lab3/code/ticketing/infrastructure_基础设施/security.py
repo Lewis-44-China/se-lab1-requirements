@@ -85,6 +85,10 @@ def yuan_to_cents(text: str) -> int:
         value = Decimal(text.strip())
     except (InvalidOperation, AttributeError) as exc:
         raise ValidationError(f"金额格式不正确：{text}") from exc
+    # 第三轮补充：nan / inf 也是合法 Decimal，但不是合法金额；
+    # 统一转成业务异常，保持“业务层只抛 AppError”的约定。
+    if not value.is_finite():
+        raise ValidationError(f"金额格式不正确：{text}")
     if value < 0:
         raise ValidationError("金额不能为负数")
     cents = int((value * 100).quantize(Decimal("1")))

@@ -121,6 +121,8 @@ CREATE TABLE IF NOT EXISTS waitlist (
 -- waitlist_id → ticket_type.session_id → activity_session.activity_id 推出；
 -- 保留是因为候补过期扫描（expire_due）和“我的候补”查询直接 join 这两列。
 -- 一致性前提：系统没有“票种换场次/场次换活动”的写入口，两列只在入队时写入一次。
+-- 与 registration 的 1—0..1 关联由 registration(account_id, session_id) 唯一约束
+-- 隐式保证：递补成功后按账号+场次即可唯一找到对应报名记录，不另存 registration_id。
 -- FIFO 顺序：按 join_time（秒级）升序，id 作为同秒并列的兜底；
 -- 取队首见 WaitlistService.head()，由 ix_waitlist_fifo 覆盖过滤与排序。
 CREATE TABLE IF NOT EXISTS waitlist_record (

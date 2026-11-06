@@ -34,6 +34,7 @@ test_checkin_at_session_end_rejected (tests.test_edge_cases.CheckinBoundaryTests
 test_modification_notifies_only_active_registrants (tests.test_edge_cases.ModificationEdgeTests) ... ok
 test_session_change_after_sale_requires_review_and_applies (tests.test_edge_cases.ModificationEdgeTests) ... ok
 test_modify_and_cancel_after_end_rejected (tests.test_edge_cases.ModificationStateTests) ... ok
+test_non_finite_amount_is_validation_error (tests.test_edge_cases.MoneyUtilityTests) ... ok
 test_same_account_can_register_two_sessions (tests.test_edge_cases.MultiSessionTests) ... ok
 test_statistics_by_session_and_activity (tests.test_edge_cases.MultiSessionTests) ... ok
 test_waitlist_queues_are_per_session (tests.test_edge_cases.MultiSessionTests) ... ok
@@ -80,7 +81,14 @@ test_promotion_retries_next_candidate_after_failure (tests.test_lifecycle.Waitli
 队首递补失败时，事件留待下一次并继续尝试下一位。 ... ok
 test_waitlist_integrity_error_does_not_return_other_account_record (tests.test_lifecycle.WaitlistTests)
 并发同号冲突时，不能把其他账号的候补记录当作幂等结果返回。 ... ok
+test_audit_filters_by_operator (tests.test_presentation.ConsoleEntryTests) ... ok
+test_create_wizard_can_disable_waitlist (tests.test_presentation.ConsoleEntryTests) ... ok
+test_invalid_ticket_kind_reprompts (tests.test_presentation.ConsoleEntryTests) ... ok
+test_location_only_modification_does_not_require_session_times (tests.test_presentation.ConsoleEntryTests) ... ok
+test_modify_ticket_defaults_to_current_values (tests.test_presentation.ConsoleEntryTests) ... ok
 test_my_tickets_has_waitlist_category (tests.test_presentation.ConsoleEntryTests) ... ok
+test_no_seed_empty_db_creates_admin (tests.test_presentation.ConsoleEntryTests) ... ok
+test_reset_removes_wal_and_shm (tests.test_presentation.ConsoleEntryTests) ... ok
 test_ticket_modification_locked_after_sale (tests.test_presentation.ConsoleEntryTests) ... ok
 test_audit_scope_by_role (tests.test_queries.QueryTests) ... ok
 test_audit_scope_includes_reported_organizer (tests.test_queries.QueryTests) ... ok
@@ -134,6 +142,9 @@ test_req023_waitlist_terminal_states_are_immutable (tests.test_round3_audit.Wait
 test_req049_promotion_generates_registration_with_snapshot (tests.test_round3_audit.WaitlistAuditTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 115 tests in 90.693s
+Ran 123 tests in 100.526s
 
 OK
+! 请输入 1 或 2
+空库且 --no-seed：已创建默认管理员 13800000000 / Admin@123
+空库且 --no-seed：已创建默认管理员 13800000000 / Admin@123
