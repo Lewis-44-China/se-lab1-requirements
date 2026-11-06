@@ -35,6 +35,7 @@ from ticketing.domain_共享能力层.models import (
     NotificationType,
     PaymentStatus,
     RegistrationStatus,
+    ReviewStatus,
     Role,
     SessionStatus,
     TicketKind,
@@ -355,6 +356,22 @@ class WaitlistAuditTests(_AuditBase):
 class ActivityAuditTests(_AuditBase):
     """REQ-007 / REQ-021 / REQ-028 / REQ-029 / REQ-038：活动与审核。"""
 
+    def test_terminal_review_approval_is_closed_not_applied(self) -> None:
+        """终态活动的审核单即使点“通过”也只能关闭，不能复活活动。"""
+        activity = self.make_activity(publish=False)
+        review = self.s.activities.submit_for_review(
+            self.organizer, activity.id
+        )
+        self.s.refunds.cancel_activity(self.admin, activity.id, "紧急取消")
+        result = self.s.admin.review(
+            self.admin, review.id, True, "尝试通过"
+        )
+        self.assertIs(result.status, ReviewStatus.REJECTED)
+        self.assertIs(
+            self.s.activities.get_activity(activity.id).status,
+            ActivityStatus.CANCELLED,
+        )
+
     def test_req021_cancel_cancels_all_sessions(self) -> None:
         activity = self.make_activity()
         self.register(self.people[0], activity)
@@ -633,7 +650,6 @@ class KnownDefectTests(_AuditBase):
                 publish=False,
             )
 
-    @unittest.expectedFailure
     def test_bug05_cancelled_activity_review_can_be_closed(self) -> None:
         """BUG-05（REQ-009）：活动取消后发布审核单永久 PENDING。"""
         activity = self.make_activity(publish=False)

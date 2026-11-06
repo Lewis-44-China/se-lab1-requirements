@@ -17,7 +17,13 @@ from ticketing.domain_共享能力层.errors import (
     PermissionDenied,
     ValidationError,
 )
-from ticketing.domain_共享能力层.models import ActivityStatus, RegistrationStatus, Role, TicketKind
+from ticketing.domain_共享能力层.models import (
+    ActivityStatus,
+    RegistrationStatus,
+    ReviewStatus,
+    Role,
+    TicketKind,
+)
 from ticketing.infrastructure_基础设施.security import new_request_id
 
 from .helpers import ServiceTestCase
@@ -310,10 +316,13 @@ class ActivityTests(ServiceTestCase):
             self.organizer, activity.id, "取消"
         )
         self.s.admin.review(self.admin, cancel_review.id, True, "同意取消")
+        # 终态活动的审核单只能关闭为 REJECTED，不能复活活动。
+        closed = self.s.admin.review(
+            self.admin, publish_review.id, True, "尝试通过"
+        )
+        self.assertIs(closed.status, ReviewStatus.REJECTED)
         with self.assertRaises(Conflict):
-            self.s.admin.review(self.admin, publish_review.id, True, "同意发布")
-        with self.assertRaises(Conflict):
-            self.s.admin.review(self.admin, publish_review.id, False, "驳回")
+            self.s.admin.review(self.admin, publish_review.id, False, "再次驳回")
         self.assertIs(
             self.s.activities.get_activity(activity.id).status,
             ActivityStatus.CANCELLED,
@@ -326,8 +335,8 @@ class ActivityTests(ServiceTestCase):
         )
         self.assertIsNotNone(review)
         self.s.refunds.cancel_activity(self.admin, activity.id, "活动取消")
-        with self.assertRaises(Conflict):
-            self.s.admin.review(self.admin, review.id, True, "同意修改")
+        closed = self.s.admin.review(self.admin, review.id, True, "尝试通过")
+        self.assertIs(closed.status, ReviewStatus.REJECTED)
         updated = self.s.activities.get_activity(activity.id)
         self.assertIs(updated.status, ActivityStatus.CANCELLED)
         self.assertNotEqual(updated.location, "新地点")

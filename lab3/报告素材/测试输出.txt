@@ -96,6 +96,8 @@ test_req021_cancel_cancels_all_sessions (tests.test_round3_audit.ActivityAuditTe
 test_req028_session_time_change_notifies_purchasers (tests.test_round3_audit.ActivityAuditTests) ... ok
 test_req029_combined_query_and_role_scope (tests.test_round3_audit.ActivityAuditTests) ... ok
 test_req038_activity_is_not_cancelled_when_underfilled (tests.test_round3_audit.ActivityAuditTests) ... ok
+test_terminal_review_approval_is_closed_not_applied (tests.test_round3_audit.ActivityAuditTests)
+终态活动的审核单即使点“通过”也只能关闭，不能复活活动。 ... ok
 test_req039_audit_covers_key_actions (tests.test_round3_audit.AuditTraceTests) ... ok
 test_req040_audit_fields_are_complete (tests.test_round3_audit.AuditTraceTests) ... ok
 test_bug01_banned_organizer_cannot_create_activity (tests.test_round3_audit.KnownDefectTests)
@@ -107,7 +109,7 @@ BUG-03（REQ-012/019）：售票截止后不能加入候补。 ... ok
 test_bug04_waitlist_deadline_cannot_precede_sale_end (tests.test_round3_audit.KnownDefectTests)
 BUG-04（REQ-019）：候补截止必须等于售票截止。 ... ok
 test_bug05_cancelled_activity_review_can_be_closed (tests.test_round3_audit.KnownDefectTests)
-BUG-05（REQ-009）：活动取消后发布审核单永久 PENDING。 ... expected failure
+BUG-05（REQ-009）：活动取消后发布审核单永久 PENDING。 ... ok
 test_bug06_refund_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
 BUG-06（REQ-013/014）：退票后待处理检票请求仍留在检票员工作台。 ... expected failure
 test_bug07_cancel_closes_pending_check_request (tests.test_round3_audit.KnownDefectTests)
@@ -132,6 +134,6 @@ test_req023_waitlist_terminal_states_are_immutable (tests.test_round3_audit.Wait
 test_req049_promotion_generates_registration_with_snapshot (tests.test_round3_audit.WaitlistAuditTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 114 tests in 75.489s
+Ran 115 tests in 90.969s
 
-OK (expected failures=5)
+OK (expected failures=4)

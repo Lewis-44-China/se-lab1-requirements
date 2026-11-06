@@ -86,9 +86,15 @@ class AdminService:
         review = self.activities.get_review(review_id)
         if review.status is not ReviewStatus.PENDING:
             raise Conflict("该审核申请已处理")
-        if not approve and not comment.strip():
-            raise ValidationError("驳回时必须填写审核意见")
         activity = self.activities.get_activity(review.activity_id)
+        # 第三轮缺陷 BUG-05：活动已取消/结束时，不再执行任何领域动作，
+        # 只把残留审核单关闭为 REJECTED；即使管理员点了“通过”也不放行。
+        if activity.status in (ActivityStatus.CANCELLED, ActivityStatus.ENDED):
+            approve = False
+            if not comment.strip():
+                comment = "活动已取消或结束，审核单关闭"
+        elif not approve and not comment.strip():
+            raise ValidationError("驳回时必须填写审核意见")
         with self.db.transaction() as conn:
             self._apply_review(conn, admin, review, activity, approve, comment)
             new_status = (
@@ -138,6 +144,16 @@ class AdminService:
         comment: str,
     ) -> None:
         """根据审核类型执行通过/驳回动作。"""
+        # 第三轮缺陷 BUG-05：终态活动只关闭审核单，不执行发布/修改/取消动作。
+        if activity.status in (ActivityStatus.CANCELLED, ActivityStatus.ENDED):
+            self.notifications.create(
+                conn,
+                activity.organizer_id,
+                NotificationType.REVIEW_RESULT,
+                f"活动《{activity.name}》{review.type.value}审核单已关闭："
+                "活动已取消或结束。",
+            )
+            return
         if review.type is ReviewType.PUBLISH:
             if approve:
                 self.activities.approve_publish(conn, activity, admin.id)
