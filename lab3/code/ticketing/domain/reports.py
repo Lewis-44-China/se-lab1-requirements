@@ -14,6 +14,7 @@ from ticketing.common.permissions import PermissionService
 
 # 审查通过：提交举报直接 INSERT report（PENDING）并写审计；
 # 管理员处理时只更新该条记录的状态/处理人/结果/时间，不删除记录。
+# 第二轮审查（2026-11-05）：核实举报的活动状态范围，只排除未公开活动（Q64）。
 
 class ReportService:
     """举报提交与个人举报查询。"""
@@ -24,6 +25,9 @@ class ReportService:
         self.audit = audit
 
     # 参与者提交举报：只能举报已公开/已结束/已取消的活动；原因必填；同事务写审计。
+    # 第二轮审查 Q64：REQ-002/018 没有限制举报时的活动状态，只要求活动对参与者
+    # 可见；因此排除未公开的 DRAFT/PENDING_REVIEW，允许对已结束/已取消活动举报
+    # （用于事后追责），是否属实由管理员处理。
     def submit_report(self, participant, activity_id: int, reason: str) -> Report:
         """参与者举报一个已公开活动。"""
         PermissionService.require_role(participant, Role.PARTICIPANT)

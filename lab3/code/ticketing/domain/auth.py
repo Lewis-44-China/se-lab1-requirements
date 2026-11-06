@@ -8,6 +8,8 @@
 # 审查通过：三种创建方式——参与者/组织者自助 register（角色受限）；
 # 管理员系统初始化 bootstrap_admin；检票员由管理员 create_inspector。
 # 重复手机号由唯一约束 + Conflict 拦截；手机号/密码/姓名在注册前校验。
+# 第二轮审查（2026-11-05）：核实手机号跨四种角色唯一、登录不需要角色参数
+# （Q58/Q59），代码逻辑未改。
 
 from __future__ import annotations
 
@@ -36,6 +38,9 @@ class AuthService:
         self.audit = audit
 
     # 自助注册：只允许参与者/组织者；校验手机号/密码/姓名；唯一手机号冲突转 Conflict。
+    # 第二轮审查 Q58：手机号在 account.phone 上有 UNIQUE 约束，覆盖四种角色；
+    # 自助注册、管理员创建检票员、管理员初始化都走 INSERT + IntegrityError→Conflict，
+    # 所以同一手机号不可能同时注册成两种角色。
     def register(
         self, phone: str, password: str, name: str, role: Role
     ) -> Account:
@@ -79,6 +84,8 @@ class AuthService:
         return self.get_account(account_id)
 
     # 登录：手机号 + 密码；失败统一提示“手机号或密码错误”，不泄露账号是否存在。
+    # 第二轮审查 Q59：登录不需要传角色。角色是账号属性（account.role），登录后
+    # 按该属性进入对应菜单；封禁账号仍可登录，是为了查看已有票/候补（REQ-018）。
     def login(self, phone: str, password: str) -> Account:
         """手机号 + 密码登录；失败时不区分“账号不存在/密码错误”。"""
         normalized = normalize_phone(phone)

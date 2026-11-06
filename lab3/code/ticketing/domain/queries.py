@@ -10,8 +10,10 @@ Q1 只读，不产生业务副作用；数据范围与字段脱敏在这里统�
 # 审查通过：数据范围按角色在 browse_activities / _check_activity_visible /
 # _audit_scope 等处分别实现；被封禁账号仍可查看已有票和候补，新增交易由服务层阻止。
 # 组合查询（关键词/时间/状态/票种）和 ORDER BY 排序已实现。
-# 实验二 UI-04 的“我的票”筛选分类（待检票/已检票/已结束/已取消）在当前终端界面未实现，
-# 留到 CLI 初审时补（属表现层筛选，不改变系统状态）。
+# 实验二 UI-04 的“我的票”筛选分类（待检票/已检票/已结束/已取消）已在 CLI 实现，
+# 查询层保持只返回原始数据（Q61）。
+# 第二轮审查（2026-11-05）：核对浏览范围、名单口径、我的票分类与审计范围
+# （Q60–Q63），代码逻辑未改。
 
 from __future__ import annotations
 
@@ -147,6 +149,9 @@ class QueryService:
             raise PermissionDenied("组织者不提供公开活动查询，只能查看自己的活动")
         if viewer.role not in (Role.PARTICIPANT, Role.ADMIN):
             raise PermissionDenied("当前角色不能查询活动")
+        # 第二轮审查 Q60：参与者只看 PUBLISHED/ONGOING/ENDED/CANCELLED；
+        # 管理员不加状态过滤，可看草稿/待审；组织者和检票员不能走公开浏览。
+        # 后面的 status 参数只能在此基础上收窄，不能突破角色过滤。
         conditions: list[str] = []
         params: list[object] = []
         if viewer.role is Role.PARTICIPANT:
@@ -290,7 +295,10 @@ class QueryService:
 
     # ---------- 我的票与候补 ----------
 
-    # 我的票：只返回当前参与者自己的报名，按创建时间倒序；
+    # 我的票：只返回当前参与者自己的报名，按创建时间倒序。
+    # 第二轮审查 Q61：服务层返回本人全部报名；UI-04 的分类在 CLI
+    # `_my_tickets` 中完成（全部/待检票/已检票/已结束/已取消或已退票），
+    # 查询层只负责数据范围，筛选属于表现层。
     # can_refund 由“已购票 + 未过退票截止”共同决定。
     def my_registrations(self, participant) -> list[RegistrationView]:
         """参与者自己的报名记录。"""
@@ -364,7 +372,10 @@ class QueryService:
 
     # ---------- 组织者名单与统计 ----------
 
-    # 组织者名单：仅活动所有者；手机号遮挡；只含有效/终态报名。
+    # 组织者名单：仅活动所有者；手机号遮挡；只含有效/出席类报名。
+    # 第二轮审查 Q62：包含 PURCHASED、CHECKED_IN、NORMAL_END、NO_SHOW；
+    # 不含 SELF_CANCELLED、ACTIVITY_CANCELLED（已退款/活动取消），与 REQ-030
+    # “已取消的报名不计入统计”的口径一致，避免把已退款者算进活动名单。
     def organizer_roster(self, organizer, activity_id: int) -> list[RosterEntry]:
         """组织者查看本活动有效报名名单；手机号遮挡。"""
         activity = self.get_activity(activity_id)
@@ -593,6 +604,11 @@ class QueryService:
 
     # 审计数据范围：管理员全部；组织者本活动相关；参与者本人报名/候补/检票/举报；
     # 检票员本人处理的请求。
+    # 第二轮审查 Q63：对照 REQ-041——
+    #   管理员：全部；
+    #   组织者：本活动/场次/票种/审核申请/被举报记录 + 本人账号；
+    #   参与者：本人报名/候补/检票请求/举报 + 本人账号；
+    #   检票员：只查自己处理过的 CHECK_REQUEST，不越权到名单/报名。
     def _audit_scope(self, viewer) -> tuple[str, ...] | None:
         """返回 (SQL 条件, 参数...)，None 表示管理员看全部。"""
         if viewer.role is Role.ADMIN:
