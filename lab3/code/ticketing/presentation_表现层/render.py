@@ -178,6 +178,18 @@ def ask_int(prompt: str, minimum: int | None = None, maximum: int | None = None)
         return value
 
 
+def ask_optional_int(prompt: str) -> int | None:
+    """读取可空整数；留空返回 None。"""
+    while True:
+        text = ask_optional(prompt)
+        if not text:
+            return None
+        try:
+            return int(text)
+        except ValueError:
+            warn("请输入整数，或直接回车留空")
+
+
 def ask_yes_no(prompt: str, default: bool = False) -> bool:
     """读取 y/n。"""
     hint = "Y/n" if default else "y/N"

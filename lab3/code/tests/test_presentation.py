@@ -83,6 +83,19 @@ class ConsoleEntryTests(ServiceTestCase):
         self.assertEqual(payload["location"], "新地点")
         self.assertNotIn("sessions", payload)
 
+    def test_audit_filters_by_operator(self) -> None:
+        self.make_activity()
+        app = ConsoleApp(self.s)
+        output = io.StringIO()
+        inputs = ["", "", str(self.organizer.id), "", "", ""]
+        with patch("builtins.input", side_effect=inputs):
+            with redirect_stdout(output):
+                app._audit(self.admin)
+        text = output.getvalue()
+        self.assertIn("ACTIVITY_CREATED", text)
+        # 管理员审核留痕的操作人是管理员，不应出现在组织者筛选结果里。
+        self.assertNotIn("PUBLISH_APPROVED", text)
+
     def test_my_tickets_has_waitlist_category(self) -> None:
         activity = self.make_activity(normal_capacity=1)
         self.register(self.people[0], activity)

@@ -39,6 +39,7 @@ from ticketing.presentation_表现层.render import (
     ask_int,
     ask_money,
     ask_optional,
+    ask_optional_int,
     ask_time,
     ask_yes_no,
     error,
@@ -1082,12 +1083,14 @@ class ConsoleApp:
     def _audit(self, account: Account) -> None:
         object_type = ask_optional("对象类型（如 ACTIVITY/REGISTRATION）")
         action = ask_optional("操作类型（如 REFUND/CHECKIN_PASSED）")
+        operator_id = ask_optional_int("操作人账号 ID（可空）")
         date_from = self._optional_time("开始时间")
         date_to = self._optional_time("结束时间")
         logs = self.services.queries.audit_query(
             account,
             object_type=object_type or None,
             action=action or None,
+            operator_id=operator_id,
             date_from=date_from,
             date_to=date_to,
             limit=100,
