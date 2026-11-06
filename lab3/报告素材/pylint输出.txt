@@ -1,5 +1,5 @@
 ************* Module ticketing.domain_共享能力层.waitlist
-ticketing/domain_共享能力层/waitlist.py:87:4: R0915: Too many statements (51/50) (too-many-statements)
+ticketing/domain_共享能力层/waitlist.py:89:4: R0915: Too many statements (51/50) (too-many-statements)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)

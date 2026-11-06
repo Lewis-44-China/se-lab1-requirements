@@ -73,9 +73,12 @@ class RegistrationService:
                 participant, session_id, kind, request_id, buyer_name, buyer_phone
             )
         except AppError as exc:
+            # 第三轮缺陷 BUG-08：失败尝试挂在 REGISTRATION_ATTEMPT 上，
+            # 由参与者按 operator_id 查看；不要再挂 SESSION，避免组织者看到
+            # 参与者个人的报名失败记录（REQ-041）。
             self.audit.record_standalone(
                 participant.id,
-                "SESSION",
+                "REGISTRATION_ATTEMPT",
                 session_id,
                 "REGISTRATION_FAILED",
                 f"报名失败：{exc.message}",

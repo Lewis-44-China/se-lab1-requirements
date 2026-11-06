@@ -1,9 +1,9 @@
 实验三代码规模统计
 说明：行数按 wc -l 口径；有效代码行=非空且非纯注释行；AST 统计类/函数数量。
 
-主代码 ticketing/: 文件 30 个，总行 7133，空行 646，注释行 471，有效代码行 6016，类 63，函数/方法 270
-测试 tests/: 文件 8 个，总行 2717，空行 268，注释行 19，有效代码行 2430，类 29，函数/方法 134
-合计: 文件 38 个，总行 9850，空行 914，注释行 490，有效代码行 8446，类 92，函数/方法 404
+主代码 ticketing/: 文件 30 个，总行 7140，空行 646，注释行 476，有效代码行 6018，类 63，函数/方法 270
+测试 tests/: 文件 8 个，总行 2736，空行 270，注释行 21，有效代码行 2445，类 29，函数/方法 134
+合计: 文件 38 个，总行 9876，空行 916，注释行 497，有效代码行 8463，类 92，函数/方法 404
 
 主代码文件明细：
   ticketing/__init__.py                                12 行
@@ -23,12 +23,12 @@
   ticketing/domain_共享能力层/checkin.py                   354 行
   ticketing/domain_共享能力层/errors.py                     46 行
   ticketing/domain_共享能力层/models.py                    522 行
-  ticketing/domain_共享能力层/queries.py                   676 行
+  ticketing/domain_共享能力层/queries.py                   678 行
   ticketing/domain_共享能力层/refunds.py                   324 行
-  ticketing/domain_共享能力层/registrations.py             275 行
+  ticketing/domain_共享能力层/registrations.py             278 行
   ticketing/domain_共享能力层/reports.py                    91 行
   ticketing/domain_共享能力层/tickets.py                   126 行
-  ticketing/domain_共享能力层/waitlist.py                  470 行
+  ticketing/domain_共享能力层/waitlist.py                  472 行
   ticketing/infrastructure_基础设施/__init__.py             1 行
   ticketing/infrastructure_基础设施/clock.py               99 行
   ticketing/infrastructure_基础设施/db.py                  87 行

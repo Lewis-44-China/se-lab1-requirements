@@ -4,10 +4,9 @@
 角色权限、状态机、候补/检票生命周期、审计可见性等角度补充检测。
 
 约定：
-- 普通测试断言“需求规定的正确行为”，应全部通过；
-- 以 ``test_bugXX_`` 开头并带 ``@unittest.expectedFailure`` 的测试是本次
-  确认的缺陷；当前会显示为 expected failure。修复后它们会变成
-  “unexpected success”，届时删除对应的 expectedFailure 装饰器即可。
+- 普通测试断言“需求规定的正确行为”；
+- ``test_bugXX_`` 是第三轮确认的 9 个缺陷；修复后保留为回归测试，
+  不再使用 expectedFailure。
 """
 # pylint: disable=missing-function-docstring,too-many-public-methods
 
@@ -569,7 +568,7 @@ class AuditTraceTests(_AuditBase):
 
 
 class KnownDefectTests(_AuditBase):
-    """本轮确认的缺陷；修复后删除对应 expectedFailure 装饰器。"""
+    """第三轮确认并修复的缺陷回归测试（保留 BUG 编号便于追溯）。"""
 
     def test_bug01_banned_organizer_cannot_create_activity(self) -> None:
         """BUG-01（REQ-018）：封禁组织者仍能创建并发布新活动。"""
@@ -695,9 +694,8 @@ class KnownDefectTests(_AuditBase):
         }
         self.assertNotIn(request.id, pending_ids)
 
-    @unittest.expectedFailure
     def test_bug08_failed_registration_audit_visible_to_participant(self) -> None:
-        """BUG-08（REQ-041）：参与者看不到自己的“报名失败”留痕。"""
+        """BUG-08（REQ-041）：参与者能看到自己的失败留痕，组织者不能看。"""
         activity = self._custom_activity(
             "失败留痕", [TicketKind.NORMAL], capacity=1
         )
@@ -707,6 +705,27 @@ class KnownDefectTests(_AuditBase):
         logs = self.s.queries.audit_query(self.people[1])
         self.assertTrue(
             any(item.action == "REGISTRATION_FAILED" for item in logs)
+        )
+
+        # 候补失败也走同一对象类型，参与者自己可见。
+        with self.assertRaises(Conflict):
+            self.enqueue(self.people[0], activity)
+        own_logs = self.s.queries.audit_query(self.people[0])
+        self.assertTrue(
+            any(item.action == "WAITLIST_JOIN_FAILED" for item in own_logs)
+        )
+
+        # 组织者不能通过自己活动的 SESSION 留痕看到参与者的失败记录。
+        organizer_logs = self.s.queries.audit_query(self.organizer)
+        self.assertFalse(
+            any(
+                item.action in ("REGISTRATION_FAILED", "WAITLIST_JOIN_FAILED")
+                for item in organizer_logs
+            )
+        )
+        admin_logs = self.s.queries.audit_query(self.admin)
+        self.assertTrue(
+            any(item.action == "REGISTRATION_FAILED" for item in admin_logs)
         )
 
     def test_bug09_session_end_closes_pending_check_request(self) -> None:

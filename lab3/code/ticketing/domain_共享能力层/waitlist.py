@@ -75,9 +75,11 @@ class WaitlistService:
                 participant, session_id, kind, request_id, buyer_name, buyer_phone
             )
         except AppError as exc:
+            # 第三轮缺陷 BUG-08：与报名失败一致，挂在 REGISTRATION_ATTEMPT，
+            # 参与者按 operator_id 可见，组织者不可见（REQ-041）。
             self.audit.record_standalone(
                 participant.id,
-                "SESSION",
+                "REGISTRATION_ATTEMPT",
                 session_id,
                 "WAITLIST_JOIN_FAILED",
                 f"候补失败：{exc.message}",

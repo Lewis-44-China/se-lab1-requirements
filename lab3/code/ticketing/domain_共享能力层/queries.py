@@ -658,7 +658,9 @@ class QueryService:
                 OR (object_type = 'REPORT' AND object_id IN
                     (SELECT id FROM report WHERE reporter_id = ?))
                 OR (object_type = 'ACCOUNT' AND object_id = ?)
+                OR (object_type = 'REGISTRATION_ATTEMPT' AND operator_id = ?)
                 """,
+                viewer.id,
                 viewer.id,
                 viewer.id,
                 viewer.id,
