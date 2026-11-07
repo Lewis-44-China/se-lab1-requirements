@@ -12,7 +12,9 @@
 | 实验一文件 | `requirements.md`、`chat.txt` 未修改 |
 | 实验一标签 | `lab1-ai-draft`、`lab1-final` 未移动 |
 
-## 2. lab3 提交历史
+## 2. lab3 提交历史（里程碑）
+
+`lab3` 相对 `lab2` 共 73 个提交（2026-11-03 ～ 2026-11-07）。下面只列 9 个里程碑，后续缺陷修复与报告整理没有逐条展开；完整记录可用 `git log --oneline --graph refs/heads/lab3` 查看。
 
 | 提交 | 内容 |
 |---|---|
@@ -58,14 +60,15 @@ git diff lab1-final..lab3 -- requirements.md chat.txt
 
 ## 4. 远程状态
 
-- 本地 `lab3` 已包含上述 9 个提交（另有本文件的记录更新提交）；
-- **尚未推送**；推送命令计划为 `git push github lab3`；
-- 推送不涉及标签、不 force push；需用户明确确认后执行；
+- 本地 `lab3` 已推送到 `github`，推送时远程与本地均指向 `2d142aa`；
+- 推送命令：`git push -u github lab3`；
+- 远程新增 `lab3` 分支，本地已设置上游 `github/lab3`；
+- 未 force push，未改动标签；
 - 远程仓库地址：`git@github.com:Lewis-44-China/se-lab1-requirements.git`。
 
 ## 5. 报告中可展示的内容
 
-1. `git log --oneline --graph -11` 的截图/文本；
-2. GitHub 仓库 `lab3` 分支页面截图（推送后）；
+1. `git log --oneline --graph` 的截图/文本（报告正文只写阶段摘要）；
+2. GitHub 仓库 `lab3` 分支页面截图；
 3. `git diff lab1-final..lab3 -- requirements.md chat.txt` 为空；
-4. 每个提交对应的功能/测试，说明 AI 初稿与人工修改的阶段性差异。
+4. 完整提交哈希与说明见本文件第 2 节及 `git log`。
