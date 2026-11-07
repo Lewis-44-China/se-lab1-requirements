@@ -20,3 +20,7 @@ lab3/code/*.csv
 *.log
 *.out
 *.toc
+
+# 实验三杂物与报告草稿
+lab3/杂物/
+lab3/报告素材/*.docx
