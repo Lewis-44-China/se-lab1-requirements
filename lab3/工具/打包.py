@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""按实验三手册结构生成交付 zip。
+"""按实验三手册 3.2 的提交结构生成 zip。
 
-包内结构：
+包内结构（只在手册要求范围内）：
     实验3_241220022_邓景文/
     ├── 实验报告.pdf
-    ├── UML/（11 对 PNG/PUML + 说明）
-    ├── code/（可运行的 Python 包、测试、schema、Makefile）
-    ├── AI使用记录.md
-    ├── 需求与设计实现对照.md
-    └── README.txt
+    ├── UML/（11 对 PNG/PUML）
+    └── code/（可运行的 Python 包、测试、schema、Makefile）
+
+自己的素材（报告素材、进度记录、AI 使用记录、需求对照、README 等）不打包。
 
 用法：
     python3 工具/打包.py                 # 正式打包（要求报告 PDF 已存在）
@@ -31,52 +30,6 @@ LAB3 = REPO / "lab3"
 DEFAULT_OUT = Path("/home/deng/软件工程实验/实验三")
 NAME = "实验3_241220022_邓景文"
 STAGE = Path("/tmp") / NAME
-
-README = """实验三 软件实现与构建 提交包
-学号：241220022    姓名：邓景文
-
-目录说明
---------
-实验报告.pdf
-    实验三报告正文（由本人撰写并导出）。
-
-UML/
-    实验二设计的 11 对 UML 图（PNG + PlantUML 源文件）、UML 设计说明，
-    以及“UML 到实现”的映射说明。
-
-code/
-    可运行实现：
-    - ticketing/：主代码（Python 3.10，标准库 sqlite3）；
-    - tests/：unittest 测试；
-    - schema.sql：数据库表、约束、索引；
-    - main.py：入口；
-    - Makefile：run/test/lint/seed/clean；
-    - pylintrc：代码规范配置。
-
-AI使用记录.md
-    AI 辅助代码实现的过程记录（场景、提示词要点、输出、问题、修复）。
-    报告正文未使用大模型撰写。
-
-需求与设计实现对照.md
-    实验一需求、实验二设计与 UML 到实验三代码的逐项对照，
-    集中记录实现逻辑与所有不完全一致之处。
-
-运行方式
---------
-    cd code
-    python3 main.py        # 首次启动自动建库并生成演示数据
-    make test              # 124 个测试
-    make lint              # pylint
-
-演示账号见 code/README.md。
-
-补充说明
---------
-- 实现使用 SQLite + 终端菜单，替代实验二的 MySQL + Web UI；
-  差异见 UML/实现映射说明.md。
-- 实验一 requirements.md、chat.txt 与标签未修改、未移动。
-- 本包不含数据库文件、__pycache__、运行导出 CSV。
-"""
 
 
 def copy_file(src: Path, dst: Path) -> None:
@@ -113,32 +66,20 @@ def build_stage(skip_report: bool) -> None:
         copy_file(report, STAGE / "实验报告.pdf")
     elif not skip_report:
         raise FileNotFoundError(
-            "缺少 lab3/报告/实验报告.pdf；请先由本人撰写报告并导出 PDF，"
+            "缺少 lab3/报告/实验报告.pdf；请先运行 报告/导出PDF.sh，"
             "或使用 --skip-report 做结构检查。"
         )
 
+    # 手册示例只要求 UML 的 png/puml，说明文档属于我们自己的素材，不打包。
     for path in sorted((LAB3 / "UML").iterdir()):
-        if path.suffix.lower() in (".png", ".puml") or path.name in (
-            "UML设计说明.md",
-            "实现映射说明.md",
-        ):
+        if path.suffix.lower() in (".png", ".puml"):
             copy_file(path, STAGE / "UML" / path.name)
 
     code_src = LAB3 / "code"
-    copy_file(code_src / "schema.sql", STAGE / "code" / "schema.sql")
-    copy_file(code_src / "main.py", STAGE / "code" / "main.py")
-    copy_file(code_src / "Makefile", STAGE / "code" / "Makefile")
-    copy_file(code_src / "pylintrc", STAGE / "code" / "pylintrc")
-    copy_file(code_src / "README.md", STAGE / "code" / "README.md")
+    for name in ("schema.sql", "main.py", "Makefile", "pylintrc", "README.md"):
+        copy_file(code_src / name, STAGE / "code" / name)
     copy_tree(code_src / "ticketing", STAGE / "code" / "ticketing", (".py",))
     copy_tree(code_src / "tests", STAGE / "code" / "tests", (".py",))
-
-    copy_file(LAB3 / "AI使用记录.md", STAGE / "AI使用记录.md")
-    copy_file(
-        LAB3 / "需求与设计实现对照.md",
-        STAGE / "需求与设计实现对照.md",
-    )
-    (STAGE / "README.txt").write_text(README, encoding="utf-8-sig")
 
 
 def build_zip(zip_path: Path) -> None:
@@ -162,7 +103,7 @@ def build_zip(zip_path: Path) -> None:
 
 
 def verify(zip_path: Path, skip_report: bool) -> None:
-    """检查数量、必备文件和禁止项。"""
+    """检查手册要求的必备项、数量和禁止项。"""
     with zipfile.ZipFile(zip_path) as zf:
         infos = zf.infolist()
         names = [item.filename for item in infos]
@@ -172,25 +113,39 @@ def verify(zip_path: Path, skip_report: bool) -> None:
         print("puml：", sum(name.endswith(".puml") for name in names))
         print("UML png：", sum(name.endswith(".png") and "/UML/" in name for name in names))
         print("code py：", sum(name.endswith(".py") and "/code/" in name for name in names))
+
+        bad_flag = [
+            item.filename
+            for item in infos
+            if any(ord(ch) > 127 for ch in item.filename)
+            and not (item.flag_bits & 0x800)
+        ]
+        print("非 ASCII 文件名未设置 UTF-8 标志：", bad_flag or "无")
+
         forbidden = (
             ".pyc",
             "__pycache__",
             "ticketing.db",
             "/exports/",
             ".pylint.d",
+            "AI使用记录",
+            "需求与设计实现对照",
+            "README.txt",
+            "报告素材",
+            "杂物",
         )
         bad = [name for name in names if any(key in name for key in forbidden)]
         print("禁止项：", bad or "无")
+
         if not skip_report:
             assert any(name.endswith("实验报告.pdf") for name in names), "缺少报告 PDF"
-        assert any(
-            name.endswith("需求与设计实现对照.md") for name in names
-        ), "缺少需求与设计实现对照.md"
         assert sum(name.endswith(".puml") for name in names) == 11, "puml 数量不对"
         assert (
             sum(name.endswith(".png") and "/UML/" in name for name in names) == 11
         ), "UML png 数量不对"
+        assert any(name.endswith("/code/main.py") for name in names), "缺少 code/main.py"
         assert not bad, "存在禁止文件"
+        assert not bad_flag, "存在未设置 UTF-8 标志的中文文件名"
 
 
 def main() -> int:

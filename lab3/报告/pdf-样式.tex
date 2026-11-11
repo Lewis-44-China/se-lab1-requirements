@@ -1,0 +1,21 @@
+% 实验二报告 PDF 样式：沿用实验一/智能计算系统的中文排版方案
+\input{/home/deng/智能计算系统/工具/pdf-样式.tex}
+\usepackage{array}
+\usepackage{caption}
+\captionsetup{justification=centering,font=small,labelfont=bf}
+\usepackage{needspace}
+\renewcommand{\contentsname}{目录}
+
+% 四级标题（Markdown 的 ####）独立成行
+\titleformat{\paragraph}[block]{\normalfont\bfseries}{}{0pt}{}
+\titlespacing*{\paragraph}{0pt}{1.0em}{0.4em}
+
+% 表格：统一小字号，列宽由导出脚本按表设置
+\usepackage{longtable}
+\usepackage{pdflscape}
+\AtBeginEnvironment{longtable}{\footnotesize}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.2}
+
+% 图片：同时限制宽度和高度，宽图/高图都不会冲出页面
+\setkeys{Gin}{width=\linewidth,height=0.80\textheight,keepaspectratio}
